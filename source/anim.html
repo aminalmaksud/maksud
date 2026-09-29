@@ -1,0 +1,115 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Archides;src:url(Archides.ttf)}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#05070d}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:Archides;color:#e8c77a}
+canvas{position:absolute;inset:0}
+.t{position:absolute;left:0;right:0;text-align:center;white-space:nowrap;will-change:transform,opacity,filter}
+.gold{background:linear-gradient(180deg,#fff3c4 0%,#f0c768 38%,#b8842c 62%,#f6d98c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 18px rgba(240,190,90,.35)) drop-shadow(0 4px 2px rgba(0,0,0,.8))}
+.ivory{color:#efe6cf;text-shadow:0 0 14px rgba(0,0,0,.9),0 2px 3px #000}
+.dim{color:#b99a5c;letter-spacing:.35em}
+</style></head>
+<body><div id="stage">
+<canvas id="c" width="1920" height="1080"></canvas>
+<div id="kicker" class="t dim" style="top:150px;font-size:34px">A DEBATE THAT HAS RAGED FOR THOUSANDS OF YEARS</div>
+<div id="title" class="t" style="top:420px;font-size:150px;letter-spacing:.06em"></div>
+<div id="exhalos" class="t gold" style="top:330px;font-size:230px;letter-spacing:.12em">EX HALOS</div>
+<div id="sub" class="t ivory" style="top:640px;font-size:52px;letter-spacing:.25em">ONE WORD &middot; TWO MEANINGS</div>
+<div id="lh" class="t" style="width:960px;left:0;top:250px"><div class="dim" style="font-size:30px">MEANING ONE</div>
+  <div class="gold" style="font-size:88px;line-height:1.1;margin-top:26px">DEATH WILL COME<br>FROM THE SEA</div></div>
+<div id="rh" class="t" style="width:960px;left:960px;top:250px"><div class="dim" style="font-size:30px">MEANING TWO</div>
+  <div class="gold" style="font-size:88px;line-height:1.1;margin-top:26px">DEATH FAR FROM<br>THE SEA, ON LAND</div></div>
+<div id="or" class="t gold" style="top:470px;font-size:80px">OR</div>
+<div id="tag" class="t ivory" style="top:930px;font-size:40px;letter-spacing:.3em">EX HALOS</div>
+</div>
+<script>
+const W=1920,H=1080,ctx=document.getElementById('c').getContext('2d');
+const $=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const out=x=>1-Math.pow(1-clamp(x),3);
+const seg=(t,a,b)=>clamp((t-a)/(b-a));
+// deterministic RNG
+let s=7;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+const motes=[...Array(90)].map(()=>({x:rnd()*W,y:rnd()*H,r:.6+rnd()*2.2,v:8+rnd()*22,p:rnd()*6.28}));
+const TITLE='DEATH FROM THE SEA';
+$('title').innerHTML=[...TITLE].map(c=>`<span class="gold" style="display:inline-block">${c===' '?'&nbsp;':c}</span>`).join('');
+const letters=[...$('title').children];
+
+function meander(t,alpha){ // Greek key border drawing progressively
+  const m=48,u=18;ctx.save();ctx.strokeStyle=`rgba(214,168,82,${alpha})`;ctx.lineWidth=3;
+  ctx.shadowColor='rgba(240,190,90,.5)';ctx.shadowBlur=8;
+  const band=(y,dir)=>{const n=Math.floor((W-2*m)/(u*4));const shown=Math.floor(n*t);
+    ctx.beginPath();for(let i=0;i<shown;i++){const x=m+i*u*4;const k=dir*u;
+      ctx.moveTo(x,y);ctx.lineTo(x,y-k*2);ctx.lineTo(x+u*3,y-k*2);ctx.lineTo(x+u*3,y-k*.5);
+      ctx.lineTo(x+u,y-k*.5);ctx.lineTo(x+u,y-k*1.25);ctx.lineTo(x+u*2,y-k*1.25);ctx.moveTo(x,y);ctx.lineTo(x+u*4,y);}
+    ctx.stroke();};
+  band(m+u*2+6,1);band(H-m-u*2-6,-1);
+  ctx.beginPath();ctx.moveTo(m,m+u*3);ctx.lineTo(m,m+u*3+(H-2*m-u*6)*t);
+  ctx.moveTo(W-m,H-m-u*3);ctx.lineTo(W-m,H-m-u*3-(H-2*m-u*6)*t);ctx.stroke();ctx.restore();}
+
+function waves(t,x0,x1,level,a){
+  for(let L=0;L<4;L++){ctx.beginPath();const y0=level+L*38;
+    ctx.moveTo(x0,H);for(let x=x0;x<=x1;x+=8){ctx.lineTo(x,y0+Math.sin(x*.012+t*(1.6+L*.4)+L)*14+Math.sin(x*.031-t*2.1)*6);}
+    ctx.lineTo(x1,H);ctx.closePath();
+    const g=ctx.createLinearGradient(0,y0-20,0,H);g.addColorStop(0,`rgba(${40+L*8},${110-L*12},${150-L*15},${a*(.55-L*.08)})`);g.addColorStop(1,`rgba(4,14,28,${a*.9})`);
+    ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=`rgba(200,230,240,${a*(.35-L*.07)})`;ctx.lineWidth=2;ctx.stroke();}}
+
+function land(t,x0,x1,level,a){
+  ctx.beginPath();ctx.moveTo(x0,H);
+  for(let x=x0;x<=x1;x+=6){const u=(x-x0)/(x1-x0);ctx.lineTo(x,level-Math.sin(u*Math.PI)*90-Math.sin(u*9)*18-Math.sin(u*23)*6);}
+  ctx.lineTo(x1,H);ctx.closePath();const g=ctx.createLinearGradient(0,level-110,0,H);
+  g.addColorStop(0,`rgba(120,86,44,${a})`);g.addColorStop(1,`rgba(18,12,8,${a})`);ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle=`rgba(230,190,110,${a*.6})`;ctx.lineWidth=2;ctx.stroke();
+  // lone column on the hill
+  const cx=(x0+x1)/2,cy=level-92;ctx.fillStyle=`rgba(230,205,150,${a*.9})`;
+  ctx.fillRect(cx-22,cy-150,44,150);ctx.fillRect(cx-34,cy-166,68,16);ctx.fillRect(cx-30,cy-6,60,8);
+  ctx.fillStyle=`rgba(120,90,50,${a*.6})`;for(let i=-2;i<=2;i++)ctx.fillRect(cx+i*8-1,cy-148,2,142);}
+
+function render(t){
+  const T=15;
+  ctx.clearRect(0,0,W,H);
+  const g=ctx.createRadialGradient(W/2,H*.45,50,W/2,H/2,1100);
+  g.addColorStop(0,'#1c1a24');g.addColorStop(.5,'#0b0d16');g.addColorStop(1,'#020308');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  // halo glow
+  const glow=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,700);glow.addColorStop(0,`rgba(230,170,70,${.10+.04*Math.sin(t*1.5)})`);glow.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+  // split scene
+  const sp=ease(seg(t,7.2,8.4))*(1-seg(t,14.2,14.9));
+  if(sp>0){waves(t,0,958,H-260+(1-sp)*260,sp);land(t,962,W,H-150+(1-sp)*250,sp);
+    ctx.fillStyle=`rgba(214,168,82,${sp*.8})`;ctx.fillRect(W/2-1.5,120+(1-sp)*400,3,(H-240)*sp);}
+  // embers
+  for(const m of motes){const y=(m.y-m.v*t*2+H*10)%H;const x=m.x+Math.sin(t+m.p)*12;
+    ctx.fillStyle=`rgba(255,${190+m.r*20|0},110,${(.25+.3*Math.sin(t*2+m.p)**2)*seg(t,0,1.5)})`;ctx.beginPath();ctx.arc(x,y,m.r,0,6.3);ctx.fill();}
+  meander(ease(seg(t,.2,2.4)),.85*(1-seg(t,14.3,15)));
+  // vignette
+  const v=ctx.createRadialGradient(W/2,H/2,500,W/2,H/2,1150);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.75)');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+
+  const set=(id,o,tr='',blur=0)=>{const e=$(id);e.style.opacity=o;e.style.transform=tr;if(!e.classList.contains('gold'))e.style.filter=blur?`blur(${blur}px)`:'';};
+  // kicker
+  const k=out(seg(t,.8,2))*(1-seg(t,6.2,6.9));set('kicker',k,`translateY(${(1-k)*20}px)`);
+  // title letters
+  const tOut=seg(t,3.8,4.6);
+  letters.forEach((l,i)=>{const p=out(seg(t,1.2+i*.06,2.2+i*.06));l.style.opacity=p;
+    l.style.transform=`translateY(${(1-p)*60}px) scale(${1.4-.4*p})`;l.style.filter=`blur(${(1-p)*14}px) drop-shadow(0 0 18px rgba(240,190,90,.35)) drop-shadow(0 4px 2px rgba(0,0,0,.8))`;});
+  $('title').style.opacity=1-tOut;$('title').style.transform=`translateY(${-tOut*80}px) scale(${1+tOut*.08})`;
+  // ex halos
+  const e1=out(seg(t,4.4,5.6)),e2=seg(t,6.6,7.3);
+  $('exhalos').style.opacity=e1*(1-e2);
+  $('exhalos').style.transform=`scale(${1.35-.35*e1-.2*e2}) translateY(${-e2*60}px)`;
+  $('exhalos').style.letterSpacing=`${.5-.38*e1}em`;
+  const s1=out(seg(t,5.3,6.1))*(1-e2);set('sub',s1,`translateY(${(1-s1)*30}px)`);
+  // two meanings
+  const l1=out(seg(t,8,9.2))*(1-seg(t,14.2,14.9)),r1=out(seg(t,10,11.2))*(1-seg(t,14.2,14.9));
+  $('lh').style.opacity=l1;$('lh').style.transform=`translateX(${(1-l1)*-80}px)`;
+  $('rh').style.opacity=r1;$('rh').style.transform=`translateX(${(1-r1)*80}px)`;
+  const o=out(seg(t,11.6,12.3))*(1-seg(t,14.2,14.9));$('or').style.opacity=o;$('or').style.transform=`scale(${2-o})`;
+  const tg=out(seg(t,12.4,13.2))*(1-seg(t,14.2,14.9));set('tag',tg);
+  // overall fade in/out
+  $('stage').style.opacity=seg(t,0,.6)*(1-seg(t,14.6,15));
+}
+window.render=render;
+render(0);
+</script></body></html>
