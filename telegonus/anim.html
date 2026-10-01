@@ -1,0 +1,397 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Archides;src:url(Archides.otf)}
+:root{--terra:#b5552b;--ink:#1b110b;--sepia:#3a2416;--ochre:#dda246;--white:#f1e4c6}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#140a05}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:Archides;color:var(--ink)}
+#cam{position:absolute;inset:0;transform-origin:50% 48%}
+canvas,svg.layer{position:absolute;left:0;top:0}
+.t{position:absolute;left:0;width:1920px;text-align:center;white-space:nowrap;will-change:transform,opacity}
+.ink{color:var(--ink);text-shadow:-1px -1px 0 rgba(241,228,198,.18),0 6px 22px rgba(40,12,0,.35)}
+.ochre{color:var(--ochre);text-shadow:0 2px 0 rgba(27,17,11,.85),0 0 18px rgba(255,190,90,.25)}
+.white{color:var(--white);text-shadow:0 2px 0 rgba(27,17,11,.8)}
+.ls{letter-spacing:.32em}
+#name{position:absolute;left:0;top:0;width:1920px;text-align:center;font-size:210px;line-height:1;white-space:nowrap}
+#name span{display:inline-block;position:relative}
+#name .o{position:absolute;left:0;right:0;top:0;text-align:center}
+.lbl{position:absolute;text-align:center;white-space:nowrap;transform:translateX(-50%)}
+.lbl b{font-weight:normal;color:var(--ochre);text-shadow:0 2px 0 rgba(27,17,11,.85)}
+</style></head>
+<body><div id="stage"><div id="cam">
+<canvas id="bg" width="1920" height="1080"></canvas>
+<div id="light" style="position:absolute;inset:0"></div>
+
+<!-- ============ MAP / FRIEZE SCENE ============ -->
+<svg class="layer" id="map" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <clipPath id="seaclip"><rect id="seaRect" x="0" y="600" width="0" height="300"/></clipPath>
+  </defs>
+  <!-- route arcs -->
+  <path id="route" d="M540 470 Q1000 250 1460 430" fill="none" stroke="#1b110b" stroke-width="5" stroke-dasharray="2 18" stroke-linecap="round"/>
+  <path id="ret" d="M1460 470 Q1000 380 560 560" fill="none" stroke="#f1e4c6" stroke-width="5" stroke-dasharray="2 18" stroke-linecap="round"/>
+  <g id="xmark" transform="translate(1035 470)">
+    <path d="M-34 -34 L34 34 M34 -34 L-34 34" stroke="#1b110b" stroke-width="20" stroke-linecap="round"/>
+    <path d="M-34 -34 L34 34 M34 -34 L-34 34" stroke="#dda246" stroke-width="9" stroke-linecap="round"/>
+  </g>
+  <!-- sea frieze -->
+  <g clip-path="url(#seaclip)">
+    <path id="sea" fill="#1b110b"/>
+    <path id="seaInc" fill="none" stroke="#b5552b" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+    <path id="seaInc2" fill="none" stroke="#dda246" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+  </g>
+
+  <!-- AEAEA -->
+  <g id="aeaea">
+    <path d="M150 720 Q200 640 330 628 Q450 610 560 640 Q650 662 710 720 Z" fill="#1b110b"/>
+    <path d="M230 660 Q330 640 430 646 M500 652 Q580 662 640 690" stroke="#b5552b" stroke-width="2.5" fill="none" opacity=".8"/>
+    <!-- olive tree -->
+    <g transform="translate(240 380)">
+      <path d="M28 260 Q22 190 36 140 Q44 110 30 80 M36 150 Q60 120 80 110 M34 130 Q10 110 -4 96" stroke="#1b110b" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <g fill="#1b110b">
+        <ellipse cx="30" cy="60" rx="62" ry="42"/><ellipse cx="-14" cy="92" rx="38" ry="26"/><ellipse cx="88" cy="96" rx="40" ry="26"/>
+        <ellipse cx="40" cy="20" rx="40" ry="28"/>
+      </g>
+      <g stroke="#dda246" stroke-width="2.4" fill="none" opacity=".8" stroke-linecap="round">
+        <path d="M-10 60 q10 -8 20 0 M30 40 q10 -8 20 0 M60 70 q10 -8 20 0 M10 95 q8 -6 16 0 M80 100 q8 -6 16 0 M30 10 q10 -8 20 0 M-30 92 q8 -6 16 0"/>
+      </g>
+    </g>
+    <!-- Circe holding the infant Telegonus -->
+    <g id="circe" transform="translate(360 372)">
+      <path d="M8 40 L14 270" stroke="#1b110b" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="8" cy="34" r="10" fill="#1b110b"/><circle cx="8" cy="34" r="4" fill="#dda246"/>
+      <!-- peplos -->
+      <path d="M58 70 Q40 74 36 100 Q30 150 22 200 Q14 240 6 270 L118 270 Q108 220 102 170 Q98 120 96 92 Q92 72 74 68 Z" fill="#1b110b"/>
+      <path d="M48 120 Q42 190 30 262 M62 120 Q60 200 56 262 M78 120 Q80 200 84 262 M92 130 Q96 200 104 262" stroke="#b5552b" stroke-width="2.4" fill="none" opacity=".85"/>
+      <path d="M10 256 L114 256" stroke="#dda246" stroke-width="3" stroke-dasharray="6 6"/>
+      <path d="M34 108 L100 104" stroke="#f1e4c6" stroke-width="2" stroke-dasharray="3 5"/>
+      <!-- added-white flesh: face, neck, arms (black-figure convention for women) -->
+      <path d="M58 56 L74 56 L76 72 L58 74 Z" fill="#f1e4c6"/>
+      <path d="M52 14 Q76 6 84 26 Q88 34 92 38 Q86 40 86 44 Q88 50 82 54 Q74 62 60 58 Q48 50 50 30 Z" fill="#f1e4c6"/>
+      <circle cx="76" cy="30" r="2.6" fill="#1b110b"/>
+      <path d="M68 24 q6 -3 12 0" stroke="#1b110b" stroke-width="1.6" fill="none"/>
+      <!-- hair + sakkos bun -->
+      <path d="M50 30 Q46 8 68 6 Q84 8 82 18 Q68 14 62 26 Q60 42 56 52 Q40 52 36 40 Q30 26 42 18 Z" fill="#1b110b"/>
+      <path d="M44 22 Q56 16 66 18" stroke="#dda246" stroke-width="2.4" fill="none"/>
+      <!-- arm bent forward holding child -->
+      <path d="M78 82 Q100 96 110 118 Q118 132 132 128" stroke="#f1e4c6" stroke-width="11" fill="none" stroke-linecap="round"/>
+      <path d="M60 84 Q34 100 20 92" stroke="#f1e4c6" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <!-- swaddled infant -->
+      <g transform="translate(116 100) rotate(-32)">
+        <path d="M-34 4 Q-36 -14 -10 -15 L26 -12 Q34 0 26 12 L-10 15 Q-32 16 -34 4 Z" fill="#1b110b"/>
+        <path d="M-22 -12 L-26 12 M-8 -14 L-12 14 M6 -13 L2 14 M18 -12 L14 13" stroke="#dda246" stroke-width="2"/>
+        <circle cx="38" cy="-4" r="14" fill="#1b110b"/>
+        <path d="M30 -16 q8 -6 16 0" stroke="#b5552b" stroke-width="2" fill="none"/>
+        <circle cx="44" cy="-6" r="2.2" fill="#f1e4c6"/>
+      </g>
+    </g>
+    <!-- one of Circe's swine -->
+    <g transform="translate(540 600) scale(.95)">
+      <path d="M10 30 Q8 6 40 4 Q78 0 92 14 Q104 14 108 22 Q104 30 94 30 Q90 40 84 42 L82 58 L74 58 L72 44 L34 44 L32 58 L24 58 L22 42 Q10 40 10 30 Z" fill="#1b110b"/>
+      <path d="M10 22 q-10 -4 -6 -12 q4 -2 4 4" stroke="#1b110b" stroke-width="3" fill="none"/>
+      <circle cx="88" cy="16" r="2" fill="#dda246"/>
+      <path d="M30 20 Q56 12 80 22" stroke="#b5552b" stroke-width="2" fill="none"/>
+      <path d="M80 6 L86 -4 L90 8" fill="#1b110b"/>
+    </g>
+  </g>
+
+  <!-- ITHACA -->
+  <g id="ithaca">
+    <path d="M1230 720 Q1290 650 1400 640 Q1520 628 1640 644 Q1730 660 1780 720 Z" fill="#1b110b"/>
+    <path d="M1300 676 Q1400 656 1500 660 M1560 660 Q1660 666 1720 694" stroke="#b5552b" stroke-width="2.5" fill="none" opacity=".8"/>
+    <!-- temple / palace -->
+    <g transform="translate(1380 440)">
+      <path d="M0 74 L120 18 L240 74 Z" fill="#1b110b"/>
+      <path d="M30 66 L120 28 L210 66 Z" fill="none" stroke="#dda246" stroke-width="2.4"/>
+      <circle cx="120" cy="52" r="7" fill="#f1e4c6"/>
+      <path d="M120 18 l0 -14 M0 74 l-10 -12 M240 74 l10 -12" stroke="#1b110b" stroke-width="6" stroke-linecap="round"/>
+      <rect x="0" y="76" width="240" height="20" fill="#1b110b"/>
+      <path d="M8 86 H232" stroke="#b5552b" stroke-width="2" stroke-dasharray="10 6"/>
+      <g fill="#1b110b">
+        <rect x="12" y="100" width="22" height="88"/><rect x="56" y="100" width="22" height="88"/><rect x="100" y="100" width="22" height="88"/>
+        <rect x="144" y="100" width="22" height="88"/><rect x="188" y="100" width="22" height="88"/>
+        <rect x="-8" y="188" width="256" height="10"/><rect x="-18" y="198" width="276" height="10"/>
+      </g>
+      <g stroke="#b5552b" stroke-width="1.6" opacity=".9">
+        <path d="M19 104v80M27 104v80M63 104v80M71 104v80M107 104v80M115 104v80M151 104v80M159 104v80M195 104v80M203 104v80"/>
+      </g>
+      <!-- Penelope's lamp in the doorway: a home still waiting -->
+      <circle id="lamp" cx="133" cy="150" r="6" fill="#dda246"/>
+    </g>
+    <!-- cypress -->
+    <g transform="translate(1680 420)">
+      <path d="M20 230 L20 200" stroke="#1b110b" stroke-width="10"/>
+      <path d="M20 0 Q44 60 40 130 Q38 190 20 205 Q2 190 0 130 Q-4 60 20 0 Z" fill="#1b110b"/>
+      <path d="M12 40 q8 6 16 0 M8 80 q12 8 24 0 M6 120 q14 8 28 0 M8 160 q12 8 24 0" stroke="#dda246" stroke-width="2.2" fill="none" opacity=".8"/>
+    </g>
+  </g>
+
+  <!-- Odysseus' ship -->
+  <g id="ship">
+    <g id="shipInner">
+      <path d="M-120 -16 L-170 70 M-80 -10 L-125 72 M-40 -8 L-80 72 M0 -8 L-36 72 M40 -8 L6 72 M80 -10 L50 70" stroke="#1b110b" stroke-width="5" stroke-linecap="round"/>
+      <path d="M-200 -40 Q-214 -86 -184 -100 Q-176 -70 -168 -30 L150 -30 L206 -8 L150 2 Q20 30 -150 20 Q-190 12 -200 -40 Z" fill="#1b110b"/>
+      <path d="M-170 -14 Q0 -6 150 -16" stroke="#b5552b" stroke-width="2.4" fill="none"/>
+      <path d="M-160 4 Q0 14 140 -2" stroke="#dda246" stroke-width="2" fill="none" stroke-dasharray="8 6"/>
+      <circle cx="128" cy="-18" r="9" fill="#f1e4c6"/><circle cx="130" cy="-18" r="4" fill="#1b110b"/>
+      <rect x="-14" y="-210" width="8" height="182" fill="#1b110b"/>
+      <path d="M-120 -196 Q-10 -206 100 -196 L94 -76 Q-10 -66 -114 -76 Z" fill="#1b110b"/>
+      <path d="M-110 -170 H92 M-112 -140 H94 M-112 -110 H94 M-60 -196 V-74 M-10 -200 V-70 M40 -198 V-72" stroke="#b5552b" stroke-width="2" opacity=".85"/>
+      <path d="M-130 -200 Q-10 -214 110 -200" stroke="#1b110b" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <!-- helmsman -->
+      <circle cx="-150" cy="-52" r="10" fill="#1b110b"/><path d="M-160 -44 L-140 -44 L-142 -30 L-158 -30 Z" fill="#1b110b"/>
+      <path d="M-158 -60 Q-150 -76 -140 -62" stroke="#1b110b" stroke-width="6" fill="none"/>
+    </g>
+  </g>
+</svg>
+
+<!-- ============ TEXT LAYERS ============ -->
+<div id="kick1" class="t ochre ls" style="top:178px;font-size:40px">BREAK THE NAME APART</div>
+<div id="sub1" class="t white ls" style="top:760px;font-size:32px">THE GREEKS WERE NEVER CARELESS WITH NAMES</div>
+<div id="name"></div>
+
+<!-- split panels -->
+<svg class="layer" id="divider" width="1920" height="1080">
+  <path id="divLine" d="M960 220 V900" stroke="#1b110b" stroke-width="4"/>
+  <g id="plus" transform="translate(960 335)">
+    <circle r="44" fill="#1b110b"/><circle r="36" fill="none" stroke="#dda246" stroke-width="2.4"/>
+    <path d="M-18 0 H18 M0 -18 V18" stroke="#f1e4c6" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>
+<div id="lMean" class="lbl ochre" style="left:480px;top:470px;font-size:76px">= FAR AWAY</div>
+<div id="rMean" class="lbl ochre" style="left:1440px;top:470px;font-size:76px">= BIRTH</div>
+
+<svg class="layer" id="icons" width="1920" height="1080">
+  <!-- telephone -->
+  <g id="phone" transform="translate(300 680)">
+    <g transform="translate(-110 -110)">
+      <path d="M44 196 L72 96 L148 96 L176 196 Q110 210 44 196 Z" fill="#1b110b"/>
+      <circle cx="110" cy="150" r="38" fill="none" stroke="#dda246" stroke-width="3"/>
+      <g fill="#b5552b"><circle cx="110" cy="122" r="6"/><circle cx="130" cy="130" r="6"/><circle cx="138" cy="150" r="6"/><circle cx="130" cy="170" r="6"/><circle cx="90" cy="170" r="6"/><circle cx="82" cy="150" r="6"/><circle cx="90" cy="130" r="6"/></g>
+      <circle cx="110" cy="150" r="12" fill="#f1e4c6"/>
+      <path d="M26 74 Q30 40 110 38 Q190 40 194 74" stroke="#1b110b" stroke-width="20" fill="none" stroke-linecap="round"/>
+      <rect x="8" y="64" width="50" height="26" rx="10" fill="#1b110b"/><rect x="162" y="64" width="50" height="26" rx="10" fill="#1b110b"/>
+      <path d="M40 48 Q110 30 180 48" stroke="#dda246" stroke-width="2.2" fill="none"/>
+      <path d="M176 186 q14 -6 16 6 q2 12 14 6 q12 -6 14 6" stroke="#1b110b" stroke-width="5" fill="none"/>
+    </g>
+  </g>
+  <!-- television -->
+  <g id="tv" transform="translate(660 680)">
+    <g transform="translate(-110 -110)">
+      <path d="M110 46 L64 2 M110 46 L162 4" stroke="#1b110b" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="64" cy="2" r="7" fill="#1b110b"/><circle cx="162" cy="4" r="7" fill="#1b110b"/>
+      <rect x="14" y="44" width="192" height="138" rx="20" fill="#1b110b"/>
+      <rect x="30" y="58" width="132" height="108" rx="26" fill="#3a2416" stroke="#dda246" stroke-width="3"/>
+      <path d="M44 84 H148 M40 104 H152 M40 124 H152 M44 144 H148" stroke="#b5552b" stroke-width="2" opacity=".8"/>
+      <circle cx="184" cy="80" r="9" fill="#f1e4c6"/><circle cx="184" cy="110" r="9" fill="#dda246"/>
+      <path d="M176 136 H192 M176 146 H192 M176 156 H192" stroke="#b5552b" stroke-width="2"/>
+      <path d="M44 182 L28 216 M176 182 L192 216" stroke="#1b110b" stroke-width="8" stroke-linecap="round"/>
+    </g>
+  </g>
+  <!-- liknon cradle with swaddled infant -->
+  <g id="cradle" transform="translate(1440 690)">
+    <g transform="translate(-140 -100)">
+      <path d="M30 104 Q36 182 140 184 Q244 182 250 104 Z" fill="#1b110b"/>
+      <path d="M50 92 Q60 54 128 56 Q176 58 186 92 Z" fill="#1b110b" stroke="#dda246" stroke-width="2.4"/>
+      <path d="M70 90 L84 62 M94 92 L106 58 M118 92 L128 56 M142 92 L150 58 M164 92 L170 66" stroke="#dda246" stroke-width="2"/>
+      <circle cx="202" cy="78" r="26" fill="#1b110b"/>
+      <path d="M196 60 q12 -8 24 2" stroke="#b5552b" stroke-width="2.4" fill="none"/>
+      <circle cx="214" cy="76" r="3.2" fill="#f1e4c6"/>
+      <path d="M210 90 q6 3 12 -1" stroke="#b5552b" stroke-width="2" fill="none"/>
+      <ellipse cx="140" cy="104" rx="110" ry="14" fill="none" stroke="#dda246" stroke-width="2.6"/>
+      <path d="M52 136 Q140 156 232 128 M60 156 Q140 172 222 152" stroke="#b5552b" stroke-width="2.4" fill="none"/>
+      <path d="M48 120 Q140 140 238 112" stroke="#f1e4c6" stroke-width="2" fill="none" stroke-dasharray="4 6"/>
+    </g>
+  </g>
+</svg>
+<div id="phLbl" class="lbl ink" style="left:300px;top:800px;font-size:44px"><b>TELE</b>PHONE</div>
+<div id="tvLbl" class="lbl ink" style="left:660px;top:800px;font-size:44px"><b>TELE</b>VISION</div>
+<div id="sameTele" class="lbl white ls" style="left:480px;top:880px;font-size:26px">THE VERY SAME TELE</div>
+<div id="crLbl" class="lbl ink" style="left:1440px;top:800px;font-size:44px">A CHILD IS <b>BORN</b></div>
+<div id="genLbl" class="lbl white ls" style="left:1440px;top:880px;font-size:26px">THE ROOT OF GENESIS</div>
+
+<!-- merged meaning -->
+<div id="kick2" class="t ink ls" style="top:236px;font-size:40px"><span class="ochre">TELE</span> FAR &nbsp;+&nbsp; <span class="ochre">GONOS</span> BIRTH</div>
+<div id="mean" class="t ochre" style="top:600px;font-size:84px;letter-spacing:.08em">THE SON BORN FAR AWAY</div>
+<svg class="layer" id="ul" width="1920" height="1080"><path id="ulPath" d="M560 712 H1360" stroke="#1b110b" stroke-width="5"/><path id="ulPath2" d="M600 726 H1320" stroke="#f1e4c6" stroke-width="2" stroke-dasharray="3 8"/></svg>
+
+<!-- map labels -->
+<div id="farLbl" class="lbl ochre ls" style="left:1000px;top:286px;font-size:36px">FAR AWAY</div>
+<div id="aeLbl" class="lbl" style="left:430px;top:804px"><div class="ink" style="font-size:48px;letter-spacing:.12em">AEAEA</div><div class="white ls" style="font-size:22px;margin-top:6px">CIRCE'S ISLAND &middot; HIS BIRTHPLACE</div></div>
+<div id="itLbl" class="lbl" style="left:1505px;top:804px"><div class="ink" style="font-size:48px;letter-spacing:.12em">ITHACA</div><div class="white ls" style="font-size:22px;margin-top:6px">HIS FATHER'S HOME</div></div>
+<div id="neverLbl" class="lbl white ls" style="left:1035px;top:528px;font-size:30px">HE NEVER CAME BACK</div>
+<div id="final" class="t ink" style="top:916px;font-size:38px;letter-spacing:.14em">BORN ON AN ISLAND HIS FATHER <span class="ochre">NEVER RETURNED</span> TO</div>
+
+<canvas id="fx" width="1920" height="1080"></canvas>
+</div>
+<!-- fixed frame: meander bands -->
+<svg class="layer" id="frame" width="1920" height="1080">
+  <defs>
+    <pattern id="key" width="56" height="56" patternUnits="userSpaceOnUse">
+      <rect width="56" height="56" fill="#1b110b"/>
+      <path d="M0 47 H56 M6 47 V9 H46 V39 H18 V21 H34 V31" fill="none" stroke="#c4683a" stroke-width="5" stroke-linecap="square"/>
+    </pattern>
+    <clipPath id="frameClip"><rect id="frameRect" x="960" y="0" width="0" height="1080"/></clipPath>
+  </defs>
+  <g clip-path="url(#frameClip)">
+    <rect x="0" y="18" width="1920" height="10" fill="#1b110b"/>
+    <rect x="0" y="34" width="1920" height="56" fill="url(#key)"/>
+    <rect x="0" y="96" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="104" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="974" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="980" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="990" width="1920" height="56" fill="url(#key)" transform="translate(0 2036) scale(1 -1)"/>
+    <rect x="0" y="1052" width="1920" height="10" fill="#1b110b"/>
+  </g>
+</svg>
+<div id="vig" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 45%,rgba(20,6,0,.55) 100%)"></div>
+<div id="black" style="position:absolute;inset:0;background:#0d0603"></div>
+</div>
+<script>
+const W=1920,H=1080,$=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const out=x=>1-Math.pow(1-clamp(x),3);
+const back=x=>{x=clamp(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const seg=(t,a,b)=>clamp((t-a)/(b-a));
+const lerp=(a,b,p)=>a+(b-a)*p;
+let s=11;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+
+/* ---------- aged terracotta / parchment ground (drawn once) ---------- */
+(function(){
+  const c=$('bg').getContext('2d');
+  const g=c.createRadialGradient(W/2,H*.45,80,W/2,H/2,1150);
+  g.addColorStop(0,'#cf7442');g.addColorStop(.55,'#b5552b');g.addColorStop(1,'#7c3418');
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  for(let i=0;i<70;i++){const x=rnd()*W,y=rnd()*H,r=60+rnd()*260,dark=rnd()<.6;
+    const b=c.createRadialGradient(x,y,0,x,y,r);
+    b.addColorStop(0,dark?`rgba(70,28,10,${.05+rnd()*.08})`:`rgba(240,190,140,${.04+rnd()*.06})`);b.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=b;c.fillRect(x-r,y-r,2*r,2*r);}
+  c.lineCap='round';
+  for(let i=0;i<900;i++){const x=rnd()*W,y=rnd()*H,a=rnd()*6.28,l=6+rnd()*30;
+    c.strokeStyle=rnd()<.5?`rgba(60,24,8,${.05+rnd()*.07})`:`rgba(250,210,170,${.04+rnd()*.06})`;c.lineWidth=.6+rnd();
+    c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);c.stroke();}
+  for(let i=0;i<14;i++){let x=rnd()*W,y=rnd()*H,a=rnd()*6.28;c.strokeStyle=`rgba(50,18,6,${.12+rnd()*.12})`;c.lineWidth=.8+rnd()*.8;
+    c.beginPath();c.moveTo(x,y);for(let k=0;k<20+rnd()*30;k++){a+=(rnd()-.5)*.9;x+=Math.cos(a)*9;y+=Math.sin(a)*9;c.lineTo(x,y);}c.stroke();}
+  const id=c.getImageData(0,0,W,H),d=id.data;
+  for(let i=0;i<d.length;i+=4){const n=(rnd()-.5)*26;d[i]+=n;d[i+1]+=n*.85;d[i+2]+=n*.7;}
+  c.putImageData(id,0,0);
+})();
+
+/* ---------- sea frieze paths ---------- */
+(function(){
+  let d='M0 790';for(let x=0;x<=1920;x+=20)d+=` L${x} ${712+Math.sin(x*.04)*5}`;d+=' L1920 790 Z';
+  $('sea').setAttribute('d',d);
+  let inc='',inc2='';
+  for(let x=20;x<1900;x+=64){inc+=`M${x} 748 q16 -24 32 -6 q8 10 -2 14 q-8 2 -8 -6 `;}
+  for(let x=0;x<1920;x+=32){inc2+=`M${x} 776 q8 -8 16 0 t16 0 `;}
+  $('seaInc').setAttribute('d',inc);$('seaInc2').setAttribute('d',inc2);
+})();
+
+/* ---------- name letters ---------- */
+const NAME='TELEGONUS';
+$('name').innerHTML=[...NAME].map((c,i)=>c==='U'
+  ?`<span class="ink"><span class="u">U</span><span class="o">O</span></span>`
+  :`<span class="ink">${c}</span>`).join('');
+const L=[...$('name').children];
+let cA=0,cB=0;
+function measure(){
+  const r=L.map(e=>({l:e.offsetLeft,w:e.offsetWidth}));
+  cA=(r[0].l+r[3].l+r[3].w)/2;cB=(r[4].l+r[8].l+r[8].w)/2;
+}
+
+const motes=[...Array(70)].map(()=>({x:rnd()*W,y:rnd()*H,r:.8+rnd()*2.2,v:6+rnd()*16,p:rnd()*6.28}));
+const fx=$('fx').getContext('2d');
+const route=$('route'),ret=$('ret');const RL=route.getTotalLength(),RT=ret.getTotalLength();
+
+function op(id,o,tr){const e=$(id);e.style.opacity=o;if(tr!==undefined){if(e instanceof SVGElement)e.setAttribute('transform',tr);else e.style.transform=tr;}}
+
+function render(t){
+  window.t=t;
+  // camera: slow push-in with a breath
+  const z=1+.035*(t/22)+.004*Math.sin(t*.7);
+  $('cam').style.transform=`scale(${z})`;
+  $('black').style.opacity=1-seg(t,0,.7);
+  // moving key light (cinematic)
+  const lx=50+8*Math.sin(t*.25),ly=40+4*Math.cos(t*.31),fl=.20+.03*Math.sin(t*3.1)+.02*Math.sin(t*7.3);
+  $('light').style.background=`radial-gradient(ellipse 60% 55% at ${lx}% ${ly}%,rgba(255,196,120,${fl}) 0%,rgba(255,160,90,0) 70%)`;
+  // meander frame opens from centre
+  const fr=ease(seg(t,.2,1.6));$('frameRect').setAttribute('x',960-960*fr);$('frameRect').setAttribute('width',1920*fr);
+
+  /* --- name --- */
+  const split=ease(seg(t,3.6,4.8)),merge=ease(seg(t,11.7,12.9)),top=ease(seg(t,14.0,15.1));
+  const sp=split*(1-merge);
+  const uo=ease(seg(t,4.1,4.8))*(1-ease(seg(t,11.9,12.6)));
+  let ny=lerp(lerp(lerp(470,330,split),420,merge),165,top);
+  const ns=lerp(1,.5,top);
+  $('name').style.transform=`translateY(${ny-105}px) scale(${ns})`;
+  $('name').style.transformOrigin=`960px 105px`;
+  L.forEach((e,i)=>{
+    const p=out(seg(t,1.0+i*.08,1.9+i*.08));
+    const dx=(i<4?480-cA:1440-cB)*sp;
+    e.style.opacity=p;
+    e.style.transform=`translate(${dx}px,${(1-p)*70}px) scale(${1.25-.25*p})`;
+    e.style.filter=`blur(${(1-p)*10}px)`;
+  });
+  const U=L[7];U.querySelector('.u').style.opacity=1-uo;U.querySelector('.u').style.transform=`rotateX(${uo*90}deg)`;
+  U.querySelector('.o').style.opacity=uo;U.querySelector('.o').style.transform=`rotateX(${(1-uo)*-90}deg)`;
+
+  const k1=out(seg(t,.6,1.5))*(1-seg(t,3.2,3.7));op('kick1',k1,`translateY(${(1-k1)*-20}px)`);
+  const s1=out(seg(t,2.0,2.8))*(1-seg(t,3.2,3.7));op('sub1',s1,`translateY(${(1-s1)*24}px)`);
+
+  /* --- split panels --- */
+  const pOut=1-seg(t,11.2,11.7);
+  const dv=ease(seg(t,4.4,5.2));
+  $('divLine').setAttribute('stroke-dasharray',`${680*dv} 2000`);$('divLine').setAttribute('stroke-dashoffset',0);
+  op('divider',pOut);
+  const pl=back(seg(t,4.7,5.4));$('plus').setAttribute('transform',`translate(960 335) scale(${pl}) rotate(${(1-pl)*-90})`);
+  const lm=out(seg(t,5.0,5.7))*pOut;op('lMean',lm,`translateX(-50%) translateY(${(1-lm)*30}px)`);
+  const rm=out(seg(t,8.4,9.1))*pOut;op('rMean',rm,`translateX(-50%) translateY(${(1-rm)*30}px)`);
+  const ic=(id,t0,x,y,k=1)=>{const p=back(seg(t,t0,t0+.7)),o=seg(t,t0,t0+.3)*pOut;const b=Math.sin(t*1.6+x)*4;
+    $(id).setAttribute('transform',`translate(${x} ${y+b+(1-p)*40}) scale(${(.6+.4*p)*k})`);$(id).style.opacity=o;};
+  ic('phone',5.9,300,680);ic('tv',6.6,660,680);ic('cradle',9.2,1440,670,1.35);
+  const lab=(id,t0)=>{const p=out(seg(t,t0,t0+.6))*pOut;op(id,p,`translateX(-50%) translateY(${(1-p)*20}px)`);};
+  lab('phLbl',6.3);lab('tvLbl',7.0);lab('sameTele',7.6);lab('crLbl',9.7);lab('genLbl',10.3);
+
+  /* --- merged meaning --- */
+  const mOut=1-seg(t,13.7,14.2);
+  const k2=out(seg(t,12.6,13.2))*mOut;op('kick2',k2,`translateY(${(1-k2)*-20}px)`);
+  const mn=out(seg(t,12.9,13.6))*mOut;op('mean',mn,`translateY(${(1-mn)*30}px)`);$('mean').style.letterSpacing=`${.2-.12*mn}em`;
+  const ul=ease(seg(t,13.2,13.8));op('ul',mOut);
+  $('ulPath').setAttribute('d',`M${960-400*ul} 712 H${960+400*ul}`);$('ulPath2').setAttribute('d',`M${960-360*ul} 726 H${960+360*ul}`);
+
+  /* --- map scene --- */
+  const sea=ease(seg(t,14.3,15.4));$('seaRect').setAttribute('width',1920*sea);
+  const ae=out(seg(t,14.8,15.7)),it=out(seg(t,15.2,16.1));
+  op('aeaea',ae,`translate(0 ${(1-ae)*60})`);op('ithaca',it,`translate(0 ${(1-it)*60})`);
+  const al=out(seg(t,15.5,16.1)),il=out(seg(t,15.9,16.5));
+  op('aeLbl',al,`translateX(-50%) translateY(${(1-al)*20}px)`);op('itLbl',il,`translateX(-50%) translateY(${(1-il)*20}px)`);
+  $('lamp').style.opacity=.55+.45*Math.sin(t*5)*Math.sin(t*2.3);
+  // ship departs Aeaea for Ithaca
+  const sh=ease(seg(t,16.4,19.0)),shO=seg(t,16.0,16.5)*(1-seg(t,19.0,19.6));
+  const sx=lerp(810,1190,sh),sy=716+Math.sin(t*2.4)*5;
+  op('ship',shO,`translate(${sx} ${sy}) scale(.78)`);
+  $('shipInner').setAttribute('transform',`rotate(${Math.sin(t*2.4+1)*1.6})`);
+  // outbound route
+  const rp=ease(seg(t,16.4,19.0));
+  route.style.opacity=seg(t,16.3,16.6);
+  route.setAttribute('stroke-dasharray',dashUpTo(RL*rp));
+  const far=out(seg(t,17.4,18.1));op('farLbl',far,`translateX(-50%) translateY(${(1-far)*-14}px)`);
+  // return route attempted, broken
+  const rr=ease(seg(t,19.3,20.3));ret.setAttribute('stroke-dasharray',dashUpTo(RT*.45*rr));
+  ret.style.opacity=seg(t,19.2,19.4)*(1-.55*seg(t,20.6,21.2));
+  const xm=back(seg(t,20.3,20.8));op('xmark',seg(t,20.3,20.45),`translate(1035 470) scale(${xm*1.0+.0001}) rotate(${(1-xm)*45})`);
+  const nv=out(seg(t,20.6,21.2));op('neverLbl',nv,`translateX(-50%) translateY(${(1-nv)*16}px)`);
+  const fi=out(seg(t,21.2,22.0));op('final',fi,`translateY(${(1-fi)*24}px)`);$('final').style.letterSpacing=`${.24-.1*fi}em`;
+
+  /* --- dust in the light --- */
+  fx.clearRect(0,0,W,H);
+  for(const m of motes){const y=((m.y-m.v*t*2)%H+H)%H,x=m.x+Math.sin(t*.8+m.p)*14;
+    fx.fillStyle=`rgba(255,${200+m.r*15|0},140,${(.15+.25*Math.sin(t*1.7+m.p)**2)*seg(t,0,1.5)})`;
+    fx.beginPath();fx.arc(x,y,m.r,0,6.3);fx.fill();}
+}
+// dotted line that is revealed only up to length len
+function dashUpTo(len){let a=[],acc=0;while(acc+20<=len){a.push(2,18);acc+=20;}a.push(0.001,99999);return a.join(' ');}
+window.render=render;
+document.fonts.ready.then(()=>{measure();render(0);window.ready=true;});
+</script></body></html>
