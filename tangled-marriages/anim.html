@@ -1,0 +1,269 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Archides;src:url(Archides.otf)}
+@font-face{font-family:Dabanol;src:url(Dabanol.ttf)}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#140a05}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:Archides;color:#1b110b}
+#cam{position:absolute;inset:0;transform-origin:50% 50%}
+canvas,svg.layer{position:absolute;left:0;top:0}
+svg text{font-family:Archides}
+.t{position:absolute;left:0;width:1920px;text-align:center;white-space:nowrap;will-change:transform,opacity}
+.lbl{position:absolute;text-align:center;white-space:nowrap;transform:translateX(-50%)}
+.ink{color:#1b110b;text-shadow:-1px -1px 0 rgba(241,228,198,.18),0 6px 22px rgba(40,12,0,.35)}
+.ochre{color:#dda246;text-shadow:0 2px 0 rgba(27,17,11,.85),0 0 18px rgba(255,190,90,.25)}
+.white{color:#f1e4c6;text-shadow:0 2px 0 rgba(27,17,11,.8)}
+.red{color:#8a2e1c;text-shadow:0 2px 0 rgba(241,228,198,.25)}
+.ls{letter-spacing:.3em}
+.bn{font-family:Dabanol;letter-spacing:0;line-height:1.2}
+.paint{filter:saturate(1.05) contrast(1.08) brightness(1.12)}
+</style></head>
+<body><div id="stage"><div id="cam">
+<canvas id="bg" width="1920" height="1080"></canvas>
+<div id="light" style="position:absolute;inset:0"></div>
+
+<svg class="layer" id="sv" width="1920" height="1080" viewBox="0 0 1920 1080">
+<defs>
+  <radialGradient id="discG" cx=".5" cy=".42" r=".6">
+    <stop offset="0" stop-color="#e29a63"/><stop offset=".7" stop-color="#c86a38"/><stop offset="1" stop-color="#9c4520"/>
+  </radialGradient>
+  <filter id="grey"><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncR type="linear" slope=".75"/><feFuncG type="linear" slope=".72"/><feFuncB type="linear" slope=".7"/></feComponentTransfer></filter>
+  <!-- interlocked wedding rings -->
+  <g id="rings">
+    <circle r="30" fill="#1b110b"/>
+    <circle cx="-8" r="12" fill="none" stroke="#dda246" stroke-width="4.5"/>
+    <circle cx="8" r="12" fill="none" stroke="#f1e4c6" stroke-width="4.5"/>
+  </g>
+</defs>
+
+<!-- the original tree -->
+<g id="tree" fill="none" stroke="#1b110b" stroke-width="5" stroke-linecap="round">
+  <path id="lWife1" d="M508 374 H828"/><path id="lWife2" d="M508 386 H828"/>
+  <path id="lLover" d="M1092 380 H1412" stroke-dasharray="14 11"/>
+  <path id="dropL" d="M670 386 V648"/><path id="dropR" d="M1250 380 V648"/>
+</g>
+<text id="tWife" x="670" y="358" font-size="18" fill="#f1e4c6" text-anchor="middle" letter-spacing="6">WIFE</text>
+<text id="tLover" x="1250" y="358" font-size="18" fill="#f1e4c6" text-anchor="middle" letter-spacing="6">LOVER</text>
+
+<!-- the tangled marriages -->
+<path id="thrA" d="M1250 670 Q 860 700 470 476" fill="none" stroke="#dda246" stroke-width="7" stroke-linecap="round"/>
+<path id="thrA2" d="M1250 670 Q 860 700 470 476" fill="none" stroke="#1b110b" stroke-width="2" stroke-dasharray="3 9" stroke-linecap="round"/>
+<path id="thrB" d="M670 670 Q 1060 700 1450 476" fill="none" stroke="#8a2e1c" stroke-width="7" stroke-linecap="round"/>
+<path id="thrB2" d="M670 670 Q 1060 700 1450 476" fill="none" stroke="#f1e4c6" stroke-width="2" stroke-dasharray="3 9" stroke-linecap="round"/>
+<use id="ringA" href="#rings"/>
+<use id="ringB" href="#rings"/>
+<!-- the knot where the two marriages cross -->
+<g id="knot">
+  <circle r="50" fill="#1b110b"/><circle r="42" fill="none" stroke="#dda246" stroke-width="2"/>
+  <path d="M-24 -14 C-6 -30 6 30 24 14 M-24 14 C-6 30 6 -30 24 -14" fill="none" stroke="#dda246" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-24 0 C-14 -22 14 -22 24 0 C14 22 -14 22 -24 0 Z" fill="none" stroke="#f1e4c6" stroke-width="2.2"/>
+</g>
+
+<g id="medals"></g>
+<!-- Circe's wand badge -->
+<g id="wand">
+  <circle r="30" fill="#1b110b"/><circle r="24" fill="none" stroke="#dda246" stroke-width="1.6"/>
+  <path d="M-12 14 L10 -8" stroke="#f1e4c6" stroke-width="4" stroke-linecap="round"/>
+  <path d="M12 -20 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 Z" fill="#dda246"/>
+</g>
+</svg>
+
+<!-- ===== TEXT ===== -->
+<div id="head" class="t bn ochre" style="top:112px;font-size:92px">জট পাকানো বিয়ে</div>
+<div id="sub" class="t white ls" style="top:226px;font-size:22px">TANGLED MARRIAGES</div>
+<div id="sub2" class="t white ls" style="top:226px;font-size:22px">EACH SON WEDS <span class="ochre">THE OTHER SON'S MOTHER</span></div>
+
+<div id="nO" class="lbl" style="left:960px;top:524px"><div class="ink" style="font-size:40px;letter-spacing:.08em">ODYSSEUS</div><div id="nOs" class="white ls" style="font-size:16px;margin-top:4px">THE FATHER</div></div>
+<div id="nP" class="lbl" style="left:380px;top:518px"><div class="ink" style="font-size:40px;letter-spacing:.08em">PENELOPE</div><div class="white ls" style="font-size:16px;margin-top:4px">HIS WIFE</div></div>
+<div id="nC" class="lbl" style="left:1540px;top:518px"><div class="ink" style="font-size:40px;letter-spacing:.08em">CIRCE</div><div class="white ls" style="font-size:16px;margin-top:4px">THE WITCH OF AEAEA</div></div>
+<div id="nM" class="lbl" style="left:670px;top:888px"><div class="ink" style="font-size:36px;letter-spacing:.06em">TELEMACHUS</div><div class="white ls" style="font-size:15px;margin-top:4px">SON OF PENELOPE</div></div>
+<div id="nG" class="lbl" style="left:1250px;top:888px"><div class="ochre" style="font-size:36px;letter-spacing:.06em">TELEGONUS</div><div class="white ls" style="font-size:15px;margin-top:4px">SON OF CIRCE</div></div>
+
+<div id="cP" class="lbl" style="left:380px;top:612px"><div class="bn ochre" style="font-size:56px">বাবার বিধবা স্ত্রী</div><div class="white ls" style="font-size:16px;margin-top:6px">HIS FATHER'S WIDOW</div></div>
+<div id="cC" class="lbl" style="left:1540px;top:612px"><div class="bn ink" style="font-size:56px">বাবার প্রেমিকা</div><div class="white ls" style="font-size:16px;margin-top:6px">THE WITCH, HIS FATHER'S LOVER</div></div>
+<div id="wed1" class="lbl ochre ls" style="left:0;top:0;font-size:18px;transform:none">WEDS</div>
+<div id="wed2" class="lbl ls" style="left:0;top:0;font-size:18px;transform:none;color:#f1e4c6;text-shadow:0 2px 0 #1b110b">WEDS</div>
+
+<canvas id="fx" width="1920" height="1080"></canvas>
+</div>
+<svg class="layer" id="frame" width="1920" height="1080">
+  <defs>
+    <pattern id="key" width="56" height="56" patternUnits="userSpaceOnUse">
+      <rect width="56" height="56" fill="#1b110b"/>
+      <path d="M0 47 H56 M6 47 V9 H46 V39 H18 V21 H34 V31" fill="none" stroke="#c4683a" stroke-width="5" stroke-linecap="square"/>
+    </pattern>
+    <clipPath id="frameClip"><rect id="frameRect" x="960" y="0" width="0" height="1080"/></clipPath>
+  </defs>
+  <g clip-path="url(#frameClip)">
+    <rect x="0" y="18" width="1920" height="10" fill="#1b110b"/>
+    <rect x="0" y="34" width="1920" height="56" fill="url(#key)"/>
+    <rect x="0" y="96" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="104" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="974" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="980" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="990" width="1920" height="56" fill="url(#key)" transform="translate(0 2036) scale(1 -1)"/>
+    <rect x="0" y="1052" width="1920" height="10" fill="#1b110b"/>
+  </g>
+</svg>
+<div id="vig" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 45%,rgba(20,6,0,.55) 100%)"></div>
+<div id="black" style="position:absolute;inset:0;background:#0d0603"></div>
+</div>
+<script>
+const W=1920,H=1080,$=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const out=x=>1-Math.pow(1-clamp(x),3);
+const back=x=>{x=clamp(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const seg=(t,a,b)=>clamp((t-a)/(b-a));
+const lerp=(a,b,p)=>a+(b-a)*p;
+let s=53;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e;};
+
+/* ---------- aged terracotta ground ---------- */
+(function(){
+  const c=$('bg').getContext('2d');
+  const g=c.createRadialGradient(W/2,H*.45,80,W/2,H/2,1150);
+  g.addColorStop(0,'#cf7442');g.addColorStop(.55,'#b5552b');g.addColorStop(1,'#7c3418');
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  for(let i=0;i<70;i++){const x=rnd()*W,y=rnd()*H,r=60+rnd()*260,dark=rnd()<.6;
+    const b=c.createRadialGradient(x,y,0,x,y,r);
+    b.addColorStop(0,dark?`rgba(70,28,10,${.05+rnd()*.08})`:`rgba(240,190,140,${.04+rnd()*.06})`);b.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=b;c.fillRect(x-r,y-r,2*r,2*r);}
+  c.lineCap='round';
+  for(let i=0;i<900;i++){const x=rnd()*W,y=rnd()*H,a=rnd()*6.28,l=6+rnd()*30;
+    c.strokeStyle=rnd()<.5?`rgba(60,24,8,${.05+rnd()*.07})`:`rgba(250,210,170,${.04+rnd()*.06})`;c.lineWidth=.6+rnd();
+    c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);c.stroke();}
+  for(let i=0;i<14;i++){let x=rnd()*W,y=rnd()*H,a=rnd()*6.28;c.strokeStyle=`rgba(50,18,6,${.12+rnd()*.12})`;c.lineWidth=.8+rnd()*.8;
+    c.beginPath();c.moveTo(x,y);for(let k=0;k<20+rnd()*30;k++){a+=(rnd()-.5)*.9;x+=Math.cos(a)*9;y+=Math.sin(a)*9;c.lineTo(x,y);}c.stroke();}
+  const id=c.getImageData(0,0,W,H),d=id.data;
+  for(let i=0;i<d.length;i+=4){const n=(rnd()-.5)*26;d[i]+=n;d[i+1]+=n*.85;d[i+2]+=n*.7;}
+  c.putImageData(id,0,0);
+})();
+
+/* ---------- medallions ---------- */
+function medal(id,r,img,ring='#dda246'){
+  const g=el('g',{id:'m_'+id},$('medals'));
+  const cp=el('clipPath',{id:'cp_'+id},g);el('circle',{r},cp);
+  el('circle',{r:r+22,fill:'#1b110b'},g);
+  const n=Math.round(r/3.6);for(let k=0;k<n;k++){const a=k/n*6.283;el('circle',{cx:Math.cos(a)*(r+12),cy:Math.sin(a)*(r+12),r:3,fill:ring},g);}
+  el('circle',{r:r+3,fill:'none',stroke:'#b5552b','stroke-width':2},g);
+  el('circle',{r,fill:'url(#discG)'},g);
+  const im=el('image',{href:img,x:-r*1.04,y:-r*1.04,width:r*2.08,height:r*2.08,'clip-path':`url(#cp_${id})`,class:'paint'},g);
+  const extra=el('g',{'clip-path':`url(#cp_${id})`},g);
+  el('circle',{r,fill:'none',stroke:'#1b110b','stroke-width':5},g);
+  const fl=el('circle',{r,fill:'none',stroke:'#ffcf7a','stroke-width':8,opacity:0},g);
+  const glow=el('circle',{r:r+30,fill:'none',stroke:'#ffcf7a','stroke-width':4,opacity:0},g);
+  g.insertBefore(glow,g.firstChild.nextSibling);
+  return {g,im,extra,fl,glow,r};
+}
+const P={O:[960,380],P:[380,380],C:[1540,380],M:[670,770],G:[1250,770]};
+const MO=medal('ody',110,'odysseus.png');
+const MP=medal('pen',105,'penelope.png');
+const MC=medal('cir',105,'circe.png','#e2734a');
+const MM=medal('tem',100,'telemachus.png');
+const MG=medal('teg',100,'telegonus.png');MG.im.style.filter='saturate(1.05) contrast(1.05) brightness(1.45)';
+// mourning sash across Odysseus once he is a widower's ghost: a black band with ochre edges
+const sash=el('g',{opacity:0},MO.extra);
+el('rect',{x:-160,y:-20,width:320,height:40,fill:'#1b110b',transform:'rotate(-38)'},sash);
+el('path',{d:'M-160 -20 H160 M-160 20 H160',stroke:'#dda246','stroke-width':2.5,transform:'rotate(-38)'},sash);
+
+function flash(m,t0,t,grow=55){m.fl.setAttribute('opacity',(1-seg(t,t0+.03,t0+.65))*seg(t,t0,t0+.04));m.fl.setAttribute('r',m.r+seg(t,t0+.03,t0+.65)*grow);}
+function place(m,key,t0,t,dim){const p=back(seg(t,t0,t0+.55));const [x,y]=P[key];
+  m.g.setAttribute('transform',`translate(${x} ${y+(1-out(seg(t,t0,t0+.5)))*36+Math.sin(t*1.3+x)*2.5}) scale(${p*.98+.02})`);
+  m.g.style.opacity=seg(t,t0,t0+.1)*dim;flash(m,t0,t);}
+function spot(m,a,b,t){const k=seg(t,a,a+.25)*(1-seg(t,b,b+.4));m.glow.setAttribute('opacity',k*(.55+.45*Math.sin(t*6)));m.glow.setAttribute('r',m.r+26+Math.sin(t*3)*3);}
+
+const fx=$('fx').getContext('2d');
+const motes=[...Array(70)].map(()=>({x:rnd()*W,y:rnd()*H,r:.8+rnd()*2.2,v:6+rnd()*16,p:rnd()*6.28}));
+const dust=[...Array(60)].map(()=>({a:rnd()*6.28,v:200+rnd()*500,r:1.5+rnd()*3.5}));
+
+function op(id,o,tr){const e=typeof id==='string'?$(id):id;e.style.opacity=o;if(tr!==undefined){if(e instanceof SVGElement)e.setAttribute('transform',tr);else e.style.transform=tr;}}
+const L=(id,o,dy=0,sc=1)=>op(id,o,`translateX(-50%) translateY(${(1-o)*dy}px) scale(${sc})`);
+const T=(id,o,dy=0,sc=1)=>op(id,o,`translateY(${(1-o)*dy}px) scale(${sc})`);
+function draw(id,p){const e=$(id);const len=e.getTotalLength();e.style.strokeDasharray=`${len*p} ${len+10}`;e.style.opacity=p>0?1:0;}
+function drawDots(id,p){const e=$(id);const len=e.getTotalLength();let a=[],acc=0;while(acc+12<=len*p){a.push(3,9);acc+=12;}a.push(.001,99999);e.setAttribute('stroke-dasharray',a.join(' '));}
+const pathPt=(id,f)=>{const e=$(id);return e.getPointAtLength(e.getTotalLength()*f);};
+
+/* Voice-over beats (12.92s): 0.25 তারপর | 0.94 জট পাকানো কিছু | 2.34 বিয়ে হলো | 3.66 Telegonus | 4.67-6.80 বিয়ে করলেন Penelope-কে
+   7.41-8.68 মানে নিজের বাবার বিধবা স্ত্রীকে | 8.83 আর Telemachus | 9.92-10.95 বিয়ে করলেন Circe-কে | 11.14-12.64 মানে যে উইচ … তাঁকে */
+function render(t){
+  const shk=(t0,a)=>{const k=seg(t,t0,t0+.4);return k>0&&k<1?a*(1-k)*Math.sin(t*90):0;};
+  const sh=shk(1.0,6)+shk(6.0,4)+shk(10.5,4)+shk(12.4,6);
+  const z=1+.025*(t/14.5)+.004*Math.sin(t*.7);
+  $('cam').style.transform=`translate(${sh}px,${sh*.6}px) scale(${z})`;
+  $('black').style.opacity=1-seg(t,0,.4);
+  const lx=50+8*Math.sin(t*.25),ly=40+4*Math.cos(t*.31),fl=.2+.03*Math.sin(t*3.1)+.02*Math.sin(t*7.3);
+  $('light').style.background=`radial-gradient(ellipse 60% 55% at ${lx}% ${ly}%,rgba(255,196,120,${fl}) 0%,rgba(255,160,90,0) 70%)`;
+  const fr=ease(seg(t,.05,.9));$('frameRect').setAttribute('x',960-960*fr);$('frameRect').setAttribute('width',1920*fr);
+
+  // focus: first marriage dims Telemachus & Circe, second dims Telegonus & Penelope
+  const f1=seg(t,3.6,3.9)*(1-seg(t,8.7,9.0)),f2=seg(t,8.8,9.1)*(1-seg(t,12.5,12.9));
+  const dimMC=1-.55*f1,dimGP=1-.55*f2;
+
+  /* ---- header ---- */
+  const hd=back(seg(t,.94,1.35));op('head',seg(t,.94,1.02),`scale(${lerp(1.6,1,hd)})`);
+  T('sub',out(seg(t,2.34,2.8))*(1-seg(t,12.3,12.6)),10);$('sub').style.letterSpacing=`${.6-.3*out(seg(t,2.34,2.8))}em`;
+  T('sub2',out(seg(t,12.5,13.0)),10);
+
+  /* ---- the family tree builds ---- */
+  place(MO,'O',.25,t,1);
+  L('nO',out(seg(t,.4,.8)),12);
+  draw('lWife1',ease(seg(t,.6,1.1)));draw('lWife2',ease(seg(t,.65,1.15)));
+  $('lLover').style.opacity=seg(t,.7,.75);drawDots;{const e=$('lLover');const k=ease(seg(t,.7,1.2));e.setAttribute('d',`M1092 380 H${lerp(1092,1412,k)}`);}
+  op('tWife',seg(t,1.0,1.3)*dimGP);op('tLover',seg(t,1.3,1.6)*dimMC);
+  place(MP,'P',.94,t,dimGP);L('nP',out(seg(t,1.05,1.4))*dimGP,12);
+  place(MC,'C',1.25,t,dimMC);L('nC',out(seg(t,1.35,1.7))*dimMC,12);
+  draw('dropL',ease(seg(t,1.55,1.95)));draw('dropR',ease(seg(t,1.65,2.05)));
+  $('dropL').style.opacity*=dimMC;$('dropR').style.opacity*=dimGP;
+  place(MM,'M',1.9,t,dimMC);L('nM',out(seg(t,2.0,2.35))*dimMC,12);
+  place(MG,'G',2.1,t,dimGP);L('nG',out(seg(t,2.2,2.55))*dimGP,12);
+  $('tree').style.opacity=1-.35*Math.max(f1,f2);
+
+  /* ---- Telegonus weds Penelope ---- */
+  spot(MG,3.66,8.6,t);spot(MP,5.6,8.6,t);
+  const a=ease(seg(t,4.67,6.0));draw('thrA',a);draw('thrA2',a);
+  const aDim=1-.5*f2;$('thrA').style.opacity*=aDim;$('thrA2').style.opacity*=aDim;
+  const ra=back(seg(t,5.9,6.3)),pa=pathPt('thrA',.5);
+  op('ringA',seg(t,5.9,6.0)*aDim,`translate(${pa.x-90} ${pa.y-16}) scale(${ra*.9+.0001})`);
+  const w1=out(seg(t,6.0,6.4))*aDim;op('wed1',w1*(1-seg(t,12.4,12.7)),`translate(${pa.x-90-30}px,${pa.y-16-62}px)`);
+  const cp=out(seg(t,7.41,7.9));L('cP',cp*(1-.5*f2),20,lerp(1.15,1,cp));
+  // বিধবা: Odysseus turns to grey and takes the mourning sash
+  const wid=ease(seg(t,8.0,8.5));
+  MO.im.setAttribute('filter',wid>.5?'url(#grey)':'');MO.im.style.opacity=1;
+  sash.setAttribute('opacity',wid);sash.setAttribute('transform',`translate(${lerp(-200,0,wid)} ${lerp(160,0,wid)})`);
+  $('nOs').textContent=wid>.5?'DEAD · SLAIN BY HIS SON':'THE FATHER';$('nOs').style.color=wid>.5?'#f1e4c6':'';
+
+  /* ---- Telemachus weds Circe ---- */
+  spot(MM,8.83,12.4,t);spot(MC,10.4,12.4,t);
+  const b=ease(seg(t,9.92,11.0));draw('thrB',b);draw('thrB2',b);
+  const rb=back(seg(t,10.9,11.3)),pb=pathPt('thrB',.5);
+  op('ringB',seg(t,10.9,11.0),`translate(${pb.x+90} ${pb.y-16}) scale(${rb*.9+.0001})`);
+  op('wed2',out(seg(t,11.0,11.4))*(1-seg(t,12.4,12.7)),`translate(${pb.x+90-30}px,${pb.y-16-62}px)`);
+  const cc=out(seg(t,11.6,12.1));L('cC',cc,20,lerp(1.15,1,cc));
+  const wd=back(seg(t,11.3,11.7));op('wand',seg(t,11.3,11.4),`translate(${P.C[0]+92} ${P.C[1]-92}) scale(${wd+.0001}) rotate(${(1-wd)*-60})`);
+
+  /* ---- the knot ---- */
+  // crossing point of the two threads
+  const kn=back(seg(t,12.4,12.85));op('knot',seg(t,12.4,12.5),`translate(960 ${KY}) scale(${kn+.0001}) rotate(${(1-kn)*90+Math.sin(t*1.5)*3})`);
+
+  /* ---- particles ---- */
+  fx.clearRect(0,0,W,H);
+  for(const m of motes){const y=((m.y-m.v*t*2)%H+H)%H,x=m.x+Math.sin(t*.8+m.p)*14;
+    fx.fillStyle=`rgba(255,${200+m.r*15|0},140,${(.15+.25*Math.sin(t*1.7+m.p)**2)*seg(t,0,1.2)})`;
+    fx.beginPath();fx.arc(x,y,m.r,0,6.3);fx.fill();}
+  const burst=(t0,cx,cy,sc)=>{const k=seg(t,t0,t0+.8);if(k<=0||k>=1)return;for(const d of dust){const r=d.v*out(k)*sc;
+      fx.fillStyle=`rgba(60,26,10,${(1-k)*.5})`;fx.beginPath();fx.arc(cx+Math.cos(d.a)*r*1.6,cy+Math.sin(d.a)*r*.5,d.r,0,6.3);fx.fill();}};
+  burst(1.0,960,160,.6);burst(5.92,pa.x-90,pa.y-16,.3);burst(10.92,pb.x+90,pb.y-16,.3);burst(12.42,960,KY,.45);
+  // sparkles off Circe's wand
+  const ws=seg(t,11.35,13.5);if(ws>0){for(let k=0;k<14;k++){const ph=((t*.8+k/14)%1);const ang=k*2.2;
+      const x=P.C[0]+92+Math.cos(ang)*ph*70,y=P.C[1]-92+Math.sin(ang)*ph*50-ph*30;
+      fx.fillStyle=`rgba(255,215,120,${(1-ph)*.85})`;fx.beginPath();fx.arc(x,y,1.5+(k%3),0,6.3);fx.fill();}}
+}
+// find where thread A and thread B cross (x = 960 by symmetry)
+let KY=655;
+function findKnot(){const e=$('thrA'),L=e.getTotalLength();let best=1e9;for(let i=0;i<=400;i++){const p=e.getPointAtLength(L*i/400);const d=Math.abs(p.x-960);if(d<best){best=d;KY=p.y;}}}
+window.render=render;
+Promise.all([document.fonts.load('60px Dabanol','জট পাকানো বিয়ে'),document.fonts.load('60px Archides'),document.fonts.ready,
+  ...['odysseus.png','penelope.png','circe.png','telemachus.png','telegonus.png'].map(src=>new Promise(r=>{const im=new Image();im.onload=r;im.onerror=r;im.src=src;}))])
+  .then(()=>{findKnot();render(0);window.ready=true;});
+</script></body></html>
