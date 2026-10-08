@@ -1,0 +1,230 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Archides;src:url(Archides.otf)}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#140a05}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:Archides;color:#1b110b}
+#cam{position:absolute;inset:0;transform-origin:50% 50%}
+canvas,svg.layer{position:absolute;left:0;top:0}
+svg text{font-family:Archides}
+.t{position:absolute;left:0;width:1920px;text-align:center;white-space:nowrap;will-change:transform,opacity}
+.lbl{position:absolute;text-align:center;white-space:nowrap;transform:translateX(-50%)}
+.ink{color:#1b110b;text-shadow:-1px -1px 0 rgba(241,228,198,.18),0 6px 22px rgba(40,12,0,.35)}
+.ochre{color:#dda246;text-shadow:0 2px 0 rgba(27,17,11,.85),0 0 18px rgba(255,190,90,.25)}
+.white{color:#f1e4c6;text-shadow:0 2px 0 rgba(27,17,11,.8)}
+.ls{letter-spacing:.3em}
+.paint{filter:saturate(1.05) contrast(1.08) brightness(1.08)}
+</style></head>
+<body><div id="stage"><div id="cam">
+<canvas id="bg" width="1920" height="1080"></canvas>
+<div id="light" style="position:absolute;inset:0"></div>
+
+<svg class="layer" id="sv" width="1920" height="1080" viewBox="0 0 1920 1080">
+<defs>
+  <radialGradient id="discG" cx=".5" cy=".42" r=".6">
+    <stop offset="0" stop-color="#e29a63"/><stop offset=".7" stop-color="#c86a38"/><stop offset="1" stop-color="#9c4520"/>
+  </radialGradient>
+  <filter id="grey"><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncR type="linear" slope=".78"/><feFuncG type="linear" slope=".74"/><feFuncB type="linear" slope=".7"/></feComponentTransfer></filter>
+  <clipPath id="cpO"><circle r="118"/></clipPath>
+  <radialGradient id="roseG" cx=".5" cy=".5" r=".5">
+    <stop offset="0" stop-color="#ffe2a0"/><stop offset=".6" stop-color="#dda246"/><stop offset="1" stop-color="#8a2e1c"/>
+  </radialGradient>
+</defs>
+
+<!-- connecting threads from Odysseus down to the two sources -->
+<path id="toL" d="M880 540 Q 740 560 560 610" fill="none" stroke="#1b110b" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round"/>
+<path id="toR" d="M1040 540 Q 1180 560 1360 610" fill="none" stroke="#dda246" stroke-width="4" stroke-dasharray="2 10" stroke-linecap="round"/>
+
+<!-- Odysseus -->
+<g id="ody">
+  <circle id="odyHalo" r="152" fill="none" stroke="#ffcf7a" stroke-width="4" opacity="0"/>
+  <circle r="140" fill="#1b110b"/>
+  <g id="odyDots"></g>
+  <circle r="121" fill="none" stroke="#b5552b" stroke-width="2"/>
+  <circle r="118" fill="url(#discG)"/>
+  <image id="odyImg" href="odysseus.png" x="-123" y="-123" width="246" height="246" clip-path="url(#cpO)" class="paint"/>
+  <circle r="118" fill="none" stroke="#1b110b" stroke-width="5"/>
+  <circle id="odyFl" r="118" fill="none" stroke="#ffcf7a" stroke-width="8" opacity="0"/>
+</g>
+<!-- "version II" seal -->
+<g id="seal">
+  <circle r="46" fill="#8a2e1c"/><circle r="38" fill="none" stroke="#dda246" stroke-width="2" stroke-dasharray="3 4"/>
+  <text y="-6" font-size="13" fill="#f1e4c6" text-anchor="middle" letter-spacing="3">VERSION</text>
+  <text y="22" font-size="28" fill="#dda246" text-anchor="middle">II</text>
+</g>
+
+<!-- card: Ancient Greece -->
+<g id="cardL">
+  <rect x="-250" y="-150" width="500" height="300" fill="#1b110b"/>
+  <rect x="-238" y="-138" width="476" height="276" fill="none" stroke="#dda246" stroke-width="2"/>
+  <g transform="translate(0 -30) scale(.62)">
+    <path d="M-120 -40 L0 -96 L120 -40 Z" fill="#dda246"/>
+    <path d="M-92 -48 L0 -86 L92 -48 Z" fill="none" stroke="#1b110b" stroke-width="3"/>
+    <circle cy="-60" r="7" fill="#1b110b"/>
+    <rect x="-120" y="-38" width="240" height="18" fill="#dda246"/>
+    <g fill="#dda246"><rect x="-108" y="-14" width="20" height="92"/><rect x="-62" y="-14" width="20" height="92"/><rect x="-16" y="-14" width="20" height="92"/>
+      <rect x="30" y="-14" width="20" height="92"/><rect x="76" y="-14" width="20" height="92"/>
+      <rect x="-128" y="80" width="256" height="10"/><rect x="-140" y="92" width="280" height="10"/></g>
+  </g>
+  <text y="76" font-size="38" fill="#f1e4c6" text-anchor="middle" letter-spacing="4">ANCIENT GREECE</text>
+  <text y="114" font-size="16" fill="#dda246" text-anchor="middle" letter-spacing="6">THE WORLD OF HOMER</text>
+  <g id="strike"><path id="sk1" d="M-210 -120 L210 120" stroke="#8a2e1c" stroke-width="16" stroke-linecap="round"/><path id="sk2" d="M210 -120 L-210 120" stroke="#8a2e1c" stroke-width="16" stroke-linecap="round"/></g>
+</g>
+<g id="notTag" transform="translate(560 800)">
+  <rect x="-130" y="-22" width="260" height="44" fill="#8a2e1c"/><rect x="-124" y="-16" width="248" height="32" fill="none" stroke="#f1e4c6" stroke-width="1.5"/>
+  <text y="8" font-size="20" fill="#f1e4c6" text-anchor="middle" letter-spacing="6">NOT FROM HERE</text>
+</g>
+
+<!-- arrow across the centuries -->
+<path id="leap" d="M820 640 Q 960 540 1100 640" fill="none" stroke="#dda246" stroke-width="5" stroke-linecap="round"/>
+<path id="leapHead" d="M1108 646 l-28 -2 l14 -24 Z" fill="#dda246" stroke="#1b110b" stroke-width="2"/>
+
+<!-- card: Medieval Europe -->
+<g id="cardR">
+  <rect id="cardRGlow" x="-266" y="-166" width="532" height="332" fill="none" stroke="#ffcf7a" stroke-width="6" opacity="0"/>
+  <rect x="-250" y="-150" width="500" height="300" fill="#1b110b"/>
+  <rect x="-238" y="-138" width="476" height="276" fill="none" stroke="#dda246" stroke-width="2"/>
+  <rect x="-232" y="-132" width="464" height="264" fill="none" stroke="#b5552b" stroke-width="1"/>
+  <!-- gothic cathedral -->
+  <g transform="translate(0 -24) scale(.62)">
+    <g fill="#dda246">
+      <path d="M-130 102 V-40 L-110 -110 L-90 -40 V102 Z"/>
+      <path d="M90 102 V-40 L110 -110 L130 -40 V102 Z"/>
+      <path d="M-90 102 V-30 L0 -96 L90 -30 V102 Z"/>
+      <path d="M-114 -112 V-140 M-122 -132 H-106" stroke="#dda246" stroke-width="5"/>
+      <path d="M110 -112 V-140 M102 -132 H118" stroke="#dda246" stroke-width="5"/>
+      <rect x="-150" y="100" width="300" height="12"/>
+    </g>
+    <circle id="rose" cy="-22" r="34" fill="url(#roseG)" stroke="#1b110b" stroke-width="4"/>
+    <g stroke="#1b110b" stroke-width="2.6"><path d="M0 -56 V12 M-34 -22 H34 M-24 -46 L24 2 M24 -46 L-24 2"/></g>
+    <circle cy="-22" r="9" fill="#1b110b"/>
+    <path d="M-34 102 V50 Q0 6 34 50 V102 Z" fill="#1b110b"/>
+    <path d="M-120 60 V20 Q-110 4 -100 20 V60 Z M100 60 V20 Q110 4 120 20 V60 Z" fill="#1b110b"/>
+  </g>
+  <text y="76" font-size="38" fill="#dda246" text-anchor="middle" letter-spacing="4">MEDIEVAL EUROPE</text>
+  <text y="114" font-size="16" fill="#f1e4c6" text-anchor="middle" letter-spacing="6">THE MIDDLE AGES · c. 500–1500 AD</text>
+</g>
+</svg>
+
+<div id="head" class="t ink" style="top:122px;font-size:54px;letter-spacing:.06em">ANOTHER VERSION OF HIS <span class="ochre">DEATH</span></div>
+<div id="oName" class="lbl ink" style="left:960px;top:500px;font-size:40px;letter-spacing:.08em">ODYSSEUS</div>
+<div id="years" class="lbl white ls" style="left:960px;top:560px;font-size:16px">OVER A THOUSAND YEARS LATER</div>
+
+<canvas id="fx" width="1920" height="1080"></canvas>
+</div>
+<svg class="layer" id="frame" width="1920" height="1080">
+  <defs>
+    <pattern id="key" width="56" height="56" patternUnits="userSpaceOnUse">
+      <rect width="56" height="56" fill="#1b110b"/>
+      <path d="M0 47 H56 M6 47 V9 H46 V39 H18 V21 H34 V31" fill="none" stroke="#c4683a" stroke-width="5" stroke-linecap="square"/>
+    </pattern>
+    <clipPath id="frameClip"><rect id="frameRect" x="960" y="0" width="0" height="1080"/></clipPath>
+  </defs>
+  <g clip-path="url(#frameClip)">
+    <rect x="0" y="18" width="1920" height="10" fill="#1b110b"/>
+    <rect x="0" y="34" width="1920" height="56" fill="url(#key)"/>
+    <rect x="0" y="96" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="104" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="974" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="980" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="990" width="1920" height="56" fill="url(#key)" transform="translate(0 2036) scale(1 -1)"/>
+    <rect x="0" y="1052" width="1920" height="10" fill="#1b110b"/>
+  </g>
+</svg>
+<div id="vig" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 45%,rgba(20,6,0,.55) 100%)"></div>
+<div id="black" style="position:absolute;inset:0;background:#0d0603"></div>
+</div>
+<script>
+const W=1920,H=1080,$=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const out=x=>1-Math.pow(1-clamp(x),3);
+const back=x=>{x=clamp(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const seg=(t,a,b)=>clamp((t-a)/(b-a));
+const lerp=(a,b,p)=>a+(b-a)*p;
+let s=53;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e;};
+/* ---------- aged terracotta ground ---------- */
+(function(){
+  const c=$('bg').getContext('2d');
+  const g=c.createRadialGradient(W/2,H*.45,80,W/2,H/2,1150);
+  g.addColorStop(0,'#cf7442');g.addColorStop(.55,'#b5552b');g.addColorStop(1,'#7c3418');
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  for(let i=0;i<70;i++){const x=rnd()*W,y=rnd()*H,r=60+rnd()*260,dark=rnd()<.6;
+    const b=c.createRadialGradient(x,y,0,x,y,r);
+    b.addColorStop(0,dark?`rgba(70,28,10,${.05+rnd()*.08})`:`rgba(240,190,140,${.04+rnd()*.06})`);b.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=b;c.fillRect(x-r,y-r,2*r,2*r);}
+  c.lineCap='round';
+  for(let i=0;i<900;i++){const x=rnd()*W,y=rnd()*H,a=rnd()*6.28,l=6+rnd()*30;
+    c.strokeStyle=rnd()<.5?`rgba(60,24,8,${.05+rnd()*.07})`:`rgba(250,210,170,${.04+rnd()*.06})`;c.lineWidth=.6+rnd();
+    c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);c.stroke();}
+  for(let i=0;i<14;i++){let x=rnd()*W,y=rnd()*H,a=rnd()*6.28;c.strokeStyle=`rgba(50,18,6,${.12+rnd()*.12})`;c.lineWidth=.8+rnd()*.8;
+    c.beginPath();c.moveTo(x,y);for(let k=0;k<20+rnd()*30;k++){a+=(rnd()-.5)*.9;x+=Math.cos(a)*9;y+=Math.sin(a)*9;c.lineTo(x,y);}c.stroke();}
+  const id=c.getImageData(0,0,W,H),d=id.data;
+  for(let i=0;i<d.length;i+=4){const n=(rnd()-.5)*26;d[i]+=n;d[i+1]+=n*.85;d[i+2]+=n*.7;}
+  c.putImageData(id,0,0);
+})();
+
+for(let k=0;k<36;k++){const a=k/36*6.283;el('circle',{cx:Math.cos(a)*130,cy:Math.sin(a)*130,r:3.2,fill:'#dda246'},$('odyDots'));}
+
+const fx=$('fx').getContext('2d');
+const motes=[...Array(70)].map(()=>({x:rnd()*W,y:rnd()*H,r:.8+rnd()*2.2,v:6+rnd()*16,p:rnd()*6.28}));
+const dust=[...Array(60)].map(()=>({a:rnd()*6.28,v:200+rnd()*500,r:1.5+rnd()*3.5}));
+function op(id,o,tr){const e=typeof id==='string'?$(id):id;e.style.opacity=o;if(tr!==undefined){if(e instanceof SVGElement)e.setAttribute('transform',tr);else e.style.transform=tr;}}
+const L=(id,o,dy=0,sc=1)=>op(id,o,`translateX(-50%) translateY(${(1-o)*dy}px) scale(${sc})`);
+function draw(id,p){const e=$(id);const len=e.getTotalLength();e.style.strokeDasharray=`${len*p} ${len+10}`;e.style.opacity=p>0?1:0;}
+function dots(id,p){const e=$(id);const len=e.getTotalLength();let a=[],acc=0;while(acc+12<=len*p){a.push(2,10);acc+=12;}a.push(.001,99999);e.setAttribute('stroke-dasharray',a.join(' '));}
+
+/* Voice-over beats (4.60s): 0.40-1.21 Odysseus-এর | 1.47-2.39 মৃত্যুর আরেকটা version | 2.54-2.97 এসেছে | 3.13-4.33 একদম মধ্যযুগের ইউরোপ থেকে */
+function render(t){
+  const shk=(t0,a)=>{const k=seg(t,t0,t0+.4);return k>0&&k<1?a*(1-k)*Math.sin(t*90):0;};
+  const sh=shk(1.5,6)+shk(2.62,5)+shk(3.5,4);
+  const z=1+.035*(t/6.5)+.004*Math.sin(t*.7);
+  $('cam').style.transform=`translate(${sh}px,${sh*.6}px) scale(${z})`;
+  $('black').style.opacity=1-seg(t,0,.35);
+  const lx=lerp(42,62,ease(seg(t,3.1,4.2))),ly=40+4*Math.cos(t*.31),fl=.2+.03*Math.sin(t*3.1)+.02*Math.sin(t*7.3)+.08*seg(t,3.4,4.0);
+  $('light').style.background=`radial-gradient(ellipse 60% 55% at ${lx}% ${ly}%,rgba(255,196,120,${fl}) 0%,rgba(255,160,90,0) 70%)`;
+  const fr=ease(seg(t,.0,.7));$('frameRect').setAttribute('x',960-960*fr);$('frameRect').setAttribute('width',1920*fr);
+
+  /* Odysseus */
+  const o=back(seg(t,.4,.95));op('ody',seg(t,.4,.5),`translate(960 ${345+(1-out(seg(t,.4,.9)))*36+Math.sin(t*1.3)*2}) scale(${o*.98+.02})`);
+  $('odyFl').setAttribute('opacity',(1-seg(t,.43,1.0))*seg(t,.4,.44));$('odyFl').setAttribute('r',118+seg(t,.43,1.0)*55);
+  const on=out(seg(t,.5,.95));L('oName',on,14);$('oName').style.letterSpacing=`${.3-.22*on}em`;
+  // death: he turns grey
+  const dg=ease(seg(t,1.5,2.0));$('odyImg').setAttribute('filter',dg>.5?'url(#grey)':'');
+  /* header + version seal */
+  const hd=back(seg(t,1.47,1.85));op('head',seg(t,1.47,1.55),`scale(${lerp(1.5,1,hd)})`);
+  const sl=back(seg(t,1.95,2.35));op('seal',seg(t,1.95,2.05),`translate(${960+112} ${345-96}) scale(${sl+.0001}) rotate(${(1-sl)*-120-12})`);
+
+  /* এসেছে: ancient Greece first, struck out */
+  dots('toL',ease(seg(t,2.4,2.8)));$('toL').style.opacity=0;
+  const cl=back(seg(t,2.45,2.85));op('cardL',seg(t,2.45,2.55)*(1-.45*seg(t,2.9,3.2)),`translate(560 ${720+(1-out(seg(t,2.45,2.85)))*40}) scale(${cl*.98+.02})`);
+  draw('sk1',ease(seg(t,2.62,2.8)));draw('sk2',ease(seg(t,2.75,2.93)));
+  const nt=back(seg(t,2.85,3.2));op('notTag',seg(t,2.85,2.95),`translate(560 902) scale(${nt+.0001}) rotate(${(1-nt)*8-3})`);
+
+  /* মধ্যযুগের ইউরোপ: the leap across the centuries */
+  draw('leap',ease(seg(t,3.13,3.6)));op('leapHead',seg(t,3.55,3.62));
+  L('years',out(seg(t,3.25,3.65)),10);
+  dots('toR',ease(seg(t,3.3,3.75)));$('toR').style.opacity=0;
+  const cr=back(seg(t,3.45,3.95));op('cardR',seg(t,3.45,3.55),`translate(1360 ${720+(1-out(seg(t,3.45,3.95)))*40}) scale(${cr*.98+.02}) rotate(${(1-cr)*4})`);
+  $('cardRGlow').setAttribute('opacity',seg(t,3.9,4.2)*(.55+.45*Math.sin(t*5)));
+  $('rose').setAttribute('transform',`rotate(${t*20} 0 -22)`);
+  $('odyHalo').setAttribute('opacity',seg(t,3.9,4.2)*(.4+.3*Math.sin(t*5)));
+
+  /* particles */
+  fx.clearRect(0,0,W,H);
+  for(const m of motes){const y=((m.y-m.v*t*2)%H+H)%H,x=m.x+Math.sin(t*.8+m.p)*14;
+    fx.fillStyle=`rgba(255,${200+m.r*15|0},140,${(.15+.25*Math.sin(t*1.7+m.p)**2)*seg(t,0,1.0)})`;
+    fx.beginPath();fx.arc(x,y,m.r,0,6.3);fx.fill();}
+  const burst=(t0,cx,cy,sc)=>{const k=seg(t,t0,t0+.8);if(k<=0||k>=1)return;for(const d of dust){const r=d.v*out(k)*sc;
+      fx.fillStyle=`rgba(60,26,10,${(1-k)*.5})`;fx.beginPath();fx.arc(cx+Math.cos(d.a)*r*1.6,cy+Math.sin(d.a)*r*.5,d.r,0,6.3);fx.fill();}};
+  burst(1.5,960,150,.6);burst(2.64,560,720,.4);
+  // golden light rays from the cathedral's rose window
+  const rk=seg(t,3.6,4.3);if(rk>0){fx.save();fx.translate(1360,682);for(let k=0;k<12;k++){const a=k/12*6.283+t*.3;
+      const g=fx.createLinearGradient(0,0,Math.cos(a)*260,Math.sin(a)*260);g.addColorStop(0,`rgba(255,210,120,${.22*rk})`);g.addColorStop(1,'rgba(255,210,120,0)');
+      fx.strokeStyle=g;fx.lineWidth=10;fx.beginPath();fx.moveTo(Math.cos(a)*40,Math.sin(a)*40);fx.lineTo(Math.cos(a)*260,Math.sin(a)*260);fx.stroke();}fx.restore();}
+}
+window.render=render;
+Promise.all([document.fonts.load('60px Archides'),document.fonts.ready,new Promise(r=>{const im=new Image();im.onload=r;im.onerror=r;im.src='odysseus.png';})])
+  .then(()=>{render(0);window.ready=true;});
+</script></body></html>
