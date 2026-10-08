@@ -230,7 +230,7 @@ function render(t){
   // বিধবা: Odysseus turns to grey and takes the mourning sash
   const wid=ease(seg(t,8.0,8.5));
   MO.im.setAttribute('filter',wid>.5?'url(#grey)':'');MO.im.style.opacity=1;
-  sash.setAttribute('opacity',wid);sash.setAttribute('transform',`translate(${lerp(-200,0,wid)} ${lerp(160,0,wid)})`);
+  sash.setAttribute('opacity',0);
   $('nOs').textContent=wid>.5?'DEAD · SLAIN BY HIS SON':'THE FATHER';$('nOs').style.color=wid>.5?'#f1e4c6':'';
 
   /* ---- Telemachus weds Circe ---- */
