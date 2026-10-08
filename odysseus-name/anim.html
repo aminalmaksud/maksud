@@ -2,8 +2,7 @@
 <html><head><meta charset="utf-8">
 <style>
 @font-face{font-family:Archides;src:url(Archides.otf)}
-@font-face{font-family:BnSerif;src:url(NotoSerifBengali-800.ttf);font-weight:800}
-@font-face{font-family:BnSerif;src:url(NotoSerifBengali-600.ttf);font-weight:600}
+@font-face{font-family:Dabanol;src:url(Dabanol.ttf)}
 html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#140a05}
 #stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:Archides;color:#1b110b}
 #cam{position:absolute;inset:0;transform-origin:50% 50%}
@@ -15,13 +14,13 @@ svg text{font-family:Archides}
 .ochre{color:#dda246;text-shadow:0 2px 0 rgba(27,17,11,.85),0 0 18px rgba(255,190,90,.25)}
 .white{color:#f1e4c6;text-shadow:0 2px 0 rgba(27,17,11,.8)}
 .ls{letter-spacing:.3em}
-.bn{font-family:BnSerif;font-weight:800;letter-spacing:0;line-height:1.25}
-.bn6{font-family:BnSerif;font-weight:600;letter-spacing:0;line-height:1.25}
+.bn{font-family:Dabanol;font-weight:normal;letter-spacing:0;line-height:1.25}
+.bn6{font-family:Dabanol;font-weight:normal;letter-spacing:0;line-height:1.25}
 .bust{filter:sepia(.55) saturate(1.2) contrast(1.1) brightness(.95)}
 #banner span{display:inline-block}
 #banner span.hi{color:#dda246;text-shadow:0 2px 0 rgba(27,17,11,.85),0 0 18px rgba(255,190,90,.35)}
 .card{position:absolute;width:420px;height:250px;transform:translate(-50%,-50%)}
-.card .bnw{position:absolute;left:0;right:0;top:58px;text-align:center;font-size:66px;color:#dda246;text-shadow:0 3px 0 #000}
+.card .bnw{position:absolute;left:0;right:0;top:52px;text-align:center;font-size:82px;color:#dda246;text-shadow:0 3px 0 #000}
 .card .en{position:absolute;left:0;right:0;top:176px;text-align:center;font-size:22px;letter-spacing:.28em;color:#f1e4c6}
 .card .no{position:absolute;left:0;right:0;top:16px;text-align:center;font-size:20px;letter-spacing:.3em;color:#b5552b}
 </style></head>
@@ -123,14 +122,14 @@ svg text{font-family:Archides}
 
 <div id="rough" class="t white ls" style="top:250px;font-size:30px">ROUGHLY, THE NAME MEANS</div>
 <div id="oName" class="lbl ink" style="left:960px;top:760px;font-size:54px;letter-spacing:.08em">ODYSSEUS</div>
-<div id="hL" class="lbl" style="left:440px;top:790px"><div class="bn ochre" style="font-size:60px">যিনি বিদ্বেষ জাগান</div><div class="white ls" style="font-size:20px;margin-top:10px">HE WHO STIRS UP HATRED</div></div>
-<div id="hR" class="lbl" style="left:1480px;top:790px"><div class="bn ink" style="font-size:60px">যাঁর ওপর বিদ্বেষ নামে</div><div class="white ls" style="font-size:20px;margin-top:10px">HE ON WHOM HATRED FALLS</div></div>
+<div id="hL" class="lbl" style="left:440px;top:790px"><div class="bn ochre" style="font-size:76px">যিনি বিদ্বেষ জাগান</div><div class="white ls" style="font-size:20px;margin-top:10px">HE WHO STIRS UP HATRED</div></div>
+<div id="hR" class="lbl" style="left:1480px;top:790px"><div class="bn ink" style="font-size:76px">যাঁর ওপর বিদ্বেষ নামে</div><div class="white ls" style="font-size:20px;margin-top:10px">HE ON WHOM HATRED FALLS</div></div>
 
 <div id="call" class="t white ls" style="top:132px;font-size:30px">AND SO I CALL HIM</div>
-<div id="pain" class="t bn ochre" style="top:178px;font-size:120px">যন্ত্রণার মানুষ</div>
-<div id="painEn" class="t white ls" style="top:352px;font-size:24px">THE MAN OF PAIN</div>
-<div id="pL" class="lbl" style="left:440px;top:790px"><div class="bn ochre" style="font-size:66px">যিনি যন্ত্রণা দেন</div><div class="white ls" style="font-size:20px;margin-top:10px">HE WHO GIVES PAIN</div></div>
-<div id="pR" class="lbl" style="left:1480px;top:790px"><div class="bn ink" style="font-size:66px">যিনি যন্ত্রণা পান</div><div class="white ls" style="font-size:20px;margin-top:10px">HE WHO SUFFERS IT</div></div>
+<div id="pain" class="t bn ochre" style="top:170px;font-size:150px">যন্ত্রণার মানুষ</div>
+<div id="painEn" class="t white ls" style="top:384px;font-size:24px">THE MAN OF PAIN</div>
+<div id="pL" class="lbl" style="left:440px;top:790px"><div class="bn ochre" style="font-size:82px">যিনি যন্ত্রণা দেন</div><div class="white ls" style="font-size:20px;margin-top:10px">HE WHO GIVES PAIN</div></div>
+<div id="pR" class="lbl" style="left:1480px;top:790px"><div class="bn ink" style="font-size:82px">যিনি যন্ত্রণা পান</div><div class="white ls" style="font-size:20px;margin-top:10px">HE WHO SUFFERS IT</div></div>
 
 <canvas id="fx" width="1920" height="1080"></canvas>
 </div>
@@ -318,7 +317,7 @@ function render(t){
   burst(3.66,480,290,.5);burst(11.07,480,620,.45);burst(12.09,960,620,.45);burst(13.08,1440,620,.45);burst(20.36,960,250,.8);
 }
 window.render=render;
-Promise.all([document.fonts.load('800 60px BnSerif','যন্ত্রণা'),document.fonts.load('60px Archides'),document.fonts.ready,
+Promise.all([document.fonts.load('60px Dabanol','যন্ত্রণা'),document.fonts.load('60px Archides'),document.fonts.ready,
   ...['homer.png','autolycus.png','odysseus.png'].map(src=>new Promise(r=>{const im=new Image();im.onload=r;im.onerror=r;im.src=src;}))])
   .then(()=>{render(0);window.ready=true;});
 </script></body></html>
