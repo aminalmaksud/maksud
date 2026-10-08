@@ -1,0 +1,391 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Archides;src:url(Archides.otf)}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#140a05}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:Archides;color:#1b110b}
+#cam{position:absolute;inset:0;transform-origin:50% 50%}
+canvas,svg.layer{position:absolute;left:0;top:0}
+svg text{font-family:Archides}
+.t{position:absolute;left:0;width:1920px;text-align:center;white-space:nowrap;will-change:transform,opacity}
+.lbl{position:absolute;text-align:center;white-space:nowrap;transform:translateX(-50%)}
+.ink{color:#1b110b;text-shadow:-1px -1px 0 rgba(241,228,198,.18),0 6px 22px rgba(40,12,0,.35)}
+.ochre{color:#dda246;text-shadow:0 2px 0 rgba(27,17,11,.85),0 0 18px rgba(255,190,90,.25)}
+.white{color:#f1e4c6;text-shadow:0 2px 0 rgba(27,17,11,.8)}
+.ls{letter-spacing:.3em}
+.bust{filter:sepia(.55) saturate(1.2) contrast(1.1) brightness(.95)}
+</style></head>
+<body><div id="stage"><div id="cam">
+<canvas id="bg" width="1920" height="1080"></canvas>
+<div id="light" style="position:absolute;inset:0"></div>
+
+<svg class="layer" id="sv" width="1920" height="1080" viewBox="0 0 1920 1080">
+<defs>
+  <radialGradient id="discG" cx=".5" cy=".42" r=".6">
+    <stop offset="0" stop-color="#e29a63"/><stop offset=".7" stop-color="#c86a38"/><stop offset="1" stop-color="#9c4520"/>
+  </radialGradient>
+  <linearGradient id="sheetG" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#d9a36a"/><stop offset=".5" stop-color="#e6b983"/><stop offset="1" stop-color="#c88e56"/>
+  </linearGradient>
+  <!-- black-figure profile head facing right (origin = centre of head) -->
+  <g id="headBeard">
+    <path d="M-34 10 Q-46 -40 -16 -60 Q18 -72 34 -46 L42 -24 L54 -12 L42 -6 Q44 6 36 12 Q34 24 22 28 Q-10 34 -34 10 Z" fill="#1b110b"/>
+    <path d="M4 14 Q38 18 46 42 Q48 66 30 80 Q8 66 -4 44 Z" fill="#1b110b"/>
+    <path d="M14 24 q10 14 8 32 M6 30 q6 12 4 26 M26 30 q6 10 4 22" stroke="#b5552b" stroke-width="2.2" fill="none"/>
+    <path d="M24 -26 q7 -4 14 0 q-7 4 -14 0 Z" fill="#f1e4c6"/><circle cx="31" cy="-26" r="2" fill="#1b110b"/>
+    <path d="M-36 -2 q-12 18 -10 40 q8 -10 18 -12 Z" fill="#1b110b"/>
+    <path d="M-34 4 q-6 14 -4 28 M-24 4 q-4 14 0 26" stroke="#b5552b" stroke-width="2" fill="none"/>
+  </g>
+  <g id="headYouth">
+    <path d="M-30 14 Q-42 -36 -12 -56 Q20 -66 34 -42 L40 -22 L52 -10 L40 -6 Q42 4 36 10 Q36 20 30 26 Q22 34 4 32 L4 50 L-22 50 L-18 30 Q-28 24 -30 14 Z" fill="#1b110b"/>
+    <path d="M-30 -26 Q4 -60 36 -38" stroke="#dda246" stroke-width="5" fill="none"/>
+    <path d="M22 -24 q7 -4 14 0 q-7 4 -14 0 Z" fill="#f1e4c6"/><circle cx="29" cy="-24" r="2" fill="#1b110b"/>
+    <path d="M-26 -10 q-6 16 -2 32 M-16 -14 q-4 14 0 26" stroke="#b5552b" stroke-width="2" fill="none"/>
+  </g>
+  <!-- swaddled infant -->
+  <g id="baby">
+    <path d="M-48 6 Q-50 -20 -14 -22 L36 -18 Q48 0 36 18 L-14 22 Q-46 24 -48 6 Z" fill="#1b110b"/>
+    <path d="M-30 -18 L-36 18 M-12 -20 L-18 20 M8 -19 L2 20 M24 -17 L18 19" stroke="#dda246" stroke-width="2.6"/>
+    <circle cx="54" cy="-6" r="20" fill="#1b110b"/>
+    <path d="M42 -22 q12 -8 24 0" stroke="#b5552b" stroke-width="2.4" fill="none"/>
+    <circle cx="62" cy="-9" r="3" fill="#f1e4c6"/>
+  </g>
+</defs>
+
+<!-- ===================== SCENE A: Homer's Odyssey ===================== -->
+<g id="shelf"></g>
+<g id="baby1"><use href="#baby"/><text id="babyQ" x="10" y="-44" font-size="54" fill="#f1e4c6" text-anchor="middle">?</text>
+  <path id="babyX" d="M-50 -40 L80 40 M80 -40 L-50 40" stroke="#1b110b" stroke-width="12" stroke-linecap="round"/>
+</g>
+<g id="stamp" transform="translate(1310 525)">
+  <rect x="-330" y="-92" width="660" height="184" fill="rgba(27,17,11,.88)"/>
+  <rect x="-316" y="-78" width="632" height="156" fill="none" stroke="#dda246" stroke-width="4"/>
+  <rect x="-304" y="-66" width="608" height="132" fill="none" stroke="#dda246" stroke-width="1.5"/>
+  <text x="0" y="-8" font-size="64" fill="#dda246" text-anchor="middle" letter-spacing="4">NOT A SINGLE LINE</text>
+  <text x="0" y="44" font-size="24" fill="#f1e4c6" text-anchor="middle" letter-spacing="7">ABOUT A CHILD OF CIRCE</text>
+</g>
+
+<!-- ===================== SCENE B/C: the family tree ===================== -->
+<g id="tree" fill="none" stroke="#1b110b" stroke-width="5" stroke-linecap="round">
+  <path id="trUnion" d="M540 330 H720"/>
+  <path id="trDown" d="M630 330 V560"/>
+  <path id="trBar" d="M300 610 H960"/>
+  <path id="trD0" d="M300 610 V640"/><path id="trD1" d="M630 610 V640"/><path id="trD2" d="M960 610 V640"/>
+</g>
+<g id="plus" transform="translate(630 330)"><circle r="30" fill="#1b110b"/><circle r="24" fill="none" stroke="#dda246" stroke-width="2"/>
+  <path d="M-12 0 H12 M0 -12 V12" stroke="#f1e4c6" stroke-width="5" stroke-linecap="round"/></g>
+<g id="sonQ" transform="translate(630 640)">
+  <circle r="64" fill="none" stroke="#1b110b" stroke-width="4" stroke-dasharray="3 10" stroke-linecap="round"/>
+  <use href="#baby" transform="scale(.8) translate(-8 6)"/>
+  <text x="0" y="-74" font-size="26" fill="#f1e4c6" text-anchor="middle" letter-spacing="6">A SON?</text>
+</g>
+<g id="sons"></g>
+<g id="odysseus"></g>
+
+<!-- Theogony line bar -->
+<g id="theo">
+  <rect x="1150" y="784" width="600" height="32" fill="#1b110b"/>
+  <rect id="theoFill" x="1156" y="790" width="0" height="20" fill="url(#sheetG)"/>
+  <g id="theoTicks"></g>
+  <rect id="endSeg" x="1734" y="778" width="12" height="44" fill="#dda246" stroke="#1b110b" stroke-width="2"/>
+  <circle id="theoHead" cx="1156" cy="800" r="12" fill="#dda246" stroke="#1b110b" stroke-width="3"/>
+  <path id="endPtr" d="M1740 826 V868" stroke="#dda246" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/>
+</g>
+<g id="tokens"></g>
+
+<!-- ===================== SCENE D: Homer's legacy ===================== -->
+<g id="homer">
+  <rect x="-62" y="-14" width="124" height="14" fill="#1b110b"/>
+  <path d="M-46 -14 L-42 -196 L42 -196 L46 -14 Z" fill="#1b110b"/>
+  <path d="M-34 -24 L-31 -186 L31 -186 L34 -24 Z" fill="none" stroke="#dda246" stroke-width="2"/>
+  <text x="0" y="-100" font-size="24" fill="#dda246" text-anchor="middle" letter-spacing="2">HOMER</text>
+  <path d="M-36 -128 H36 M-36 -70 H36" stroke="#b5552b" stroke-width="2"/>
+  <path d="M-70 -196 Q-60 -222 -24 -226 L30 -226 Q62 -222 70 -196 Z" fill="#1b110b"/>
+  <path d="M-30 -230 Q-44 -268 -30 -300 Q-10 -326 18 -318 Q40 -310 44 -284 L52 -270 L44 -266 Q46 -254 40 -250 Q40 -236 30 -230 Z" fill="#1b110b"/>
+  <path d="M6 -258 Q30 -246 36 -230 Q40 -206 22 -190 Q8 -200 -2 -214 Q-10 -232 6 -258 Z" fill="#1b110b"/>
+  <path d="M12 -248 q8 14 6 30 M2 -246 q6 16 2 30 M22 -240 q4 10 2 22" stroke="#b5552b" stroke-width="2" fill="none"/>
+  <path d="M-36 -296 Q4 -310 40 -292" stroke="#dda246" stroke-width="5" fill="none"/>
+  <path d="M18 -280 q8 4 16 0" stroke="#f1e4c6" stroke-width="2.2" fill="none"/>
+</g>
+<!-- Tiresias, the blind seer, facing left -->
+<g id="tiresias"><g id="tirIn" transform="scale(-1 1)">
+  <path d="M-42 -32 L-40 0 L-6 0 L-10 -32 Z M10 -32 L12 0 L52 0 Q56 -6 44 -10 L38 -32 Z" fill="#1b110b"/>
+  <path d="M-34 -330 Q-66 -300 -68 -220 Q-72 -120 -58 -30 L62 -30 Q72 -120 62 -220 Q58 -296 34 -330 Z" fill="#1b110b"/>
+  <path d="M-44 -240 Q-50 -140 -44 -40 M-22 -200 Q-26 -120 -22 -40 M0 -190 Q4 -110 2 -40 M22 -200 Q30 -120 26 -40 M46 -220 Q54 -130 50 -40" stroke="#b5552b" stroke-width="2.4" fill="none" opacity=".9"/>
+  <path d="M-58 -44 L62 -44" stroke="#8a2e1c" stroke-width="10"/><path d="M-58 -44 L62 -44" stroke="#f1e4c6" stroke-width="2" stroke-dasharray="3 7"/>
+  <path d="M-40 -330 Q-80 -300 -70 -250 L-40 -250 Z" fill="#1b110b"/>
+  <path d="M-10 -352 L18 -352 L22 -326 L-14 -326 Z" fill="#1b110b"/>
+  <path d="M-24 -364 Q-32 -404 -8 -418 Q20 -426 32 -404 L38 -388 L48 -378 L38 -374 Q40 -364 34 -360 Q32 -350 22 -346 Q-12 -340 -24 -364 Z" fill="#1b110b"/>
+  <path d="M4 -356 Q38 -350 46 -320 Q50 -280 30 -252 Q6 -270 -6 -310 Z" fill="#1b110b"/>
+  <path d="M16 -344 q12 20 8 46 M6 -340 q8 18 4 40 M30 -336 q8 16 4 34" stroke="#b5552b" stroke-width="2" fill="none"/>
+  <path d="M-26 -398 Q4 -422 32 -402" stroke="#f1e4c6" stroke-width="4" fill="none"/>
+  <path d="M18 -392 q7 4 14 0" stroke="#f1e4c6" stroke-width="2.4" fill="none"/>
+  <path d="M28 -300 Q60 -270 88 -250" stroke="#1b110b" stroke-width="18" stroke-linecap="round" fill="none"/>
+  <path d="M96 -470 L100 2" stroke="#1b110b" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="96" cy="-476" r="12" fill="#dda246" stroke="#1b110b" stroke-width="4"/>
+  <path d="M96 -440 q14 10 0 20 q-14 10 0 20" stroke="#dda246" stroke-width="3" fill="none"/>
+</g></g>
+<!-- prophecy scroll -->
+<g id="proph" transform="translate(900 430)">
+  <rect x="-300" y="-92" width="600" height="184" fill="url(#sheetG)"/>
+  <path d="M-300 -78 H300 M-300 78 H300" stroke="#8a4a22" stroke-width="2" opacity=".6"/>
+  <text x="0" y="-26" font-size="30" fill="#3a2416" text-anchor="middle" letter-spacing="6">YOUR DEATH WILL COME</text>
+  <text x="0" y="46" font-size="76" fill="#1b110b" text-anchor="middle" letter-spacing="8">EX HALOS</text>
+  <g transform="translate(-306 0)"><rect x="-13" y="-106" width="26" height="212" rx="10" fill="#1b110b"/><circle cy="-112" r="11" fill="#dda246" stroke="#1b110b" stroke-width="3"/><circle cy="112" r="11" fill="#dda246" stroke="#1b110b" stroke-width="3"/></g>
+  <g transform="translate(306 0)"><rect x="-13" y="-106" width="26" height="212" rx="10" fill="#1b110b"/><circle cy="-112" r="11" fill="#dda246" stroke="#1b110b" stroke-width="3"/><circle cy="112" r="11" fill="#dda246" stroke="#1b110b" stroke-width="3"/></g>
+</g>
+
+<g id="medals"></g>
+</svg>
+
+<!-- ===== TEXT ===== -->
+<div id="k0" class="t white ls" style="top:150px;font-size:36px">IT IS WORTH NOTING</div>
+<div id="oTitle" class="lbl ink" style="left:1310px;top:160px;font-size:70px;letter-spacing:.06em">HOMER'S <span class="ochre">ODYSSEY</span></div>
+<div id="oSub" class="lbl white ls" style="left:1310px;top:250px;font-size:22px">24 BOOKS &middot; OVER 12,000 LINES</div>
+<div id="bookX" class="lbl ochre ls" style="left:1310px;top:800px;font-size:24px">BOOK X &middot; CIRCE'S ISLAND</div>
+<div id="cName" class="lbl ink" style="left:430px;top:706px;font-size:76px;letter-spacing:.08em">CIRCE</div>
+<div id="cSub" class="lbl white ls" style="left:430px;top:800px;font-size:22px">THE ENCHANTRESS OF AEAEA</div>
+
+<div id="tCirce" class="lbl ink" style="left:430px;top:452px;font-size:30px;letter-spacing:.08em">CIRCE</div>
+<div id="tOdy" class="lbl ink" style="left:830px;top:452px;font-size:30px;letter-spacing:.08em">ODYSSEUS</div>
+<div id="first" class="lbl white ls" style="left:1450px;top:150px;font-size:26px">FIRST MENTIONED BY</div>
+<div id="hName" class="lbl ink" style="left:1450px;top:612px;font-size:62px;letter-spacing:.08em">HESIOD</div>
+<div id="hSub" class="lbl white ls" style="left:1450px;top:684px;font-size:18px">A POET OF HOMER'S OWN AGE</div>
+<div id="theoT" class="lbl ochre" style="left:1450px;top:720px;font-size:44px;letter-spacing:.1em">THEOGONY</div>
+<div id="vEnd" class="lbl ochre ls" style="left:1560px;top:880px;font-size:24px">THE VERY END &middot; LINES 1011&ndash;1014</div>
+<div id="few" class="lbl white ls" style="left:630px;top:540px;font-size:20px;padding:10px 18px;background:#1b110b">A FEW NAMES</div>
+<div id="sn0" class="lbl ink" style="left:300px;top:722px;font-size:38px;letter-spacing:.06em">AGRIUS</div>
+<div id="sn1" class="lbl ink" style="left:630px;top:722px;font-size:38px;letter-spacing:.06em">LATINUS</div>
+<div id="sn2" class="lbl ochre" style="left:960px;top:722px;font-size:42px;letter-spacing:.06em">TELEGONUS</div>
+<div id="tyr" class="lbl white ls" style="left:465px;top:782px;font-size:18px">RULERS OF THE TYRSENIANS</div>
+<div id="far" class="lbl white ls" style="left:960px;top:782px;font-size:18px">THE SON BORN FAR AWAY</div>
+
+<div id="left" class="t white ls" style="top:160px;font-size:30px">WHAT HOMER LEFT BEHIND</div>
+<div id="pLbl" class="t ochre" style="top:206px;font-size:66px;letter-spacing:.06em">TIRESIAS'S PROPHECY</div>
+<div id="pBook" class="lbl white ls" style="left:900px;top:546px;font-size:20px">ODYSSEY &middot; BOOK XI</div>
+<div id="tName" class="lbl ink" style="left:1330px;top:842px;font-size:54px;letter-spacing:.08em">TIRESIAS</div>
+<div id="tSub" class="lbl white ls" style="left:1330px;top:910px;font-size:18px">THE BLIND SEER OF THEBES</div>
+<div id="hmLbl" class="lbl white ls" style="left:480px;top:842px;font-size:22px">HOMER</div>
+
+<canvas id="fx" width="1920" height="1080"></canvas>
+</div>
+<svg class="layer" id="frame" width="1920" height="1080">
+  <defs>
+    <pattern id="key" width="56" height="56" patternUnits="userSpaceOnUse">
+      <rect width="56" height="56" fill="#1b110b"/>
+      <path d="M0 47 H56 M6 47 V9 H46 V39 H18 V21 H34 V31" fill="none" stroke="#c4683a" stroke-width="5" stroke-linecap="square"/>
+    </pattern>
+    <clipPath id="frameClip"><rect id="frameRect" x="960" y="0" width="0" height="1080"/></clipPath>
+  </defs>
+  <g clip-path="url(#frameClip)">
+    <rect x="0" y="18" width="1920" height="10" fill="#1b110b"/>
+    <rect x="0" y="34" width="1920" height="56" fill="url(#key)"/>
+    <rect x="0" y="96" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="104" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="974" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="980" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="990" width="1920" height="56" fill="url(#key)" transform="translate(0 2036) scale(1 -1)"/>
+    <rect x="0" y="1052" width="1920" height="10" fill="#1b110b"/>
+  </g>
+</svg>
+<div id="vig" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 45%,rgba(20,6,0,.55) 100%)"></div>
+<div id="black" style="position:absolute;inset:0;background:#0d0603"></div>
+</div>
+<script>
+const W=1920,H=1080,$=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const out=x=>1-Math.pow(1-clamp(x),3);
+const back=x=>{x=clamp(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const seg=(t,a,b)=>clamp((t-a)/(b-a));
+const lerp=(a,b,p)=>a+(b-a)*p;
+let s=31;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e;};
+const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI','XXII','XXIII','XXIV'];
+
+/* ---------- aged terracotta ground ---------- */
+(function(){
+  const c=$('bg').getContext('2d');
+  const g=c.createRadialGradient(W/2,H*.45,80,W/2,H/2,1150);
+  g.addColorStop(0,'#cf7442');g.addColorStop(.55,'#b5552b');g.addColorStop(1,'#7c3418');
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  for(let i=0;i<70;i++){const x=rnd()*W,y=rnd()*H,r=60+rnd()*260,dark=rnd()<.6;
+    const b=c.createRadialGradient(x,y,0,x,y,r);
+    b.addColorStop(0,dark?`rgba(70,28,10,${.05+rnd()*.08})`:`rgba(240,190,140,${.04+rnd()*.06})`);b.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=b;c.fillRect(x-r,y-r,2*r,2*r);}
+  c.lineCap='round';
+  for(let i=0;i<900;i++){const x=rnd()*W,y=rnd()*H,a=rnd()*6.28,l=6+rnd()*30;
+    c.strokeStyle=rnd()<.5?`rgba(60,24,8,${.05+rnd()*.07})`:`rgba(250,210,170,${.04+rnd()*.06})`;c.lineWidth=.6+rnd();
+    c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);c.stroke();}
+  for(let i=0;i<14;i++){let x=rnd()*W,y=rnd()*H,a=rnd()*6.28;c.strokeStyle=`rgba(50,18,6,${.12+rnd()*.12})`;c.lineWidth=.8+rnd()*.8;
+    c.beginPath();c.moveTo(x,y);for(let k=0;k<20+rnd()*30;k++){a+=(rnd()-.5)*.9;x+=Math.cos(a)*9;y+=Math.sin(a)*9;c.lineTo(x,y);}c.stroke();}
+  const id=c.getImageData(0,0,W,H),d=id.data;
+  for(let i=0;i<d.length;i+=4){const n=(rnd()-.5)*26;d[i]+=n;d[i+1]+=n*.85;d[i+2]+=n*.7;}
+  c.putImageData(id,0,0);
+})();
+
+/* ---------- the 24 book-rolls of the Odyssey ---------- */
+const ROLLS=[];
+(function(){for(let i=0;i<24;i++){const c=i%6,r=Math.floor(i/6);const x=1048+c*105,y=360+r*112;
+  const g=el('g',{},$('shelf'));
+  const glow=el('rect',{x:-44,y:-54,width:88,height:108,rx:20,fill:'none',stroke:'#ffcf7a','stroke-width':5,opacity:0},g);
+  el('rect',{x:-33,y:-44,width:66,height:88,rx:14,fill:'#1b110b'},g);
+  el('path',{d:'M-33 -30 H33 M-33 30 H33',stroke:'#dda246','stroke-width':3},g);
+  el('path',{d:'M-20 -38 V38',stroke:'#b5552b','stroke-width':2,opacity:.7},g);
+  const tx=el('text',{x:2,y:9,'font-size':22,fill:i===9?'#dda246':'#f1e4c6','text-anchor':'middle','letter-spacing':1},g);tx.textContent=ROMAN[i];
+  ROLLS.push({g,glow,x,y});}})();
+
+/* ---------- medallions (portraits with backgrounds removed) ---------- */
+function medal(id,r,img){
+  const g=el('g',{id:'m_'+id},$('medals'));
+  const cp=el('clipPath',{id:'cp_'+id},g);el('circle',{r},cp);
+  el('circle',{r:r+22,fill:'#1b110b'},g);
+  const n=Math.round(r/3.6);for(let k=0;k<n;k++){const a=k/n*6.283;el('circle',{cx:Math.cos(a)*(r+12),cy:Math.sin(a)*(r+12),r:3,fill:'#dda246'},g);}
+  el('circle',{r:r+3,fill:'none',stroke:'#b5552b','stroke-width':2},g);
+  el('circle',{r,fill:'url(#discG)'},g);
+  let im=null;
+  if(img)im=el('image',{href:img,x:-r*1.06,y:-r*.98,width:r*2.12,height:r*2.12,'clip-path':`url(#cp_${id})`,class:'bust'},g);
+  const inner=el('g',{'clip-path':`url(#cp_${id})`},g);
+  el('circle',{r,fill:'none',stroke:'#1b110b','stroke-width':5},g);
+  const fl=el('circle',{r,fill:'none',stroke:'#ffcf7a','stroke-width':8,opacity:0},g);
+  return {g,im,inner,fl,r};
+}
+const MC=medal('circe',175,'circe.png');
+const MH=medal('hesiod',165,'hesiod.png');
+const MO=medal('ody',110,null);
+// Odysseus in his pilos cap, black-figure
+(function(){const g=el('g',{transform:'translate(-6 22) scale(1.18)'},MO.inner);
+  el('use',{href:'#headBeard'},g);
+  el('path',{d:'M-40 -40 Q-30 -96 4 -104 Q34 -100 42 -40 Z',fill:'#1b110b'},g);
+  el('path',{d:'M-44 -40 Q2 -54 46 -38',stroke:'#dda246','stroke-width':6,fill:'none'},g);
+  el('path',{d:'M-24 -72 Q4 -82 30 -70',stroke:'#b5552b','stroke-width':2,fill:'none'},g);
+  el('path',{d:'M-20 40 Q-30 90 -80 110 L110 110 Q60 90 50 50 Z',fill:'#1b110b'},g);
+  el('path',{d:'M-40 92 L60 70',stroke:'#8a2e1c','stroke-width':10},g);
+})();
+$('odysseus').appendChild(MO.g);
+// the three sons
+const SONS=[0,1,2].map(i=>{const m=medal('son'+i,60,null);
+  const g=el('g',{transform:'translate(-4 16) scale(.82)'},m.inner);el('use',{href:'#headYouth'},g);
+  if(i===2){el('path',{d:'M62 80 V-46',stroke:'#1b110b','stroke-width':6},g);el('path',{d:'M62 -72 l-9 24 h18 Z',fill:'#dda246',stroke:'#1b110b','stroke-width':2},g);}
+  $('sons').appendChild(m.g);return m;});
+const SONX=[300,630,960],SONT=[13.43,14.17,15.45];
+
+/* ---------- Theogony bar ticks ---------- */
+const BX=l=>1156+588*(l/1022);
+[1,250,500,750,1022].forEach(n=>{el('path',{d:`M${BX(n)} 816 V826`,stroke:'#1b110b','stroke-width':3},$('theoTicks'));
+  const t=el('text',{x:BX(n),y:846,'font-size':15,fill:'#1b110b','text-anchor':'middle','letter-spacing':2},$('theoTicks'));t.textContent=n.toLocaleString('en')+(n===1022?' LINES':'');if(n===1022){t.setAttribute('text-anchor','end');t.setAttribute('x',BX(n)+14);}});
+const TOK=['AGRIUS','LATINUS','TELEGONUS'].map((w,i)=>{const t=el('text',{'font-size':24,fill:'#dda246','text-anchor':'middle','letter-spacing':3,stroke:'#1b110b','stroke-width':.8},$('tokens'));t.textContent=w;return t;});
+
+const fx=$('fx').getContext('2d');
+const motes=[...Array(70)].map(()=>({x:rnd()*W,y:rnd()*H,r:.8+rnd()*2.2,v:6+rnd()*16,p:rnd()*6.28}));
+const dust=[...Array(60)].map(()=>({a:rnd()*6.28,v:200+rnd()*500,r:1.5+rnd()*3.5}));
+
+function op(id,o,tr){const e=typeof id==='string'?$(id):id;e.style.opacity=o;if(tr!==undefined){if(e instanceof SVGElement)e.setAttribute('transform',tr);else e.style.transform=tr;}}
+const L=(id,o,dy=0)=>op(id,o,`translateX(-50%) translateY(${(1-o)*dy}px)`);
+function draw(id,p){const e=$(id);const len=e.getTotalLength();e.style.strokeDasharray=`${len*p} ${len}`;e.style.opacity=p>0?1:0;}
+
+/* Voice-over beats (pauses + sibilance analysis of the 20.64s take)
+   0.14 "it is worth noting"  1.10 "Homer's Odyssey"  2.17 "Circe ... no child"  3.86 "not a single line"
+   5.10 "of Circe's womb"  6.05 "Odysseus's son"  7.09 "first mention found"  8.39 Hesiod  9.21 Theogony
+   9.93-11.05 "at the very end"  11.68 "where a few names appear"  13.43 Agrius  14.17 Latinus  15.45 Telegonus
+   16.79 "what Homer left behind"  18.13 "was"  18.78 Tiresias's  19.66 prophecy (ends 20.33) */
+function render(t){
+  const shk=(t0,a)=>{const k=seg(t,t0,t0+.4);return k>0&&k<1?a*(1-k)*Math.sin(t*90):0;};
+  const sh=shk(3.88,8)+shk(15.47,4)+shk(19.7,6);
+  const z=1+.03*(t/22)+.004*Math.sin(t*.7);
+  $('cam').style.transform=`translate(${sh}px,${sh*.6}px) scale(${z})`;
+  $('black').style.opacity=1-seg(t,0,.5);
+  const lx=50+8*Math.sin(t*.25),ly=40+4*Math.cos(t*.31),fl=.2+.03*Math.sin(t*3.1)+.02*Math.sin(t*7.3);
+  $('light').style.background=`radial-gradient(ellipse 60% 55% at ${lx}% ${ly}%,rgba(255,196,120,${fl}) 0%,rgba(255,160,90,0) 70%)`;
+  const fr=ease(seg(t,.05,1.0));$('frameRect').setAttribute('x',960-960*fr);$('frameRect').setAttribute('width',1920*fr);
+
+  /* ---------- A: the Odyssey says nothing ---------- */
+  const aOut=1-seg(t,4.8,5.2);
+  const tOut=1-seg(t,16.5,16.95);
+  const k0=out(seg(t,.15,.7))*(1-seg(t,.95,1.25));op('k0',k0,`translateY(${(1-k0)*-14}px)`);$('k0').style.letterSpacing=`${.5-.2*k0}em`;
+  L('oTitle',out(seg(t,1.1,1.6))*aOut,20);L('oSub',out(seg(t,1.45,1.9))*aOut,12);
+  ROLLS.forEach((r,i)=>{const p=back(seg(t,1.15+i*.03,1.6+i*.03));
+    // search sweep across all books, settling on book X
+    const sw=(t-2.4)*14;const lit=Math.max(0,1-Math.abs(sw-i)*.8)*seg(t,2.4,2.5)*(1-seg(t,3.6,3.7));
+    const isX=i===9;const xGlow=isX?seg(t,3.1,3.3)*(1-seg(t,3.86,4.1)*.6):0;
+    r.glow.setAttribute('opacity',Math.max(lit,xGlow));
+    const dim=1-.45*seg(t,3.86,4.1);
+    op(r.g,seg(t,1.15+i*.03,1.3+i*.03)*aOut*dim,`translate(${r.x} ${r.y+(1-p)*30-(isX?xGlow*8:0)}) scale(${(p*.98+.02)*(isX?1+xGlow*.12:1)})`);});
+  L('bookX',out(seg(t,3.1,3.5))*(1-seg(t,3.8,3.95)),10);
+  const st=back(seg(t,3.86,4.25));op('stamp',seg(t,3.86,3.95)*aOut,`translate(1310 525) rotate(${-6+(1-st)*12}) scale(${lerp(1.8,1,st)})`);
+  // Circe and the missing child
+  const cIn=back(seg(t,2.17,2.75)),cm=ease(seg(t,4.9,5.6));
+  const cx=lerp(430,430,cm),cy=lerp(500,330,cm),cs=lerp(1,110/175,cm);
+  op(MC.g,seg(t,2.17,2.3)*tOut,`translate(${cx} ${cy+(1-out(seg(t,2.17,2.7)))*40}) scale(${cs*(cIn*.98+.02)})`);
+  MC.fl.setAttribute('opacity',(1-seg(t,2.2,2.8))*seg(t,2.17,2.22));MC.fl.setAttribute('r',MC.r+seg(t,2.2,2.8)*60);
+  L('cName',out(seg(t,2.25,2.7))*(1-seg(t,4.7,5.0)),20);L('cSub',out(seg(t,2.5,2.9))*(1-seg(t,4.7,5.0)),12);
+  const bb=out(seg(t,2.6,3.1));op('baby1',bb*aOut*(1-.5*seg(t,3.9,4.2)),`translate(785 ${520+Math.sin(t*1.6)*6}) scale(${.9*(bb*.9+.1)})`);
+  $('babyQ').style.opacity=1-seg(t,3.86,4.0);draw('babyX',ease(seg(t,3.9,4.25)));
+
+  /* ---------- B: Circe + Odysseus -> a son ---------- */
+  L('tCirce',out(seg(t,5.3,5.8))*tOut,10);
+  const oi=back(seg(t,6.05,6.6));op(MO.g,seg(t,6.05,6.15)*tOut,`translate(830 330) scale(${oi*.98+.02})`);
+  MO.fl.setAttribute('opacity',(1-seg(t,6.1,6.7))*seg(t,6.05,6.1));MO.fl.setAttribute('r',MO.r+seg(t,6.1,6.7)*50);
+  L('tOdy',out(seg(t,6.15,6.6))*tOut,10);
+  const pl=back(seg(t,6.4,6.8));op('plus',seg(t,6.4,6.5)*tOut,`translate(630 330) scale(${pl+.0001})`);
+  $('tree').style.opacity=tOut;
+  draw('trUnion',ease(seg(t,6.3,6.7)));draw('trDown',ease(seg(t,6.7,7.2)));
+  const sq=out(seg(t,7.1,7.6))*(1-seg(t,11.7,12.0));op('sonQ',sq,`translate(630 ${640+(1-sq)*20}) scale(${.8+.2*sq})`);
+  // Hesiod
+  L('first',out(seg(t,7.1,7.6))*tOut,-12);
+  const hi=back(seg(t,8.39,8.95));op(MH.g,seg(t,8.39,8.5)*tOut,`translate(1450 410) scale(${hi*.98+.02})`);
+  MH.fl.setAttribute('opacity',(1-seg(t,8.42,9.0))*seg(t,8.39,8.43));MH.fl.setAttribute('r',MH.r+seg(t,8.42,9.0)*60);
+  const hn=out(seg(t,8.45,8.9));L('hName',hn*tOut,20);$('hName').style.letterSpacing=`${.3-.22*hn}em`;
+  L('hSub',out(seg(t,8.8,9.2))*tOut,10);
+  // the Theogony, read to its last lines
+  const th=out(seg(t,9.21,9.7));L('theoT',th*tOut,14);
+  op('theo',seg(t,9.25,9.45)*tOut);
+  const run=ease(seg(t,9.93,11.0));$('theoFill').setAttribute('width',588*run);$('theoHead').setAttribute('cx',1156+588*run);
+  const es=seg(t,10.9,11.05);$('endSeg').style.opacity=es*(.75+.25*Math.sin(t*7));
+  draw('endPtr',ease(seg(t,10.95,11.3)));
+  L('vEnd',out(seg(t,10.95,11.4))*tOut,10);
+
+  /* ---------- C: a few names ---------- */
+  L('few',out(seg(t,11.68,12.1))*tOut,10);
+  draw('trBar',ease(seg(t,11.75,12.4)));
+  [0,1,2].forEach(i=>{draw('trD'+i,ease(seg(t,12.3+i*.1,12.6+i*.1)));
+    const ti=SONT[i];
+    // the name flies out of the end of the Theogony and lands on the tree
+    const f=ease(seg(t,ti-.55,ti));const tk=TOK[i];
+    const x=lerp(1740,SONX[i],f),y=lerp(860,700,f)-Math.sin(f*Math.PI)*220;
+    tk.setAttribute('x',x);tk.setAttribute('y',y);tk.style.opacity=seg(t,ti-.55,ti-.45)*(1-seg(t,ti-.05,ti+.05));
+    const m=SONS[i];const p=back(seg(t,ti,ti+.5));
+    op(m.g,seg(t,ti,ti+.1)*tOut,`translate(${SONX[i]} 700) scale(${(p*.98+.02)*(i===2?1.15:1)})`);
+    m.fl.setAttribute('opacity',(1-seg(t,ti,ti+.6))*seg(t,ti-.02,ti));m.fl.setAttribute('r',m.r+seg(t,ti,ti+.6)*50);
+    const n=out(seg(t,ti+.05,ti+.5));L('sn'+i,n*tOut,16);});
+  $('sn0').style.top='776px';$('sn1').style.top='776px';$('sn2').style.top='782px';
+  L('tyr',out(seg(t,14.6,15.1))*tOut,10);L('far',out(seg(t,15.9,16.3))*tOut,10);
+  $('tyr').style.top='830px';$('far').style.top='840px';
+
+  /* ---------- D: what Homer left behind ---------- */
+  op('left',out(seg(t,16.85,17.3)),`translateY(${(1-out(seg(t,16.85,17.3)))*-12}px)`);
+  const hm=back(seg(t,16.9,17.5));op('homer',seg(t,16.9,17.05),`translate(480 ${820+(1-hm)*60}) scale(1.05)`);
+  L('hmLbl',out(seg(t,17.2,17.6)),10);
+  const ti=back(seg(t,18.78,19.35));op('tiresias',seg(t,18.78,18.9),`translate(1330 ${822+(1-ti)*70}) scale(1.05)`);
+  const tn=out(seg(t,18.85,19.3));L('tName',tn,20);$('tName').style.letterSpacing=`${.3-.22*tn}em`;
+  L('tSub',out(seg(t,19.2,19.6)),10);
+  const pr=seg(t,19.66,20.3);
+  op('pLbl',out(seg(t,19.66,20.1)),`translateY(${(1-out(seg(t,19.66,20.1)))*20}px) scale(${1.25-.25*out(seg(t,19.66,20.1))})`);
+  $('left').style.top=lerp(160,140,seg(t,19.6,19.9))+'px';
+  const un=ease(seg(t,19.7,20.5));
+  op('proph',seg(t,19.7,19.8),`translate(900 430) scale(${lerp(.05,1,un)} 1)`);
+  L('pBook',out(seg(t,20.4,20.9)),10);
+
+  /* ---------- particles ---------- */
+  fx.clearRect(0,0,W,H);
+  for(const m of motes){const y=((m.y-m.v*t*2)%H+H)%H,x=m.x+Math.sin(t*.8+m.p)*14;
+    fx.fillStyle=`rgba(255,${200+m.r*15|0},140,${(.15+.25*Math.sin(t*1.7+m.p)**2)*seg(t,0,1.2)})`;
+    fx.beginPath();fx.arc(x,y,m.r,0,6.3);fx.fill();}
+  const burst=(t0,cx,cy,sc)=>{const k=seg(t,t0,t0+.8);if(k<=0||k>=1)return;for(const d of dust){const r=d.v*out(k)*sc;
+      fx.fillStyle=`rgba(60,26,10,${(1-k)*.5})`;fx.beginPath();fx.arc(cx+Math.cos(d.a)*r*1.6,cy+Math.sin(d.a)*r*.5,d.r,0,6.3);fx.fill();}};
+  burst(3.88,1310,525,.8);burst(19.72,900,430,.7);
+}
+window.render=render;
+Promise.all([document.fonts.ready,...['circe.png','hesiod.png'].map(src=>new Promise(r=>{const im=new Image();im.onload=r;im.onerror=r;im.src=src;}))])
+  .then(()=>{render(0);window.ready=true;});
+</script></body></html>
