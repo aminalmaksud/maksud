@@ -1,0 +1,329 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Archides;src:url(Archides.otf)}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#140a05}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:Archides;color:#1b110b}
+#cam{position:absolute;inset:0;transform-origin:50% 50%}
+canvas,svg.layer{position:absolute;left:0;top:0}
+svg text{font-family:Archides}
+.t{position:absolute;left:0;width:1920px;text-align:center;white-space:nowrap;will-change:transform,opacity}
+.lbl{position:absolute;text-align:center;white-space:nowrap;transform:translateX(-50%)}
+.ink{color:#1b110b;text-shadow:-1px -1px 0 rgba(241,228,198,.18),0 6px 22px rgba(40,12,0,.35)}
+.ochre{color:#dda246;text-shadow:0 2px 0 rgba(27,17,11,.85),0 0 18px rgba(255,190,90,.25)}
+.white{color:#f1e4c6;text-shadow:0 2px 0 rgba(27,17,11,.8)}
+.ls{letter-spacing:.3em}
+.bust{filter:sepia(.6) saturate(1.25) contrast(1.12) brightness(.93)}
+</style></head>
+<body><div id="stage"><div id="cam">
+<canvas id="bg" width="1920" height="1080"></canvas>
+<div id="light" style="position:absolute;inset:0"></div>
+
+<svg class="layer" id="sv" width="1920" height="1080" viewBox="0 0 1920 1080">
+<defs>
+  <filter id="paper" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 .25  0 0 0 0 .12  0 0 0 0 .04  0 0 0 .35 0" result="g"/>
+    <feComposite in="g" in2="SourceGraphic" operator="in" result="gi"/>
+    <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="gi"/></feMerge>
+  </filter>
+  <linearGradient id="sheetG" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#d9a36a"/><stop offset=".5" stop-color="#e6b983"/><stop offset="1" stop-color="#c88e56"/>
+  </linearGradient>
+  <radialGradient id="discG" cx=".5" cy=".42" r=".6">
+    <stop offset="0" stop-color="#e29a63"/><stop offset=".7" stop-color="#c86a38"/><stop offset="1" stop-color="#9c4520"/>
+  </radialGradient>
+  <clipPath id="sheetClip"><rect x="-545" y="-150" width="1090" height="300"/></clipPath>
+  <mask id="burnMask" maskUnits="userSpaceOnUse" x="-700" y="-300" width="1400" height="600">
+    <rect x="-700" y="-300" width="1400" height="600" fill="#fff"/>
+    <g id="holes" fill="#000"></g>
+  </mask>
+</defs>
+
+<!-- divider between the summary and the fragments -->
+<path id="divider" d="M790 330 V910" stroke="#1b110b" stroke-width="3" stroke-dasharray="2 12" stroke-linecap="round"/>
+
+<!-- ===== Proclus: two books become a few lines ===== -->
+<g id="epic">
+  <g id="cols"></g>
+  <text id="epicLbl" x="1160" y="356" font-size="30" fill="#1b110b" text-anchor="middle" letter-spacing="6">THE EPIC &#183; TWO BOOKS</text>
+</g>
+<g id="arrow"><path d="M1372 620 H1462" stroke="#dda246" stroke-width="6" stroke-linecap="round"/><path d="M1478 620 l-24 -15 v30 Z" fill="#dda246" stroke="#1b110b" stroke-width="2"/></g>
+<g id="tablet" transform="translate(1610 620)">
+  <rect x="-110" y="-86" width="220" height="172" rx="6" fill="#1b110b"/>
+  <rect x="-98" y="-74" width="196" height="148" rx="3" fill="#3a2416" stroke="#dda246" stroke-width="2.4"/>
+  <g stroke="#f1e4c6" stroke-width="5" stroke-linecap="round">
+    <path d="M-76 -46 H70"/><path d="M-76 -18 H52"/><path d="M-76 10 H64"/><path d="M-76 38 H24"/>
+  </g>
+  <circle cx="0" cy="-100" r="9" fill="#1b110b"/><path d="M0 -92 V-86" stroke="#1b110b" stroke-width="4"/>
+</g>
+
+<!-- ===== three empty roundels for the later mythographers ===== -->
+<g id="lines" fill="none" stroke="#dda246" stroke-width="4" stroke-linecap="round"></g>
+<g id="medals"></g>
+
+<!-- ===== fragments of the lost epic ===== -->
+<g id="frags"></g>
+
+<!-- ===== the burnt TELEGONY scroll ===== -->
+<g id="scroll">
+  <g mask="url(#burnMask)">
+    <g clip-path="url(#sheetClip)">
+      <rect x="-560" y="-150" width="1120" height="300" fill="url(#sheetG)" filter="url(#paper)"/>
+      <path d="M-560 -134 H560 M-560 134 H560" stroke="#8a4a22" stroke-width="2" opacity=".6"/>
+      <g id="writing" stroke="#3a2416" stroke-width="5" stroke-linecap="round" opacity=".55"></g>
+    </g>
+  </g>
+  <g clip-path="url(#sheetClip)"><g id="embers" fill="none" stroke-linecap="round"></g></g>
+  <g id="title"><text x="0" y="62" font-size="176" fill="#1b110b" text-anchor="middle" letter-spacing="10">TELEGONY</text>
+    <path d="M-380 96 H380" stroke="#8a2e1c" stroke-width="4"/></g>
+  <g transform="translate(-549 0)"><rect x="-15" y="-172" width="30" height="344" rx="12" fill="#1b110b"/><path d="M-6 -160 V160" stroke="#b5552b" stroke-width="2"/>
+    <circle cy="-180" r="14" fill="#dda246" stroke="#1b110b" stroke-width="4"/><circle cy="180" r="14" fill="#dda246" stroke="#1b110b" stroke-width="4"/></g>
+  <g transform="translate(549 0)"><rect x="-15" y="-172" width="30" height="344" rx="12" fill="#1b110b"/><path d="M-6 -160 V160" stroke="#b5552b" stroke-width="2"/>
+    <circle cy="-180" r="14" fill="#dda246" stroke="#1b110b" stroke-width="4"/><circle cy="180" r="14" fill="#dda246" stroke="#1b110b" stroke-width="4"/></g>
+  <circle id="glow" r="10" fill="none"/>
+</g>
+</svg>
+
+<!-- ===== TEXT ===== -->
+<div id="k0" class="t white ls" style="top:150px;font-size:38px">ALL WE HAVE LEFT</div>
+<div id="pName" class="lbl ink" style="left:400px;top:742px;font-size:84px;letter-spacing:.06em">PROCLUS</div>
+<div id="pSub" class="lbl white ls" style="left:400px;top:842px;font-size:24px">A SCHOLAR OF A LATER AGE</div>
+<div id="pWork" class="lbl ochre ls" style="left:400px;top:884px;font-size:22px">THE CHRESTOMATHY</div>
+<div id="few" class="lbl ochre" style="left:1610px;top:726px;font-size:44px;letter-spacing:.08em">A FEW LINES</div>
+<div id="summ" class="lbl white ls" style="left:1610px;top:784px;font-size:24px">OF SUMMARY</div>
+<div id="scat" class="lbl ochre" style="left:1330px;top:318px;font-size:58px;letter-spacing:.08em">SCATTERED FRAGMENTS</div>
+<div id="myth" class="lbl white ls" style="left:1330px;top:396px;font-size:22px">IN THE WRITINGS OF LATER MYTHOGRAPHERS</div>
+<div id="n0" class="lbl ink" style="left:1000px;top:722px;font-size:36px;letter-spacing:.04em">APOLLODORUS</div>
+<div id="w0" class="lbl white ls" style="left:1000px;top:772px;font-size:18px">THE LIBRARY</div>
+<div id="n1" class="lbl ink" style="left:1330px;top:722px;font-size:36px;letter-spacing:.04em">HYGINUS</div>
+<div id="w1" class="lbl white ls" style="left:1330px;top:772px;font-size:18px">FABULAE</div>
+<div id="n2" class="lbl ink" style="left:1660px;top:722px;font-size:36px;letter-spacing:.04em">PARTHENIUS</div>
+<div id="w2" class="lbl white ls" style="left:1660px;top:772px;font-size:18px">SUFFERINGS IN LOVE</div>
+<div id="final" class="lbl ink" style="left:1330px;top:858px;font-size:30px;letter-spacing:.1em">THE STORY SURVIVES <span class="ochre">THROUGH THEIR HANDS</span></div>
+
+<canvas id="fx" width="1920" height="1080"></canvas>
+</div>
+<!-- fixed frame: meander bands -->
+<svg class="layer" id="frame" width="1920" height="1080">
+  <defs>
+    <pattern id="key" width="56" height="56" patternUnits="userSpaceOnUse">
+      <rect width="56" height="56" fill="#1b110b"/>
+      <path d="M0 47 H56 M6 47 V9 H46 V39 H18 V21 H34 V31" fill="none" stroke="#c4683a" stroke-width="5" stroke-linecap="square"/>
+    </pattern>
+    <clipPath id="frameClip"><rect id="frameRect" x="960" y="0" width="0" height="1080"/></clipPath>
+  </defs>
+  <g clip-path="url(#frameClip)">
+    <rect x="0" y="18" width="1920" height="10" fill="#1b110b"/>
+    <rect x="0" y="34" width="1920" height="56" fill="url(#key)"/>
+    <rect x="0" y="96" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="104" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="974" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="980" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="990" width="1920" height="56" fill="url(#key)" transform="translate(0 2036) scale(1 -1)"/>
+    <rect x="0" y="1052" width="1920" height="10" fill="#1b110b"/>
+  </g>
+</svg>
+<div id="vig" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 45%,rgba(20,6,0,.55) 100%)"></div>
+<div id="black" style="position:absolute;inset:0;background:#0d0603"></div>
+</div>
+<script>
+const W=1920,H=1080,$=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const out=x=>1-Math.pow(1-clamp(x),3);
+const back=x=>{x=clamp(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const seg=(t,a,b)=>clamp((t-a)/(b-a));
+const lerp=(a,b,p)=>a+(b-a)*p;
+let s=23;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e;};
+
+/* ---------- aged terracotta ground ---------- */
+(function(){
+  const c=$('bg').getContext('2d');
+  const g=c.createRadialGradient(W/2,H*.45,80,W/2,H/2,1150);
+  g.addColorStop(0,'#cf7442');g.addColorStop(.55,'#b5552b');g.addColorStop(1,'#7c3418');
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  for(let i=0;i<70;i++){const x=rnd()*W,y=rnd()*H,r=60+rnd()*260,dark=rnd()<.6;
+    const b=c.createRadialGradient(x,y,0,x,y,r);
+    b.addColorStop(0,dark?`rgba(70,28,10,${.05+rnd()*.08})`:`rgba(240,190,140,${.04+rnd()*.06})`);b.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=b;c.fillRect(x-r,y-r,2*r,2*r);}
+  c.lineCap='round';
+  for(let i=0;i<900;i++){const x=rnd()*W,y=rnd()*H,a=rnd()*6.28,l=6+rnd()*30;
+    c.strokeStyle=rnd()<.5?`rgba(60,24,8,${.05+rnd()*.07})`:`rgba(250,210,170,${.04+rnd()*.06})`;c.lineWidth=.6+rnd();
+    c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);c.stroke();}
+  for(let i=0;i<14;i++){let x=rnd()*W,y=rnd()*H,a=rnd()*6.28;c.strokeStyle=`rgba(50,18,6,${.12+rnd()*.12})`;c.lineWidth=.8+rnd()*.8;
+    c.beginPath();c.moveTo(x,y);for(let k=0;k<20+rnd()*30;k++){a+=(rnd()-.5)*.9;x+=Math.cos(a)*9;y+=Math.sin(a)*9;c.lineTo(x,y);}c.stroke();}
+  const id=c.getImageData(0,0,W,H),d=id.data;
+  for(let i=0;i<d.length;i+=4){const n=(rnd()-.5)*26;d[i]+=n;d[i+1]+=n*.85;d[i+2]+=n*.7;}
+  c.putImageData(id,0,0);
+})();
+
+/* ---------- the burnt scroll from the previous graphic ---------- */
+(function(){
+  let d='';
+  for(let col=0;col<5;col++){const x0=-520+col*212;
+    for(let r=0;r<9;r++){const y=-110+r*27;let x=x0;
+      while(x<x0+180){const l=6+rnd()*22;if(x+l>x0+184)break;d+=`M${x.toFixed(0)} ${y} h${l.toFixed(0)} `;x+=l+7+rnd()*6;}}}
+  el('path',{d},$('writing'));
+  const HS=[[420,-40,1.0],[505,60,1.1],[540,-120,.9],[300,120,.8],[180,150,.7],[360,-150,.6],[-80,155,.6],[-300,150,.55],[470,150,.9],[-520,-150,.5],[60,-155,.45]];
+  window.HOLES=HS.map(([cx,cy,k])=>{let pts=[];for(let i=0;i<14;i++){const a=i/14*6.283,r=(.7+rnd()*.5);pts.push([Math.cos(a)*r,Math.sin(a)*r]);}
+    const d='M'+pts.map(p=>p.map(v=>(v*100).toFixed(1)).join(' ')).join(' L')+' Z';
+    const hole=el('path',{d,fill:'#000'},$('holes'));
+    const em2=el('path',{d,stroke:'#2a1208',opacity:.8},$('embers'));
+    const em=el('path',{d,stroke:'#ffb34d'},$('embers'));
+    return {cx,cy,k,hole,em,em2,ph:rnd()*6};});
+})();
+function setHoles(t,heal){
+  HOLES.forEach((h,i)=>{const k=h.k*clamp(1.4-i*.05)*(1-heal*(i%3===0?.75:.45));const sc=k*.55+.0001;
+    const tr=`translate(${h.cx} ${h.cy}) scale(${sc})`;h.hole.setAttribute('transform',tr);
+    const er=`translate(${h.cx} ${h.cy}) scale(${sc*1.04})`;h.em.setAttribute('transform',er);h.em2.setAttribute('transform',er);
+    const sw=1/(sc*1.04);h.em.setAttribute('stroke-width',3*sw);h.em2.setAttribute('stroke-width',16*sw);
+    h.em.setAttribute('opacity',(.18+.25*Math.sin(t*6+h.ph)**2)+heal*.5);});
+}
+
+/* ---------- Proclus's job: two book-columns of the epic ---------- */
+(function(){const g=$('cols');
+  [1000,1180].forEach((x0,c)=>{const col=el('g',{class:'col'},g);
+    el('rect',{x:x0-10,y:384,width:160,height:470,fill:'#1b110b',opacity:.12},col);
+    el('rect',{x:x0-10,y:384,width:160,height:470,fill:'none',stroke:'#1b110b','stroke-width':3},col);
+    let d='';for(let r=0;r<26;r++){const y=402+r*17.5;let x=x0;while(x<x0+128){const l=5+rnd()*18;if(x+l>x0+140)break;d+=`M${x.toFixed(0)} ${y.toFixed(0)} h${l.toFixed(0)} `;x+=l+6+rnd()*5;}}
+    el('path',{d,stroke:'#1b110b','stroke-width':4,'stroke-linecap':'round',class:'colTxt'},col);
+    const lab=el('text',{x:x0+70,y:880,'font-size':22,fill:'#f1e4c6','text-anchor':'middle','letter-spacing':4},col);lab.textContent=c?'BOOK II':'BOOK I';});
+})();
+
+/* ---------- portrait medallions ---------- */
+const MED=[
+  {id:'proclus',x:400,y:540,r:165,img:'proclus.png'},
+  {id:'apollodorus',x:1000,y:575,r:118,img:'apollodorus.png'},
+  {id:'hyginus',x:1330,y:575,r:118,img:'hyginus.png'},
+  {id:'parthenius',x:1660,y:575,r:118,img:'parthenius.png'}];
+MED.forEach((m,i)=>{
+  const g=el('g',{id:'m_'+m.id},$('medals'));
+  const cp=el('clipPath',{id:'cp_'+m.id},g);el('circle',{r:m.r},cp);
+  el('circle',{r:m.r+22,fill:'#1b110b'},g);
+  for(let k=0;k<48;k++){const a=k/48*6.283;el('circle',{cx:Math.cos(a)*(m.r+12),cy:Math.sin(a)*(m.r+12),r:3,fill:'#dda246'},g);}
+  el('circle',{r:m.r+3,fill:'none',stroke:'#b5552b','stroke-width':2},g);
+  el('circle',{r:m.r,fill:'url(#discG)'},g);
+  const q=el('text',{y:m.r*.32,'font-size':m.r*.9,fill:'#3a2416','text-anchor':'middle',class:'q',opacity:.55},g);q.textContent='?';
+  const im=el('image',{href:m.img,x:-m.r*1.06,y:-m.r*1.0,width:m.r*2.12,height:m.r*2.12,'clip-path':`url(#cp_${m.id})`,class:'bust'},g);
+  el('circle',{r:m.r,fill:'none',stroke:'#1b110b','stroke-width':5},g);
+  const fl=el('circle',{r:m.r,fill:'none',stroke:'#ffcf7a','stroke-width':8,class:'flash',opacity:0},g);
+  m.g=g;m.im=im;m.q=q;m.fl=fl;
+  if(i>0){m.line=el('path',{d:`M${m.x} ${m.y-m.r-22} C${m.x} ${m.y-m.r-110} ${960+(m.x-960)*.3} 380 ${960+(m.x-960)*.25} 300`},$('lines'));}
+  else{m.line=el('path',{d:`M${m.x+m.r*.75} ${m.y-m.r*.85} C${m.x+120} 330 760 290 820 260`},$('lines'));}
+});
+document.querySelectorAll('#lines path').forEach(p=>{p.L=p.getTotalLength();});
+
+/* ---------- fragments ---------- */
+const BANNER={x:960,y:200,s:.5};
+const FR=[...Array(13)].map((_,i)=>{
+  const g=el('g',{},$('frags'));
+  const n=7,R=26+rnd()*20;let pts=[];for(let k=0;k<n;k++){const a=k/n*6.283+rnd()*.5,r=R*(.6+rnd()*.5);pts.push([Math.cos(a)*r,Math.sin(a)*r]);}
+  const d='M'+pts.map(p=>p.map(v=>v.toFixed(1)).join(' ')).join(' L')+' Z';
+  el('path',{d,fill:'#2a1208',transform:'translate(2 4)'},g);
+  el('path',{d,fill:'#e2b27c',stroke:'#3a1a0a','stroke-width':3},g);
+  let tx='';for(let r=-1;r<=1;r++)tx+=`M${-R*.5} ${r*11} h${(R*.4+rnd()*R*.5).toFixed(0)} `;
+  el('path',{d:tx,stroke:'#3a2416','stroke-width':4,'stroke-linecap':'round',opacity:.7},g);
+  const h=HOLES[i%HOLES.length];
+  return {g,sx:BANNER.x+h.cx*BANNER.s,sy:BANNER.y+h.cy*BANNER.s,ph:rnd()*6,rot:(rnd()-.5)*80,R};
+});
+// scatter targets on the right half, between the roundels; three go into the roundels
+const TGT=[...Array(13)].map((_,i)=>[868+i*79,i%2?898:846]);
+FR.forEach((f,i)=>{f.tx=TGT[i][0];f.ty=TGT[i][1];});
+const INTO={10:1,11:2,12:3};// fragment index -> medallion index
+const INTO_T={1:9.15,2:10.25,3:11.65};
+
+const fx=$('fx').getContext('2d');
+const motes=[...Array(70)].map(()=>({x:rnd()*W,y:rnd()*H,r:.8+rnd()*2.2,v:6+rnd()*16,p:rnd()*6.28}));
+
+function op(id,o,tr){const e=typeof id==='string'?$(id):id;e.style.opacity=o;if(tr!==undefined){if(e instanceof SVGElement)e.setAttribute('transform',tr);else e.style.transform=tr;}}
+
+/* Voice-over beats (from pause + sibilance analysis of the 13.4s take)
+   0.10-1.42 "all we have is only"     1.55-1.90 "Proclus"     1.95-3.91 "...a later-age scholar's few lines"
+   4.05-5.19 "of summary"              5.65-6.16 "and later"   6.46-7.43 "mythographers' writings"
+   7.65-8.76 "scattered fragments"     9.15 Apollodorus   10.25 Hyginus   11.65 Parthenius   12.50-13.15 "through their hands" */
+function render(t){
+  const z=1+.03*(t/15)+.004*Math.sin(t*.7);
+  const shk=(t0,a)=>{const k=seg(t,t0,t0+.4);return k>0&&k<1?a*(1-k)*Math.sin(t*90):0;};
+  const sh=shk(1.56,5)+shk(7.66,6);
+  $('cam').style.transform=`translate(${sh}px,${sh*.6}px) scale(${z})`;
+  $('black').style.opacity=1-seg(t,0,.5);
+  const lx=50+8*Math.sin(t*.25),ly=40+4*Math.cos(t*.31),fl=.20+.03*Math.sin(t*3.1)+.02*Math.sin(t*7.3)+.1*seg(t,12.5,13.2);
+  $('light').style.background=`radial-gradient(ellipse 60% 55% at ${lx}% ${ly}%,rgba(255,196,120,${fl}) 0%,rgba(255,160,90,0) 70%)`;
+  const fr=ease(seg(t,.05,1.0));$('frameRect').setAttribute('x',960-960*fr);$('frameRect').setAttribute('width',1920*fr);
+
+  /* scroll: centre stage, then up into the banner */
+  const k0=out(seg(t,.2,.8))*(1-seg(t,1.3,1.6));op('k0',k0,`translateY(${(1-k0)*-16}px)`);$('k0').style.letterSpacing=`${.5-.2*k0}em`;
+  const up=ease(seg(t,1.4,2.2));
+  const sIn=out(seg(t,0,.8));
+  const sx=960,sy=lerp(500,BANNER.y,up),ss=lerp(.82,BANNER.s,up)*lerp(.92,1,sIn);
+  // fragments tear out of the banner at "scattered"
+  const burst=seg(t,7.65,8.7);
+  const kick=burst>0&&burst<.25?Math.sin(burst/.25*Math.PI)*6:0;
+  op('scroll',1,`translate(${sx} ${sy+Math.sin(t*1.3)*3*(1-up)-kick}) scale(${ss})`);
+  const heal=ease(seg(t,12.6,13.6));
+  setHoles(t,heal);
+
+  /* Proclus */
+  const P=MED[0];const pm=back(seg(t,1.55,2.15));
+  op(P.g,seg(t,1.55,1.7),`translate(${P.x} ${P.y+(1-out(seg(t,1.55,2.1)))*40}) scale(${pm*.98+.02})`);
+  const pi=seg(t,1.62,2.1);P.im.style.opacity=pi;P.q.style.opacity=0;
+  P.fl.setAttribute('opacity',(1-seg(t,1.6,2.2))*seg(t,1.55,1.62));P.fl.setAttribute('r',P.r+seg(t,1.6,2.2)*60);
+  const pn=out(seg(t,1.6,2.1));op('pName',pn,`translateX(-50%) translateY(${(1-pn)*24}px)`);$('pName').style.letterSpacing=`${.3-.24*pn}em`;
+  const ps=out(seg(t,2.4,2.9));op('pSub',ps,`translateX(-50%) translateY(${(1-ps)*14}px)`);
+  const pw=out(seg(t,4.1,4.6));op('pWork',pw,`translateX(-50%) translateY(${(1-pw)*12}px)`);
+  // two books -> a few lines
+  const rOut=1-seg(t,5.3,5.75);
+  const ep=out(seg(t,2.5,3.1)),cm=ease(seg(t,3.35,4.15));
+  op('epic',ep*(1-cm*.85)*rOut,`translate(${lerp(0,1610-1160,cm)} ${lerp(0,620-620,cm)}) translate(1160 620) scale(${lerp(1,.26,cm)} ${lerp(1,.1,cm)}) translate(-1160 -620)`);
+  $('epicLbl').style.opacity=1-seg(t,3.35,3.6);
+  const ar=out(seg(t,3.4,3.8))*rOut;op('arrow',ar*(1-cm*0),`translate(${(1-ar)*-30} 0)`);
+  const tb=back(seg(t,3.75,4.3));op('tablet',seg(t,3.75,3.9)*rOut,`translate(1610 620) scale(${tb+.0001}) rotate(${(1-tb)*-8})`);
+  const fw=out(seg(t,3.55,4.05))*rOut;op('few',fw,`translateX(-50%) scale(${1.3-.3*fw})`);
+  const sm=out(seg(t,4.1,4.6))*rOut;op('summ',sm,`translateX(-50%) translateY(${(1-sm)*12}px)`);$('summ').style.letterSpacing=`${.6-.3*sm}em`;
+  const dv=ease(seg(t,2.4,3.2));$('divider').setAttribute('d',`M790 ${620-290*dv} V${620+290*dv}`);$('divider').style.opacity=dv>0?1:0;
+
+  /* later mythographers: empty roundels draw in */
+  const my=out(seg(t,6.46,7.0));op('myth',my,`translateX(-50%) translateY(${(1-my)*12}px)`);
+  const sc=out(seg(t,7.65,8.2));op('scat',sc,`translateX(-50%) scale(${1.25-.25*sc})`);$('scat').style.letterSpacing=`${.3-.22*sc}em`;
+  [1,2,3].forEach(i=>{const m=MED[i];const a=back(seg(t,5.8+i*.22,6.5+i*.22));
+    op(m.g,seg(t,5.8+i*.22,6.0+i*.22),`translate(${m.x} ${m.y+Math.sin(t*1.4+i)*3}) scale(${a*.98+.02})`);
+    const ti=INTO_T[i];const p=seg(t,ti,ti+.45);m.im.style.opacity=p;m.q.style.opacity=.55*(1-p);
+    m.fl.setAttribute('opacity',(1-seg(t,ti,ti+.6))*seg(t,ti-.02,ti));m.fl.setAttribute('r',m.r+seg(t,ti,ti+.6)*50);
+    const n=out(seg(t,ti,ti+.5));op('n'+(i-1),n,`translateX(-50%) translateY(${(1-n)*18}px)`);$('n'+(i-1)).style.letterSpacing=`${.3-.26*n}em`;
+    const w=out(seg(t,ti+.25,ti+.7));op('w'+(i-1),w,`translateX(-50%) translateY(${(1-w)*10}px)`);});
+
+  /* fragments: burst, drift, three are claimed, the rest return */
+  FR.forEach((f,i)=>{
+    const b=out(seg(t,7.65+i*.03,8.7+i*.03));
+    if(b<=0){f.g.style.opacity=0;return;}
+    let x=lerp(f.sx,f.tx,b),y=lerp(f.sy,f.ty,b)-Math.sin(b*Math.PI)*90;
+    let r=f.rot*b+Math.sin(t*1.1+f.ph)*6,sc=lerp(.5,1,b),o=1;
+    x+=Math.sin(t*.9+f.ph)*6*b;y+=Math.cos(t*1.2+f.ph)*5*b;
+    const mi=INTO[i];
+    if(mi){const m=MED[mi],ti=INTO_T[mi],p=ease(seg(t,ti-.35,ti+.05));x=lerp(x,m.x,p);y=lerp(y,m.y,p);sc*=lerp(1,.2,p);o=1-seg(t,ti-.05,ti+.05);}
+    else{const p=ease(seg(t,12.5+i*.03,13.3+i*.03));const h=HOLES[i%HOLES.length];
+      x=lerp(x,f.sx,p);y=lerp(y,f.sy,p)-Math.sin(p*Math.PI)*60;sc*=lerp(1,.5,p);o=1-seg(t,13.2+i*.03,13.4+i*.03);}
+    f.g.style.opacity=o;f.g.setAttribute('transform',`translate(${x} ${y}) rotate(${r}) scale(${sc})`);
+  });
+
+  /* through their hands: threads from every source back to the scroll */
+  MED.forEach((m,i)=>{const p=ease(seg(t,12.5+i*.1,13.2+i*.1));const L=m.line.L;
+    let a=[],acc=0;while(acc+16<=L*p){a.push(2,14);acc+=16;}a.push(.001,99999);m.line.setAttribute('stroke-dasharray',a.join(' '));m.line.style.opacity=p>0?1:0;});
+  const fi=out(seg(t,12.8,13.5));op('final',fi,`translateX(-50%) translateY(${(1-fi)*20}px)`);$('final').style.letterSpacing=`${.2-.1*fi}em`;
+
+  /* dust motes */
+  fx.clearRect(0,0,W,H);
+  for(const m of motes){const y=((m.y-m.v*t*2)%H+H)%H,x=m.x+Math.sin(t*.8+m.p)*14;
+    fx.fillStyle=`rgba(255,${200+m.r*15|0},140,${(.15+.25*Math.sin(t*1.7+m.p)**2)*seg(t,0,1.2)})`;
+    fx.beginPath();fx.arc(x,y,m.r,0,6.3);fx.fill();}
+  // embers when the fragments tear loose
+  const eb=seg(t,7.65,9.2);if(eb>0&&eb<1){for(let k=0;k<50;k++){const a=k*2.4,v=120+(k*37%200);
+    const x=BANNER.x+Math.cos(a)*v*out(eb)*2,y=BANNER.y+60+Math.sin(a)*v*out(eb)*.7+eb*80;
+    fx.fillStyle=`rgba(255,${170+(k%5)*15},90,${(1-eb)*.8})`;fx.beginPath();fx.arc(x,y,1.5+(k%3),0,6.3);fx.fill();}}
+}
+window.render=render;
+Promise.all([document.fonts.ready,...[...document.querySelectorAll('image')].map(i=>new Promise(r=>{const im=new Image();im.onload=r;im.onerror=r;im.src=i.getAttribute('href');}))])
+  .then(()=>{render(0);window.ready=true;});
+</script></body></html>
