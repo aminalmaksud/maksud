@@ -1,0 +1,324 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Archides;src:url(Archides.otf)}
+@font-face{font-family:BnSerif;src:url(NotoSerifBengali-800.ttf);font-weight:800}
+@font-face{font-family:BnSerif;src:url(NotoSerifBengali-600.ttf);font-weight:600}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#140a05}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:Archides;color:#1b110b}
+#cam{position:absolute;inset:0;transform-origin:50% 50%}
+canvas,svg.layer{position:absolute;left:0;top:0}
+svg text{font-family:Archides}
+.t{position:absolute;left:0;width:1920px;text-align:center;white-space:nowrap;will-change:transform,opacity}
+.lbl{position:absolute;text-align:center;white-space:nowrap;transform:translateX(-50%)}
+.ink{color:#1b110b;text-shadow:-1px -1px 0 rgba(241,228,198,.18),0 6px 22px rgba(40,12,0,.35)}
+.ochre{color:#dda246;text-shadow:0 2px 0 rgba(27,17,11,.85),0 0 18px rgba(255,190,90,.25)}
+.white{color:#f1e4c6;text-shadow:0 2px 0 rgba(27,17,11,.8)}
+.ls{letter-spacing:.3em}
+.bn{font-family:BnSerif;font-weight:800;letter-spacing:0;line-height:1.25}
+.bn6{font-family:BnSerif;font-weight:600;letter-spacing:0;line-height:1.25}
+.bust{filter:sepia(.55) saturate(1.2) contrast(1.1) brightness(.95)}
+#banner span{display:inline-block}
+#banner span.hi{color:#dda246;text-shadow:0 2px 0 rgba(27,17,11,.85),0 0 18px rgba(255,190,90,.35)}
+.card{position:absolute;width:420px;height:250px;transform:translate(-50%,-50%)}
+.card .bnw{position:absolute;left:0;right:0;top:58px;text-align:center;font-size:66px;color:#dda246;text-shadow:0 3px 0 #000}
+.card .en{position:absolute;left:0;right:0;top:176px;text-align:center;font-size:22px;letter-spacing:.28em;color:#f1e4c6}
+.card .no{position:absolute;left:0;right:0;top:16px;text-align:center;font-size:20px;letter-spacing:.3em;color:#b5552b}
+</style></head>
+<body><div id="stage"><div id="cam">
+<canvas id="bg" width="1920" height="1080"></canvas>
+<div id="light" style="position:absolute;inset:0"></div>
+
+<svg class="layer" id="sv" width="1920" height="1080" viewBox="0 0 1920 1080">
+<defs>
+  <radialGradient id="discG" cx=".5" cy=".42" r=".6">
+    <stop offset="0" stop-color="#e29a63"/><stop offset=".7" stop-color="#c86a38"/><stop offset="1" stop-color="#9c4520"/>
+  </radialGradient>
+  <linearGradient id="sheetG" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#d9a36a"/><stop offset=".5" stop-color="#e6b983"/><stop offset="1" stop-color="#c88e56"/>
+  </linearGradient>
+  <g id="baby">
+    <path d="M-48 6 Q-50 -20 -14 -22 L36 -18 Q48 0 36 18 L-14 22 Q-46 24 -48 6 Z" fill="#1b110b"/>
+    <path d="M-30 -18 L-36 18 M-12 -20 L-18 20 M8 -19 L2 20 M24 -17 L18 19" stroke="#dda246" stroke-width="2.6"/>
+    <circle cx="54" cy="-6" r="20" fill="#1b110b"/>
+    <path d="M42 -22 q12 -8 24 0" stroke="#b5552b" stroke-width="2.4" fill="none"/>
+    <circle cx="62" cy="-9" r="3" fill="#f1e4c6"/>
+  </g>
+  <!-- arrow pointing left, tip at 0,0 -->
+  <g id="arrowGold">
+    <path d="M6 0 H150" stroke="#1b110b" stroke-width="5" stroke-linecap="round"/>
+    <path d="M0 0 L26 -12 L20 0 L26 12 Z" fill="#dda246" stroke="#1b110b" stroke-width="2.5"/>
+    <path d="M130 0 l20 -14 M140 0 l20 -14 M130 0 l20 14 M140 0 l20 14" stroke="#dda246" stroke-width="3"/>
+  </g>
+  <g id="arrowInk">
+    <path d="M6 0 H150" stroke="#1b110b" stroke-width="5" stroke-linecap="round"/>
+    <path d="M0 0 L26 -12 L20 0 L26 12 Z" fill="#8a2e1c" stroke="#1b110b" stroke-width="2.5"/>
+    <path d="M130 0 l20 -14 M140 0 l20 -14 M130 0 l20 14 M140 0 l20 14" stroke="#f1e4c6" stroke-width="3"/>
+  </g>
+</defs>
+
+<!-- Book XIX badge -->
+<g id="badge" transform="translate(480 290)">
+  <rect x="-200" y="-44" width="400" height="88" fill="#1b110b"/>
+  <rect x="-192" y="-36" width="384" height="72" fill="none" stroke="#dda246" stroke-width="2"/>
+  <g transform="translate(-150 0)">
+    <rect x="-24" y="-30" width="48" height="60" rx="10" fill="#e6b983"/>
+    <path d="M-24 -20 H24 M-24 20 H24" stroke="#1b110b" stroke-width="3"/>
+    <text x="0" y="7" font-size="17" fill="#1b110b" text-anchor="middle">XIX</text>
+  </g>
+  <text x="34" y="-6" font-size="20" fill="#f1e4c6" text-anchor="middle" letter-spacing="6">THE ODYSSEY</text>
+  <text x="34" y="26" font-size="28" fill="#dda246" text-anchor="middle" letter-spacing="6">BOOK XIX</text>
+</g>
+
+<!-- family chain -->
+<path id="chain" d="M660 560 H1010" stroke="#1b110b" stroke-width="5" stroke-linecap="round" fill="none"/>
+<g id="anti" transform="translate(830 560)"><circle r="14" fill="#1b110b"/><circle r="7" fill="#dda246"/></g>
+<g id="newborn" transform="translate(1110 560)">
+  <circle id="nbRing" r="92" fill="none" stroke="#1b110b" stroke-width="4" stroke-dasharray="3 10" stroke-linecap="round"/>
+  <circle id="nbGold" r="92" fill="none" stroke="#dda246" stroke-width="6" opacity="0"/>
+  <use href="#baby" transform="translate(-8 6)"/>
+</g>
+<path id="nameArc" d="M480 400 Q800 250 1110 452" fill="none" stroke="#dda246" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round"/>
+<text id="nameTag" font-size="30" fill="#dda246" text-anchor="middle" letter-spacing="4" stroke="#1b110b" stroke-width="1">ODYSSEUS</text>
+
+<!-- the Greek verb -->
+<g id="tablet">
+  <rect x="-215" y="-96" width="430" height="192" fill="#1b110b"/>
+  <rect x="-203" y="-84" width="406" height="168" fill="none" stroke="#dda246" stroke-width="2.4"/>
+  <rect x="-195" y="-76" width="390" height="152" fill="none" stroke="#b5552b" stroke-width="1.2"/>
+  <text x="0" y="-38" font-size="20" fill="#f1e4c6" text-anchor="middle" letter-spacing="7">A GREEK VERB</text>
+  <text id="verb" x="0" y="34" font-size="64" fill="#f1e4c6" text-anchor="middle" letter-spacing="5"><tspan id="vHi">ODYSS</tspan><tspan>OMAI</tspan></text>
+  <text x="0" y="70" font-size="16" fill="#b5552b" text-anchor="middle" letter-spacing="6">ODYSSEY 19.406&#8211;409</text>
+</g>
+<path id="link" d="M1590 444 Q1500 250 1150 175" fill="none" stroke="#dda246" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round"/>
+<g id="fan" fill="none" stroke="#1b110b" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round">
+  <path id="fan0" d="M960 392 Q700 420 480 470"/><path id="fan1" d="M960 392 V470"/><path id="fan2" d="M960 392 Q1220 420 1440 470"/>
+</g>
+
+<!-- arrows of hatred / pain -->
+<g id="outArrows"></g>
+<g id="inArrows"></g>
+<g id="medals"></g>
+</svg>
+
+<!-- ===== TEXT ===== -->
+<div id="k0" class="t white ls" style="top:150px;font-size:34px">IN HOMER'S OWN WORDS</div>
+<div id="hName" class="lbl ink" style="left:420px;top:720px;font-size:66px;letter-spacing:.08em">HOMER</div>
+<div id="banner" class="t ink" style="top:0;font-size:150px;letter-spacing:.06em"></div>
+<div id="q" class="lbl white ls" style="left:1240px;top:640px;font-size:30px">WHAT DOES THE NAME <span class="ochre" style="font-size:44px">MEAN?</span></div>
+<div id="grand" class="lbl white ls" style="left:480px;top:788px;font-size:22px">HIS MOTHER'S FATHER</div>
+<div id="aName" class="lbl ink" style="left:480px;top:722px;font-size:58px;letter-spacing:.08em">AUTOLYCUS</div>
+<div id="antiL" class="lbl white ls" style="left:830px;top:596px;font-size:16px">ANTICLEIA</div>
+<div id="nbL" class="lbl white ls" style="left:1110px;top:676px;font-size:22px">THE NEWBORN GRANDSON</div>
+<div id="named" class="lbl ochre ls" style="left:1110px;top:716px;font-size:24px">HE NAMES HIM</div>
+
+<div id="cards">
+  <div id="c0" class="card" style="left:480px;top:620px"><svg width="420" height="250" style="position:absolute;left:0;top:0"><rect width="420" height="250" fill="#1b110b"/><rect x="9" y="9" width="402" height="232" fill="none" stroke="#dda246" stroke-width="2.2"/></svg>
+    <div class="no">I</div><div class="bnw bn">রাগ করা</div><div class="en">TO BE ANGRY</div></div>
+  <div id="c1" class="card" style="left:960px;top:620px"><svg width="420" height="250" style="position:absolute;left:0;top:0"><rect width="420" height="250" fill="#1b110b"/><rect x="9" y="9" width="402" height="232" fill="none" stroke="#dda246" stroke-width="2.2"/></svg>
+    <div class="no">II</div><div class="bnw bn">বিরূপ হওয়া</div><div class="en">TO TURN HOSTILE</div></div>
+  <div id="c2" class="card" style="left:1440px;top:620px"><svg width="420" height="250" style="position:absolute;left:0;top:0"><rect width="420" height="250" fill="#1b110b"/><rect x="9" y="9" width="402" height="232" fill="none" stroke="#dda246" stroke-width="2.2"/></svg>
+    <div class="no">III</div><div class="bnw bn">বিদ্বেষ পোষা</div><div class="en">TO NURSE A GRUDGE</div></div>
+</div>
+
+<div id="rough" class="t white ls" style="top:250px;font-size:30px">ROUGHLY, THE NAME MEANS</div>
+<div id="oName" class="lbl ink" style="left:960px;top:760px;font-size:54px;letter-spacing:.08em">ODYSSEUS</div>
+<div id="hL" class="lbl" style="left:440px;top:790px"><div class="bn ochre" style="font-size:60px">যিনি বিদ্বেষ জাগান</div><div class="white ls" style="font-size:20px;margin-top:10px">HE WHO STIRS UP HATRED</div></div>
+<div id="hR" class="lbl" style="left:1480px;top:790px"><div class="bn ink" style="font-size:60px">যাঁর ওপর বিদ্বেষ নামে</div><div class="white ls" style="font-size:20px;margin-top:10px">HE ON WHOM HATRED FALLS</div></div>
+
+<div id="call" class="t white ls" style="top:132px;font-size:30px">AND SO I CALL HIM</div>
+<div id="pain" class="t bn ochre" style="top:178px;font-size:120px">যন্ত্রণার মানুষ</div>
+<div id="painEn" class="t white ls" style="top:352px;font-size:24px">THE MAN OF PAIN</div>
+<div id="pL" class="lbl" style="left:440px;top:790px"><div class="bn ochre" style="font-size:66px">যিনি যন্ত্রণা দেন</div><div class="white ls" style="font-size:20px;margin-top:10px">HE WHO GIVES PAIN</div></div>
+<div id="pR" class="lbl" style="left:1480px;top:790px"><div class="bn ink" style="font-size:66px">যিনি যন্ত্রণা পান</div><div class="white ls" style="font-size:20px;margin-top:10px">HE WHO SUFFERS IT</div></div>
+
+<canvas id="fx" width="1920" height="1080"></canvas>
+</div>
+<svg class="layer" id="frame" width="1920" height="1080">
+  <defs>
+    <pattern id="key" width="56" height="56" patternUnits="userSpaceOnUse">
+      <rect width="56" height="56" fill="#1b110b"/>
+      <path d="M0 47 H56 M6 47 V9 H46 V39 H18 V21 H34 V31" fill="none" stroke="#c4683a" stroke-width="5" stroke-linecap="square"/>
+    </pattern>
+    <clipPath id="frameClip"><rect id="frameRect" x="960" y="0" width="0" height="1080"/></clipPath>
+  </defs>
+  <g clip-path="url(#frameClip)">
+    <rect x="0" y="18" width="1920" height="10" fill="#1b110b"/>
+    <rect x="0" y="34" width="1920" height="56" fill="url(#key)"/>
+    <rect x="0" y="96" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="104" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="974" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="980" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="990" width="1920" height="56" fill="url(#key)" transform="translate(0 2036) scale(1 -1)"/>
+    <rect x="0" y="1052" width="1920" height="10" fill="#1b110b"/>
+  </g>
+</svg>
+<div id="vig" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 45%,rgba(20,6,0,.55) 100%)"></div>
+<div id="black" style="position:absolute;inset:0;background:#0d0603"></div>
+</div>
+<script>
+const W=1920,H=1080,$=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const out=x=>1-Math.pow(1-clamp(x),3);
+const back=x=>{x=clamp(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const seg=(t,a,b)=>clamp((t-a)/(b-a));
+const lerp=(a,b,p)=>a+(b-a)*p;
+let s=41;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e;};
+
+/* ---------- aged terracotta ground ---------- */
+(function(){
+  const c=$('bg').getContext('2d');
+  const g=c.createRadialGradient(W/2,H*.45,80,W/2,H/2,1150);
+  g.addColorStop(0,'#cf7442');g.addColorStop(.55,'#b5552b');g.addColorStop(1,'#7c3418');
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  for(let i=0;i<70;i++){const x=rnd()*W,y=rnd()*H,r=60+rnd()*260,dark=rnd()<.6;
+    const b=c.createRadialGradient(x,y,0,x,y,r);
+    b.addColorStop(0,dark?`rgba(70,28,10,${.05+rnd()*.08})`:`rgba(240,190,140,${.04+rnd()*.06})`);b.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=b;c.fillRect(x-r,y-r,2*r,2*r);}
+  c.lineCap='round';
+  for(let i=0;i<900;i++){const x=rnd()*W,y=rnd()*H,a=rnd()*6.28,l=6+rnd()*30;
+    c.strokeStyle=rnd()<.5?`rgba(60,24,8,${.05+rnd()*.07})`:`rgba(250,210,170,${.04+rnd()*.06})`;c.lineWidth=.6+rnd();
+    c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);c.stroke();}
+  for(let i=0;i<14;i++){let x=rnd()*W,y=rnd()*H,a=rnd()*6.28;c.strokeStyle=`rgba(50,18,6,${.12+rnd()*.12})`;c.lineWidth=.8+rnd()*.8;
+    c.beginPath();c.moveTo(x,y);for(let k=0;k<20+rnd()*30;k++){a+=(rnd()-.5)*.9;x+=Math.cos(a)*9;y+=Math.sin(a)*9;c.lineTo(x,y);}c.stroke();}
+  const id=c.getImageData(0,0,W,H),d=id.data;
+  for(let i=0;i<d.length;i+=4){const n=(rnd()-.5)*26;d[i]+=n;d[i+1]+=n*.85;d[i+2]+=n*.7;}
+  c.putImageData(id,0,0);
+})();
+
+/* ---------- medallions ---------- */
+function medal(id,r,img){
+  const g=el('g',{id:'m_'+id},$('medals'));
+  const cp=el('clipPath',{id:'cp_'+id},g);el('circle',{r},cp);
+  el('circle',{r:r+22,fill:'#1b110b'},g);
+  const n=Math.round(r/3.6);for(let k=0;k<n;k++){const a=k/n*6.283;el('circle',{cx:Math.cos(a)*(r+12),cy:Math.sin(a)*(r+12),r:3,fill:'#dda246'},g);}
+  el('circle',{r:r+3,fill:'none',stroke:'#b5552b','stroke-width':2},g);
+  el('circle',{r,fill:'url(#discG)'},g);
+  const im=el('image',{href:img,x:-r*1.06,y:-r*.98,width:r*2.12,height:r*2.12,'clip-path':`url(#cp_${id})`,class:'bust'},g);
+  el('circle',{r,fill:'none',stroke:'#1b110b','stroke-width':5},g);
+  const fl=el('circle',{r,fill:'none',stroke:'#ffcf7a','stroke-width':8,opacity:0},g);
+  return {g,im,fl,r};
+}
+const MH=medal('homer',160,'homer.png');
+const MA=medal('auto',150,'autolycus.png');
+const MO=medal('ody',150,'odysseus.png');
+function flash(m,t0,t,grow=60){m.fl.setAttribute('opacity',(1-seg(t,t0+.03,t0+.65))*seg(t,t0,t0+.04));m.fl.setAttribute('r',m.r+seg(t,t0+.03,t0+.65)*grow);}
+
+/* ---------- ODYSSEUS banner letters ---------- */
+$('banner').innerHTML=[...'ODYSSEUS'].map((c,i)=>`<span${i<5?' data-hi':''}>${c}</span>`).join('');
+const BL=[...$('banner').children];
+
+/* ---------- arrows ---------- */
+const OUT=[...Array(5)].map((_,i)=>{const g=el('g',{},$('outArrows'));el('use',{href:'#arrowGold'},g);return {g,a:(i-2)*13,ph:i*.2};});
+const IN=[...Array(5)].map((_,i)=>{const g=el('g',{},$('inArrows'));el('use',{href:'#arrowInk'},g);return {g,a:(i-2)*13,ph:i*.2+.1};});
+const MC={x:960,y:600};
+
+const fx=$('fx').getContext('2d');
+const motes=[...Array(70)].map(()=>({x:rnd()*W,y:rnd()*H,r:.8+rnd()*2.2,v:6+rnd()*16,p:rnd()*6.28}));
+const dust=[...Array(60)].map(()=>({a:rnd()*6.28,v:200+rnd()*500,r:1.5+rnd()*3.5}));
+
+function op(id,o,tr){const e=typeof id==='string'?$(id):id;e.style.opacity=o;if(tr!==undefined){if(e instanceof SVGElement)e.setAttribute('transform',tr);else e.style.transform=tr;}}
+const L=(id,o,dy=0,sc=1)=>op(id,o,`translateX(-50%) translateY(${(1-o)*dy}px) scale(${sc})`);
+const T=(id,o,dy=0,sc=1)=>op(id,o,`translateY(${(1-o)*dy}px) scale(${sc})`);
+function draw(id,p,dots){const e=$(id);const len=e.getTotalLength();
+  if(dots){let a=[],acc=0;while(acc+12<=len*p){a.push(2,10);acc+=12;}a.push(.001,99999);e.setAttribute('stroke-dasharray',a.join(' '));}
+  else e.style.strokeDasharray=`${len*p} ${len}`;e.style.opacity=p>0?1:0;}
+
+/* Voice-over beats (24.96s): 0.54 Homer | 1.03 "himself said" | 2.00 "what Odysseus means" | 3.64 "in Book XIX"
+   5.01 "his grandfather" | 5.70 Autolycus | 6.64 "the newborn grandson" | 7.66 "named him" | 8.51 "from a Greek verb"
+   10.33 "meaning" | 11.05 রাগ করা | 12.07 বিরূপ হওয়া | 13.06 বিদ্বেষ পোষা | 14.39 "roughly" | 15.70 যিনি বিদ্বেষ জাগান
+   16.94 "and on whom" | 17.68 বিদ্বেষ নামে | 19.05 "I call him" | 20.34 যন্ত্রণার মানুষ | 21.59 যিনি যন্ত্রণা দেন | 23.22 আর যিনি যন্ত্রণা পান */
+function render(t){
+  const shk=(t0,a)=>{const k=seg(t,t0,t0+.4);return k>0&&k<1?a*(1-k)*Math.sin(t*90):0;};
+  const sh=shk(11.07,4)+shk(12.09,4)+shk(13.08,5)+shk(20.36,8);
+  const z=1+.03*(t/26)+.004*Math.sin(t*.7);
+  $('cam').style.transform=`translate(${sh}px,${sh*.6}px) scale(${z})`;
+  $('black').style.opacity=1-seg(t,0,.45);
+  const pulse=Math.exp(-Math.pow((t-20.5)/.5,2))*.12;
+  const lx=50+8*Math.sin(t*.25),ly=40+4*Math.cos(t*.31),fl=.2+.03*Math.sin(t*3.1)+.02*Math.sin(t*7.3)+pulse;
+  $('light').style.background=`radial-gradient(ellipse 60% 55% at ${lx}% ${ly}%,rgba(255,196,120,${fl}) 0%,rgba(255,160,90,0) 70%)`;
+  const fr=ease(seg(t,.05,1.0));$('frameRect').setAttribute('x',960-960*fr);$('frameRect').setAttribute('width',1920*fr);
+
+  /* ---- 1. Homer asks what the name means ---- */
+  const s1=1-seg(t,3.35,3.75);
+  const hm=back(seg(t,.54,1.1));op(MH.g,seg(t,.54,.65)*s1,`translate(420 ${520+(1-out(seg(t,.54,1.05)))*40}) scale(${hm*.98+.02})`);flash(MH,.54,t);
+  const hn=out(seg(t,.6,1.05));L('hName',hn*s1,20);$('hName').style.letterSpacing=`${.3-.22*hn}em`;
+  T('k0',out(seg(t,1.03,1.5))*s1,-14);$('k0').style.letterSpacing=`${.5-.2*out(seg(t,1.03,1.5))}em`;
+  // ODYSSEUS: big in scene 1, then the banner for the rest of the piece
+  const bm=ease(seg(t,3.45,4.2)),bOut=1-seg(t,18.85,19.25);
+  const bx=lerp(1240,960,bm),by=lerp(470,148,bm),bs=lerp(1,.42,bm);
+  $('banner').style.transform=`translate(${bx-960}px,${by-75}px) scale(${bs})`;$('banner').style.opacity=bOut;
+  const hiP=seg(t,9.0,9.4)*(1-seg(t,14.0,14.4));
+  BL.forEach((e,i)=>{const p=out(seg(t,2.0+i*.07,2.55+i*.07));e.style.opacity=p;
+    e.style.transform=`translateY(${(1-p)*60}px) scale(${1.3-.3*p})`;e.style.filter=`blur(${(1-p)*8}px)`;
+    if(i<5)e.className=hiP>.5?'hi':'';});
+  L('q',out(seg(t,2.7,3.15))*(1-seg(t,3.35,3.6)),14);
+
+  /* ---- 2. Book XIX: Autolycus names the newborn ---- */
+  const s2=1-seg(t,9.95,10.4);
+  const bd=back(seg(t,3.64,4.1));op('badge',seg(t,3.64,3.75)*s2,`translate(480 290) rotate(${(1-bd)*-8}) scale(${lerp(1.6,1,bd)})`);
+  const am=back(seg(t,5.70,6.25));op(MA.g,seg(t,5.70,5.82)*s2,`translate(480 ${560+(1-out(seg(t,5.7,6.2)))*40}) scale(${am*.98+.02})`);flash(MA,5.70,t);
+  L('grand',out(seg(t,5.01,5.45))*s2,12);
+  const an=out(seg(t,5.75,6.2));L('aName',an*s2,20);$('aName').style.letterSpacing=`${.3-.22*an}em`;
+  draw('chain',ease(seg(t,6.64,7.2)));$('chain').style.opacity*=s2;
+  op('anti',seg(t,6.8,6.95)*s2);L('antiL',out(seg(t,6.85,7.2))*s2,8);
+  const nb=back(seg(t,6.9,7.4));op('newborn',seg(t,6.9,7.0)*s2,`translate(1110 ${560+Math.sin(t*1.6)*4}) scale(${nb*.98+.02})`);
+  L('nbL',out(seg(t,7.0,7.4))*s2,10);
+  // the name flies from grandfather to grandson
+  const nf=ease(seg(t,7.66,8.35));draw('nameArc',nf,true);$('nameArc').style.opacity=(nf>0?1:0)*s2;
+  const arc=$('nameArc'),pt=arc.getPointAtLength(arc.getTotalLength()*nf);
+  const nt=$('nameTag');nt.setAttribute('x',pt.x);nt.setAttribute('y',pt.y-10);nt.style.opacity=seg(t,7.66,7.8)*(1-seg(t,8.3,8.45))*s2;
+  $('nbGold').setAttribute('opacity',seg(t,8.3,8.45)*(.7+.3*Math.sin(t*6)));
+  L('named',out(seg(t,8.3,8.7))*s2,10);
+  // the Greek verb
+  const tb=back(seg(t,8.51,9.0)),tm=ease(seg(t,9.95,10.6));
+  const tx=lerp(1590,960,tm),ty=lerp(560,300,tm),ts=lerp(1,.86,tm);
+  op('tablet',seg(t,8.51,8.62)*(1-seg(t,14.0,14.4)),`translate(${tx} ${ty}) scale(${ts*(tb*.98+.02)}) rotate(${(1-tb)*6})`);
+  $('vHi').setAttribute('fill',hiP>.5?'#dda246':'#f1e4c6');
+  draw('link',ease(seg(t,9.0,9.6)),true);$('link').style.opacity*=s2;
+
+  /* ---- 3. three meanings ---- */
+  const s3=1-seg(t,14.0,14.4);
+  [0,1,2].forEach(i=>{draw('fan'+i,ease(seg(t,10.4+i*.12,10.95+i*.12)),true);$('fan'+i).style.opacity*=s3;
+    const ti=[11.05,12.07,13.06][i];const p=back(seg(t,ti,ti+.4));
+    op('c'+i,seg(t,ti,ti+.08)*s3,`translate(-50%,-50%) scale(${lerp(1.5,1,p)}) rotate(${(1-p)*(i-1)*4}deg)`);});
+
+  /* ---- 4. he who stirs hatred / on whom hatred falls ---- */
+  T('rough',out(seg(t,14.39,14.85))*(1-seg(t,18.85,19.2)),12);
+  const om=back(seg(t,14.45,15.0));op(MO.g,seg(t,14.45,14.55),`translate(${MC.x} ${MC.y}) scale(${om*.98+.02})`);flash(MO,14.45,t);
+  const on=out(seg(t,14.5,14.95));L('oName',on,16);$('oName').style.letterSpacing=`${.3-.22*on}em`;
+  const outOn=seg(t,15.7,15.95),inOn=seg(t,16.94,17.2);
+  OUT.forEach(a=>{const ph=((t-15.7)*.7+a.ph)%1;const r0=190,r1=470;const r=lerp(r0,r1,ph);const ang=(180+a.a)*Math.PI/180;
+    const x=MC.x+Math.cos(ang)*r,y=MC.y+Math.sin(ang)*r*.9;
+    a.g.setAttribute('transform',`translate(${x} ${y}) rotate(${a.a*.9}) scale(.8)`);
+    a.g.style.opacity=t<15.7?0:outOn*Math.sin(ph*Math.PI);});
+  IN.forEach(a=>{const ph=((t-16.94)*.7+a.ph)%1;const r0=470,r1=195;const r=lerp(r0,r1,ph);const ang=(-a.a)*Math.PI/180;
+    const x=MC.x+Math.cos(ang)*r,y=MC.y+Math.sin(ang)*r*.9;
+    a.g.setAttribute('transform',`translate(${x} ${y}) rotate(${-a.a*.9}) scale(.8)`);
+    a.g.style.opacity=t<16.94?0:inOn*Math.sin(ph*Math.PI);});
+  const hl=out(seg(t,15.7,16.2))*(1-seg(t,18.9,19.3));L('hL',hl,20,lerp(1.1,1,hl));
+  const hr=out(seg(t,17.68,18.15))*(1-seg(t,18.9,19.3));L('hR',hr,20,lerp(1.1,1,hr));
+
+  /* ---- 5. the man of pain ---- */
+  T('call',out(seg(t,19.05,19.5)),-12);$('call').style.letterSpacing=`${.5-.2*out(seg(t,19.05,19.5))}em`;
+  const pn=back(seg(t,20.34,20.8));op('pain',seg(t,20.34,20.42),`scale(${lerp(1.6,1,pn)})`);
+  T('painEn',out(seg(t,20.7,21.1)),10);$('painEn').style.letterSpacing=`${.6-.3*out(seg(t,20.7,21.1))}em`;
+  const pl=out(seg(t,21.59,22.05));L('pL',pl,20,lerp(1.15,1,pl));
+  const pr=out(seg(t,23.22,23.7));L('pR',pr,20,lerp(1.15,1,pr));
+
+  /* ---- particles ---- */
+  fx.clearRect(0,0,W,H);
+  for(const m of motes){const y=((m.y-m.v*t*2)%H+H)%H,x=m.x+Math.sin(t*.8+m.p)*14;
+    fx.fillStyle=`rgba(255,${200+m.r*15|0},140,${(.15+.25*Math.sin(t*1.7+m.p)**2)*seg(t,0,1.2)})`;
+    fx.beginPath();fx.arc(x,y,m.r,0,6.3);fx.fill();}
+  const burst=(t0,cx,cy,sc)=>{const k=seg(t,t0,t0+.8);if(k<=0||k>=1)return;for(const d of dust){const r=d.v*out(k)*sc;
+      fx.fillStyle=`rgba(60,26,10,${(1-k)*.5})`;fx.beginPath();fx.arc(cx+Math.cos(d.a)*r*1.6,cy+Math.sin(d.a)*r*.5,d.r,0,6.3);fx.fill();}};
+  burst(3.66,480,290,.5);burst(11.07,480,620,.45);burst(12.09,960,620,.45);burst(13.08,1440,620,.45);burst(20.36,960,250,.8);
+}
+window.render=render;
+Promise.all([document.fonts.load('800 60px BnSerif','যন্ত্রণা'),document.fonts.load('60px Archides'),document.fonts.ready,
+  ...['homer.png','autolycus.png','odysseus.png'].map(src=>new Promise(r=>{const im=new Image();im.onload=r;im.onerror=r;im.src=src;}))])
+  .then(()=>{render(0);window.ready=true;});
+</script></body></html>
