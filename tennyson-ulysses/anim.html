@@ -1,0 +1,237 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Archides;src:url(Archides.otf)}
+@font-face{font-family:Dabanol;src:url(Dabanol.ttf)}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#140a05}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:Archides;color:#1b110b}
+#cam{position:absolute;inset:0;transform-origin:50% 50%}
+canvas,svg.layer{position:absolute;left:0;top:0}
+svg text{font-family:Archides}
+.t{position:absolute;left:0;width:1920px;text-align:center;white-space:nowrap;will-change:transform,opacity}
+.lbl{position:absolute;text-align:center;white-space:nowrap;transform:translateX(-50%)}
+.ink{color:#1b110b;text-shadow:-1px -1px 0 rgba(241,228,198,.18),0 6px 22px rgba(40,12,0,.35)}
+.ochre{color:#dda246;text-shadow:0 2px 0 rgba(27,17,11,.85),0 0 18px rgba(255,190,90,.25)}
+.white{color:#f1e4c6;text-shadow:0 2px 0 rgba(27,17,11,.8)}
+.ls{letter-spacing:.3em}
+.bn{font-family:Dabanol;letter-spacing:0;line-height:1.2}
+.paint{filter:sepia(.35) saturate(1.1) contrast(1.06)}
+</style></head>
+<body><div id="stage"><div id="cam">
+<canvas id="bg" width="1920" height="1080"></canvas>
+<div id="light" style="position:absolute;inset:0"></div>
+
+<svg class="layer" id="sv" width="1920" height="1080" viewBox="0 0 1920 1080">
+<defs>
+  <radialGradient id="discG" cx=".5" cy=".42" r=".6">
+    <stop offset="0" stop-color="#e29a63"/><stop offset=".7" stop-color="#c86a38"/><stop offset="1" stop-color="#9c4520"/>
+  </radialGradient>
+  <radialGradient id="sunG" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffe2a0"/><stop offset=".6" stop-color="#dda246"/><stop offset="1" stop-color="#dda246" stop-opacity="0"/></radialGradient>
+  <clipPath id="voyClip"><rect x="-150" y="-80" width="300" height="140"/></clipPath>
+  <g id="laurel">
+    <path d="M0 0 C -40 -20 -70 -70 -66 -130" fill="none" stroke="#dda246" stroke-width="4"/>
+  </g>
+</defs>
+
+<!-- ===== scene 1: Tennyson + his poem ===== -->
+<g id="s1">
+  <g id="ten"></g>
+  <!-- the same idea: one last voyage -->
+  <g id="voy">
+    <rect x="-160" y="-92" width="320" height="164" fill="#1b110b"/>
+    <rect x="-150" y="-82" width="300" height="144" fill="none" stroke="#dda246" stroke-width="2"/>
+    <g clip-path="url(#voyClip)">
+      <circle id="sun" cx="96" cy="20" r="60" fill="url(#sunG)"/>
+      <circle cx="96" cy="20" r="26" fill="#dda246"/>
+      <rect x="-150" y="22" width="300" height="40" fill="#1b110b"/>
+      <path id="waves" fill="none" stroke="#b5552b" stroke-width="2.5"/>
+      <g id="ship">
+        <path d="M-40 10 Q-44 -4 -34 -8 L36 -8 L52 0 L36 4 Q0 16 -34 12 Z" fill="#dda246"/>
+        <rect x="-3" y="-58" width="4" height="52" fill="#dda246"/>
+        <path d="M-30 -54 Q2 -60 30 -54 L28 -18 Q0 -14 -28 -18 Z" fill="#dda246"/>
+        <path d="M-26 -42 H26 M-26 -30 H26" stroke="#1b110b" stroke-width="2"/>
+      </g>
+    </g>
+  </g>
+  <path id="link1" d="M600 470 Q 680 470 740 470" fill="none" stroke="#1b110b" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round"/>
+  <path id="link2" d="M1060 470 Q 1100 470 1150 470" fill="none" stroke="#dda246" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round"/>
+  <!-- the poem card, background kept -->
+  <g id="card">
+    <rect id="cardGlow" x="-262" y="-262" width="524" height="524" fill="none" stroke="#ffcf7a" stroke-width="6" opacity="0"/>
+    <rect x="-252" y="-252" width="504" height="504" fill="#1b110b"/>
+    <rect x="-242" y="-242" width="484" height="484" fill="none" stroke="#dda246" stroke-width="2.4"/>
+    <image href="ulysses_card.jpg" x="-232" y="-232" width="464" height="464"/>
+  </g>
+  <g id="poemTag">
+    <rect x="-120" y="-22" width="240" height="44" fill="#8a2e1c"/><rect x="-114" y="-16" width="228" height="32" fill="none" stroke="#f1e4c6" stroke-width="1.5"/>
+    <text y="8" font-size="20" fill="#f1e4c6" text-anchor="middle" letter-spacing="5">WRITTEN 1833</text>
+  </g>
+</g>
+
+<!-- ===== scene 2: Ulysses = Odysseus ===== -->
+<g id="s2">
+  <g id="ody"></g>
+  <g id="eq">
+    <circle r="56" fill="#1b110b"/><circle r="47" fill="none" stroke="#dda246" stroke-width="2"/>
+    <path d="M-22 -10 H22 M-22 10 H22" stroke="#f1e4c6" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <g id="wreath">
+    <path d="M1130 352 H1630" stroke="#1b110b" stroke-width="4"/><path d="M1170 362 H1590" stroke="#dda246" stroke-width="2"/>
+    <path d="M1130 512 H1630" stroke="#1b110b" stroke-width="4"/><path d="M1170 502 H1590" stroke="#dda246" stroke-width="2"/>
+    <circle cx="1120" cy="432" r="7" fill="#dda246" stroke="#1b110b" stroke-width="2"/><circle cx="1640" cy="432" r="7" fill="#dda246" stroke="#1b110b" stroke-width="2"/>
+  </g><g id="wr" transform="scale(-1 1)"></g>
+  </g>
+</g>
+</svg>
+
+<!-- text -->
+<div id="kick" class="t white ls" style="top:150px;font-size:30px">LATER, IN ENGLAND</div>
+<div id="tName" class="lbl ink" style="left:420px;top:668px;font-size:62px;letter-spacing:.08em">TENNYSON</div>
+<div id="tSub" class="lbl" style="left:420px;top:748px"><div class="ochre ls" style="font-size:22px">ENGLISH POET</div><div class="white ls" style="font-size:16px;margin-top:8px">ALFRED, LORD TENNYSON &middot; 1809&ndash;1892</div></div>
+<div id="same" class="lbl" style="left:900px;top:588px"><div class="ochre ls" style="font-size:22px">THE SAME IDEA</div><div class="white ls" style="font-size:15px;margin-top:6px">ONE LAST VOYAGE</div></div>
+<div id="imm" class="lbl ink" style="left:1400px;top:154px;font-size:40px;letter-spacing:.1em">HIS <span class="ochre">IMMORTAL</span> POEM</div>
+<div id="quote" class="lbl white" style="left:1400px;top:868px;font-size:22px;letter-spacing:.14em">&ldquo;TO STRIVE, TO SEEK, TO FIND, AND NOT TO YIELD&rdquo;</div>
+
+<div id="oName" class="lbl" style="left:560px;top:668px"><div class="ink" style="font-size:58px;letter-spacing:.08em">ODYSSEUS</div><div class="white ls" style="font-size:18px;margin-top:8px">THE GREEK NAME</div></div>
+<div id="lat" class="lbl white ls" style="left:1380px;top:290px;font-size:22px">LATIN &middot; <span class="ochre" style="font-size:30px">ULIXES</span></div>
+<div id="uly" class="lbl ink" style="left:1380px;top:360px;font-size:126px;letter-spacing:.04em">ULYSSES</div>
+<div id="rom" class="lbl" style="left:1380px;top:548px"><div class="bn ochre" style="font-size:96px">রোমান নাম</div><div class="white ls" style="font-size:20px;margin-top:4px">THE ROMAN NAME</div></div>
+<div id="same2" class="t ink" style="top:160px;font-size:44px;letter-spacing:.1em">ONE HERO &middot; <span class="ochre">TWO NAMES</span></div>
+
+<canvas id="fx" width="1920" height="1080"></canvas>
+</div>
+<svg class="layer" id="frame" width="1920" height="1080">
+  <defs>
+    <pattern id="key" width="56" height="56" patternUnits="userSpaceOnUse">
+      <rect width="56" height="56" fill="#1b110b"/>
+      <path d="M0 47 H56 M6 47 V9 H46 V39 H18 V21 H34 V31" fill="none" stroke="#c4683a" stroke-width="5" stroke-linecap="square"/>
+    </pattern>
+    <clipPath id="frameClip"><rect id="frameRect" x="960" y="0" width="0" height="1080"/></clipPath>
+  </defs>
+  <g clip-path="url(#frameClip)">
+    <rect x="0" y="18" width="1920" height="10" fill="#1b110b"/>
+    <rect x="0" y="34" width="1920" height="56" fill="url(#key)"/>
+    <rect x="0" y="96" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="104" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="974" width="1920" height="2" fill="#dda246" opacity=".7"/>
+    <rect x="0" y="980" width="1920" height="4" fill="#1b110b"/>
+    <rect x="0" y="990" width="1920" height="56" fill="url(#key)" transform="translate(0 2036) scale(1 -1)"/>
+    <rect x="0" y="1052" width="1920" height="10" fill="#1b110b"/>
+  </g>
+</svg>
+<div id="vig" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 45%,rgba(20,6,0,.55) 100%)"></div>
+<div id="black" style="position:absolute;inset:0;background:#0d0603"></div>
+</div>
+<script>
+const W=1920,H=1080,$=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const out=x=>1-Math.pow(1-clamp(x),3);
+const back=x=>{x=clamp(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const seg=(t,a,b)=>clamp((t-a)/(b-a));
+const lerp=(a,b,p)=>a+(b-a)*p;
+let s=61;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e;};
+/* ---------- aged terracotta ground ---------- */
+(function(){
+  const c=$('bg').getContext('2d');
+  const g=c.createRadialGradient(W/2,H*.45,80,W/2,H/2,1150);
+  g.addColorStop(0,'#cf7442');g.addColorStop(.55,'#b5552b');g.addColorStop(1,'#7c3418');
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  for(let i=0;i<70;i++){const x=rnd()*W,y=rnd()*H,r=60+rnd()*260,dark=rnd()<.6;
+    const b=c.createRadialGradient(x,y,0,x,y,r);
+    b.addColorStop(0,dark?`rgba(70,28,10,${.05+rnd()*.08})`:`rgba(240,190,140,${.04+rnd()*.06})`);b.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=b;c.fillRect(x-r,y-r,2*r,2*r);}
+  c.lineCap='round';
+  for(let i=0;i<900;i++){const x=rnd()*W,y=rnd()*H,a=rnd()*6.28,l=6+rnd()*30;
+    c.strokeStyle=rnd()<.5?`rgba(60,24,8,${.05+rnd()*.07})`:`rgba(250,210,170,${.04+rnd()*.06})`;c.lineWidth=.6+rnd();
+    c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);c.stroke();}
+  for(let i=0;i<14;i++){let x=rnd()*W,y=rnd()*H,a=rnd()*6.28;c.strokeStyle=`rgba(50,18,6,${.12+rnd()*.12})`;c.lineWidth=.8+rnd()*.8;
+    c.beginPath();c.moveTo(x,y);for(let k=0;k<20+rnd()*30;k++){a+=(rnd()-.5)*.9;x+=Math.cos(a)*9;y+=Math.sin(a)*9;c.lineTo(x,y);}c.stroke();}
+  const id=c.getImageData(0,0,W,H),d=id.data;
+  for(let i=0;i<d.length;i+=4){const n=(rnd()-.5)*26;d[i]+=n;d[i+1]+=n*.85;d[i+2]+=n*.7;}
+  c.putImageData(id,0,0);
+})();
+
+function medal(parent,id,r,img){
+  const g=el('g',{},parent);
+  const cp=el('clipPath',{id:'cp_'+id},g);el('circle',{r},cp);
+  el('circle',{r:r+22,fill:'#1b110b'},g);
+  const n=Math.round(r/3.6);for(let k=0;k<n;k++){const a=k/n*6.283;el('circle',{cx:Math.cos(a)*(r+12),cy:Math.sin(a)*(r+12),r:3,fill:'#dda246'},g);}
+  el('circle',{r:r+3,fill:'none',stroke:'#b5552b','stroke-width':2},g);
+  el('circle',{r,fill:'url(#discG)'},g);
+  el('image',{href:img,x:-r*1.04,y:-r*1.04,width:r*2.08,height:r*2.08,'clip-path':`url(#cp_${id})`,class:'paint'},g);
+  el('circle',{r,fill:'none',stroke:'#1b110b','stroke-width':5},g);
+  const fl=el('circle',{r,fill:'none',stroke:'#ffcf7a','stroke-width':8,opacity:0},g);
+  return {g,fl,r};
+}
+const MT=medal($('ten'),'ten',150,'tennyson.png');
+const MO=medal($('ody'),'ody',150,'odysseus.png');
+function flash(m,t0,t){m.fl.setAttribute('opacity',(1-seg(t,t0+.03,t0+.65))*seg(t,t0,t0+.04));m.fl.setAttribute('r',m.r+seg(t,t0+.03,t0+.65)*55);}
+
+(function(){let d='';for(let x=-150;x<160;x+=24)d+=`M${x} 34 q6 -6 12 0 t12 0 `;$('waves').setAttribute('d',d);})();
+
+const fx=$('fx').getContext('2d');
+const motes=[...Array(70)].map(()=>({x:rnd()*W,y:rnd()*H,r:.8+rnd()*2.2,v:6+rnd()*16,p:rnd()*6.28}));
+const dust=[...Array(60)].map(()=>({a:rnd()*6.28,v:200+rnd()*500,r:1.5+rnd()*3.5}));
+function op(id,o,tr){const e=typeof id==='string'?$(id):id;e.style.opacity=o;if(tr!==undefined){if(e instanceof SVGElement)e.setAttribute('transform',tr);else e.style.transform=tr;}}
+const L=(id,o,dy=0,sc=1)=>op(id,o,`translateX(-50%) translateY(${(1-o)*dy}px) scale(${sc})`);
+const T=(id,o,dy=0,sc=1)=>op(id,o,`translateY(${(1-o)*dy}px) scale(${sc})`);
+function dots(id,p){const e=$(id);const len=e.getTotalLength();let a=[],acc=0;while(acc+12<=len*p){a.push(2,10);acc+=12;}a.push(.001,99999);e.setAttribute('stroke-dasharray',a.join(' '));e.style.opacity=p>0?1:0;}
+
+/* Voice-over beats (8.80s): 0.27 পরে | 0.73 ইংরেজ কবি | 1.60 Tennyson | 2.23-3.60 এই একই ভাবনা নিয়ে
+   3.82 লিখলেন তাঁর অমর | 4.88-5.47 কবিতা "Ulysses" | 6.02 Ulysses কিন্তু | 7.20 Odysseus-এরই | 8.06 রোমান নাম */
+function render(t){
+  const shk=(t0,a)=>{const k=seg(t,t0,t0+.4);return k>0&&k<1?a*(1-k)*Math.sin(t*90):0;};
+  const sh=shk(4.95,5)+shk(6.05,7)+shk(8.08,6);
+  const z=1+.03*(t/10.5)+.004*Math.sin(t*.7);
+  $('cam').style.transform=`translate(${sh}px,${sh*.6}px) scale(${z})`;
+  $('black').style.opacity=1-seg(t,0,.35);
+  const lx=50+8*Math.sin(t*.25),ly=40+4*Math.cos(t*.31),fl=.2+.03*Math.sin(t*3.1)+.02*Math.sin(t*7.3);
+  $('light').style.background=`radial-gradient(ellipse 60% 55% at ${lx}% ${ly}%,rgba(255,196,120,${fl}) 0%,rgba(255,160,90,0) 70%)`;
+  const fr=ease(seg(t,0,.7));$('frameRect').setAttribute('x',960-960*fr);$('frameRect').setAttribute('width',1920*fr);
+
+  /* ---- scene 1 ---- */
+  const s1=1-seg(t,5.8,6.1);$('s1').style.opacity=s1;
+  T('kick',out(seg(t,.27,.7))*(1-seg(t,1.4,1.7)),-12);$('kick').style.letterSpacing=`${.5-.2*out(seg(t,.27,.7))}em`;
+  const tm=back(seg(t,.73,1.3));op(MT.g,seg(t,.73,.85),`translate(420 ${470+(1-out(seg(t,.73,1.2)))*36+Math.sin(t*1.3)*2.5}) scale(${tm*.98+.02})`);flash(MT,1.6,t);
+  L('tSub',out(seg(t,.8,1.25))*s1,12);
+  const tn=out(seg(t,1.6,2.0));L('tName',tn*s1,18,lerp(1.2,1,tn));$('tName').style.letterSpacing=`${.3-.22*tn}em`;
+  // the same idea: one last voyage
+  dots('link1',ease(seg(t,2.23,2.6)));
+  const vy=back(seg(t,2.35,2.85));op('voy',seg(t,2.35,2.45),`translate(900 470) scale(${vy*.98+.02})`);
+  $('ship').setAttribute('transform',`translate(${lerp(-110,40,seg(t,2.4,6))} ${18+Math.sin(t*2.6)*2.5}) scale(.9)`);
+  $('sun').setAttribute('r',56+Math.sin(t*3)*5);
+  L('same',out(seg(t,2.6,3.1))*s1,10);
+  dots('link2',ease(seg(t,3.82,4.2)));
+  // his immortal poem
+  L('imm',out(seg(t,3.85,4.3))*s1,-14);
+  const cd=back(seg(t,4.88,5.35));op('card',seg(t,4.88,4.98),`translate(1400 510) scale(${lerp(1.35,1,cd)}) rotate(${(1-cd)*-5})`);
+  $('cardGlow').setAttribute('opacity',seg(t,5.2,5.4)*(.55+.45*Math.sin(t*5)));
+  const pt=back(seg(t,5.3,5.6));op('poemTag',seg(t,5.3,5.4),`translate(${1400+178} ${510-238}) scale(${pt+.0001}) rotate(${(1-pt)*10+4})`);
+  L('quote',out(seg(t,5.2,5.6))*s1,10);
+
+  /* ---- scene 2 ---- */
+  const uy=back(seg(t,6.02,6.45));L('uly',seg(t,6.02,6.12),0,lerp(1.7,1,uy));$('uly').style.letterSpacing=`${.4-.36*out(seg(t,6.02,6.5))}em`;
+  L('lat',out(seg(t,6.4,6.85)),-10);
+  const wr=ease(seg(t,6.3,6.9));op('wreath',wr,`translate(${1380*(1-wr)} 0) scale(${wr} 1)`);
+  T('same2',out(seg(t,6.6,7.0)),-12);
+  const om=back(seg(t,7.2,7.75));op(MO.g,seg(t,7.2,7.3),`translate(560 ${470+(1-out(seg(t,7.2,7.7)))*36+Math.sin(t*1.3)*2.5}) scale(${om*.98+.02})`);flash(MO,7.2,t);
+  L('oName',out(seg(t,7.3,7.7)),16);
+  const eq=back(seg(t,7.6,8.0));op('eq',seg(t,7.6,7.7),`translate(960 470) scale(${eq+.0001})`);
+  const rm=back(seg(t,8.06,8.45));L('rom',seg(t,8.06,8.14),0,lerp(1.6,1,rm));
+
+  /* ---- particles ---- */
+  fx.clearRect(0,0,W,H);
+  for(const m of motes){const y=((m.y-m.v*t*2)%H+H)%H,x=m.x+Math.sin(t*.8+m.p)*14;
+    fx.fillStyle=`rgba(255,${200+m.r*15|0},140,${(.15+.25*Math.sin(t*1.7+m.p)**2)*seg(t,0,1.0)})`;
+    fx.beginPath();fx.arc(x,y,m.r,0,6.3);fx.fill();}
+  const burst=(t0,cx,cy,sc)=>{const k=seg(t,t0,t0+.8);if(k<=0||k>=1)return;for(const d of dust){const r=d.v*out(k)*sc;
+      fx.fillStyle=`rgba(60,26,10,${(1-k)*.5})`;fx.beginPath();fx.arc(cx+Math.cos(d.a)*r*1.6,cy+Math.sin(d.a)*r*.5,d.r,0,6.3);fx.fill();}};
+  burst(4.9,1400,510,.6);burst(6.04,1380,430,.6);burst(8.08,1380,600,.5);
+}
+window.render=render;
+Promise.all([document.fonts.load('60px Archides'),document.fonts.load('60px Dabanol','রোমান নাম'),document.fonts.ready,
+  ...['tennyson.png','odysseus.png','ulysses_card.jpg'].map(src=>new Promise(r=>{const im=new Image();im.onload=r;im.onerror=r;im.src=src;}))])
+  .then(()=>{render(0);window.ready=true;});
+</script></body></html>
