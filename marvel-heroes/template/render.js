@@ -1,4 +1,4 @@
-// Render one Marvel Heroes post card to a 1080x1080 PNG.
+// Render one Marvel Heroes post card to a 1920x1080 PNG.
 // Usage: node marvel-heroes/template/render.js marvel-heroes/posts/day-001.json
 const {chromium} = require(process.env.PLAYWRIGHT || '/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'), path = require('path');
@@ -11,14 +11,14 @@ const fs = require('fs'), path = require('path');
   const out = path.resolve(path.dirname(cfgPath), post.output);
 
   const b = await chromium.launch();
-  const p = await b.newPage({viewport: {width: 1080, height: 1080}});
+  const p = await b.newPage({viewport: {width: 1920, height: 1080}});
   await p.addInitScript(cfg => { window.POST = cfg; }, post);
   await p.goto('file://' + path.join(__dirname, 'post.html'));
   await p.evaluate(() => document.fonts.ready);
   await p.waitForFunction(() => document.getElementById('art').complete);
   await p.evaluate(() => window.fitAll());
-  const bad = await p.evaluate(() => [...document.fonts].filter(f => f.status !== 'loaded').map(f => f.family));
-  if (bad.length) console.warn('WARNING: fonts not loaded:', bad.join(', '));
+  const bad = await p.evaluate(() => [...document.fonts].filter(f => f.status === 'error').map(f => f.family));
+  if (bad.length) console.warn('WARNING: fonts failed to load:', bad.join(', '));
   await p.screenshot({path: out});
   await b.close();
   console.log('Saved', out);

@@ -1,11 +1,12 @@
 # Marvel Heroes: 100-day post image series
 
-One 1080x1080 post card per day. Day 1 is `posts/day-001-spider-man.png`.
+One 1920x1080 (16:9) post card per day. Day 1 is `posts/day-001-spider-man.png`.
 Every later day reuses the same template, so only a small JSON file and the art change.
 
 ## Making a new day (instructions for whoever builds days 2 to 100)
 
-1. Put the day's art in `images/` as `day-NNN-hero-name.<ext>` (Midjourney output, `--ar 1:1`).
+1. Put the day's art in `images/` as `day-NNN-hero-name.<ext>`. Generate it 16:9: end the Midjourney
+   prompt with `--ar 16:9` (not the `--ar 1:1` the older series used).
 2. Copy `posts/day-001.json` to `posts/day-NNN.json` and edit it:
 
    | Field | Meaning | Example |
@@ -17,7 +18,7 @@ Every later day reuses the same template, so only a small JSON file and the art 
    | `hero` | Hero name, English, as it should read (rendered in caps) | `"Iron Man"` |
    | `tagline` | Bangla sub-line from the image heading | `"..."` |
    | `image` | Path to the art, relative to the JSON file | `"../images/day-002-iron-man.png"` |
-   | `art` | Art placement on the 1080 canvas | see below |
+   | `art` | Art placement on the 1920x1080 canvas | see below |
    | `output` | PNG file name, written next to the JSON | `"day-002-iron-man.png"` |
 
 3. Render: `node marvel-heroes/template/render.js marvel-heroes/posts/day-NNN.json`
@@ -25,22 +26,29 @@ Every later day reuses the same template, so only a small JSON file and the art 
 
 ### Art placement (`art`)
 
-- Square 1:1 art (the normal case): `{ "width": 1080, "left": 0, "top": 0 }`.
-- Wide art (like Day 1, 2000x1120): scale it so the whole figure fits across 1080 and
-  centre the figure. Day 1 uses `{ "width": 1440, "left": -180, "top": 0 }`.
-- Optional `scrimHeight` (default 560) makes the dark fade at the bottom taller or shorter.
-  Keep the hero's face above the fade.
+The art must cover the full 1920x1080 canvas.
+
+- Exact 16:9 art: `{ "width": 1920, "left": 0, "top": 0 }`.
+- Near 16:9 art: scale to cover, then centre. Day 1 (2000x1120) uses
+  `{ "width": 1929, "left": -4, "top": 0 }`. Formula: `width = max(1920, 1080 * w / h)`,
+  `left = (1920 - width) / 2`, and `top = (1080 - width * h / w) / 2` (0 or negative).
+- Square art also works if needed: `{ "width": 1920, "left": 0, "top": -420 }` (shift `top`
+  to keep the face in frame).
+- Optional `scrimHeight` (default 520) makes the dark fade at the bottom taller or shorter.
+  Keep the hero's face above the fade and out of the lower-left text block.
 
 ## Image heading rules
 
 The image heading from each post is written as `MAIN / sub-line`. On the card:
 
 - **MAIN** = the hero name in English (`hero`). Comic Book Bold Italic, all caps, hero red
-  `#E23636`, black stroke and hard 9 px offset shadow. Long names shrink automatically.
+  `#E23636`, black stroke and hard 10 px offset shadow. Long names shrink automatically.
 - **sub-line** = the Bangla line (`tagline`). Dabanol, comic paper `#F5F3EE`, on a night navy
   `#1B2A4A` caption box with a halftone-yellow left bar.
 - Top-left badge: `ARC N` (yellow) + arc name. Top-right badge: `DAY N OF 100` (red).
-- Bottom-right: `Musings of মাকসুদ` signature.
+- Bottom-right, stacked: `Musings of মাকসুদ`, then `www.musingsofmaksud.com` (globe icon),
+  then `https://www.youtube.com/@MusingsofMaksud` (play icon). These are fixed in
+  `template/post.html` (`SITE`, `YOUTUBE`); do not change them per day.
 - No em dashes or en dashes anywhere on the card. Proper nouns stay in English.
 - Rotate the shape of the Bangla sub-line from day to day (a fact, a quote, a single noun,
   a question). At most one mirrored "[A]-এর X, [B]-এর Y" line per batch of four.
@@ -56,12 +64,12 @@ The image heading from each post is written as `MAIN / sub-line`. On the card:
 | text | `#F5F3EE` | Bangla sub-line, signature |
 
 Fonts live in `template/fonts/`: Comic Book Bold Italic (hero name), Comic Book Bold (badges),
-Dabanol (Bangla). Do not add colours outside this table.
+Dabanol (Bangla), Barlow Bold (links). Do not add colours outside this table.
 
 ## Check before delivering
 
-- The render prints no "fonts not loaded" warning.
+- The render prints no "fonts failed to load" warning.
 - Bangla conjuncts are shaped (zoom in on words like প্রায়শ্চিত্ত, ক্ষ, ন্ত্র).
 - The hero's face is clear of the badges and the bottom fade.
-- At 168x168 the hero name still reads.
+- At 320x180 the hero name still reads.
 - No dashes, no off-palette colours, no Marvel logo or wordmark on the card.
