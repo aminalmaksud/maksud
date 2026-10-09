@@ -26,9 +26,9 @@ I will send, for each day: the 16:9 art (Midjourney, `--ar 16:9`), the hero name
 
 1. Save the art to `marvel-heroes/images/day-NNN-hero-name.<ext>` (NNN is three digits).
 2. Copy `posts/day-001.json` to `posts/day-NNN.json` and edit only: `day`, `arc`, `arcName`, `hero`, `tagline`, `image`, `art`, `output`. Keep `total` at 100. Set `output` to `day-NNN-hero-name.webp`.
-3. Set `art` so the art covers the whole 1920x1080 canvas, with the hero's face clear of the badges and of the lower-left text block. The formulas are in the README. Exact 16:9 art is `{ "width": 1920, "left": 0, "top": 0 }`.
+3. Set `art` so the art covers the whole 1920x1080 canvas (exact 16:9 art is `{ "width": 1920, "left": 0, "top": 0 }`; the README has the formulas for other sizes). Set `pos` to where the title block goes: `bottom-left` (default), `bottom-right`, `bottom`, `top-left`, `top-right` or `middle`. The title block must never cover the hero's face or mouth, so look at the art and pick the position that keeps the face clear; the README has a table of what each position is good for. Only the opening post uses `dayLabel` (it replaces the "Day N of 100" badge).
 4. Render: `node marvel-heroes/template/render.js marvel-heroes/posts/day-NNN.json`
-5. Open the result and check it (see section 4). Fix and re-render until it passes.
+5. Open the result and check it (see section 4). Fix and re-render until it passes. Lossless WebP of detailed art takes about 40 seconds, so run the render in the background if your shell times out. Use a `.png` output name for quick position tests.
 6. Show me the finished image. Commit and push only when I ask.
 
 Never edit `post.html` or `render.js` for a single day. If you think the template itself needs a change, tell me first, because every day must look the same.
@@ -38,7 +38,7 @@ Never edit `post.html` or `render.js` for a single day. If you think the templat
 - Size 1920x1080, saved as lossless WebP (pixel-identical to the PNG render).
 - Style: Marvel "comic ink". Colours only from this list: bg `#0B0B0D`, surface `#1B2A4A`, title red `#E23636`, accent yellow `#F7C948`, text `#F5F3EE`. Nothing off-palette.
 - Top-left badge: `ARC N` (yellow) plus the arc name. Top-right badge: `DAY N OF 100` (red).
-- Lower-left: the hero name in English (Comic Book Bold Italic, all caps, red, black stroke and hard offset shadow), a short yellow rule, then the Bangla sub-line (Dabanol, on a navy box with a yellow left bar).
+- Default position, lower-left (see `pos`): the hero name in English (Comic Book Bold Italic, all caps, red, black stroke and hard offset shadow), a short yellow rule, then the Bangla sub-line (Dabanol, on a navy box with a yellow left bar).
 - Lower-right, stacked: `Musings of মাকসুদ`, `www.musingsofmaksud.com`, `https://www.youtube.com/@MusingsofMaksud`. These are fixed in the template and must stay identical on every day.
 - Art is full-bleed, fading into black at the bottom, with a thin yellow inner frame.
 
