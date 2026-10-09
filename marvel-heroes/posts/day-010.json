@@ -1,0 +1,16 @@
+{
+  "day": 10,
+  "total": 100,
+  "arc": 1,
+  "arcName": "Avengers core",
+  "hero": "Scarlet Witch",
+  "tagline": "যে শোক বাস্তবতাকেই ভেঙে দিয়েছিল",
+  "image": "../images/day-010-scarlet-witch.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-010-scarlet-witch.webp"
+}

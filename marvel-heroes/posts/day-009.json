@@ -1,0 +1,16 @@
+{
+  "day": 9,
+  "total": 100,
+  "arc": 1,
+  "arcName": "Avengers core",
+  "hero": "Captain Marvel",
+  "tagline": "যে নারী নিজের গল্প নিজেই ফিরিয়ে নিয়েছিলেন",
+  "image": "../images/day-009-captain-marvel.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-009-captain-marvel.webp"
+}

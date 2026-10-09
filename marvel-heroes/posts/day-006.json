@@ -1,0 +1,16 @@
+{
+  "day": 6,
+  "total": 100,
+  "arc": 1,
+  "arcName": "Avengers core",
+  "hero": "Black Widow",
+  "tagline": "যে নারী নিজের স্মৃতিকেও বিশ্বাস করতে পারেন না",
+  "image": "../images/day-006-black-widow.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-006-black-widow.webp"
+}

@@ -1,0 +1,16 @@
+{
+  "day": 7,
+  "total": 100,
+  "arc": 1,
+  "arcName": "Avengers core",
+  "hero": "Hawkeye",
+  "tagline": "দেবতাদের ভিড়ে একজন সাধারণ মানুষ",
+  "image": "../images/day-007-hawkeye.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-007-hawkeye.webp"
+}
