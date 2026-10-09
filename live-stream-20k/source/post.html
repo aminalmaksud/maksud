@@ -1,0 +1,119 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Cinzel;font-weight:400;src:url(fonts/Cinzel-400.ttf)}
+@font-face{font-family:Cinzel;font-weight:700;src:url(fonts/Cinzel-700.ttf)}
+@font-face{font-family:Cardo;font-weight:400;src:url(fonts/Cardo-400.ttf)}
+@font-face{font-family:Cardo;font-weight:700;src:url(fonts/Cardo-700.ttf)}
+@font-face{font-family:Dabanol;src:url(fonts/Dabanol.ttf)}
+:root{--bg:#120F0D;--surface:#2A221C;--title:#D6B25E;--accent:#B3261E;--highlight:#F3DFA2;--text:#EFE6CF}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1350px;background:var(--bg);overflow:hidden}
+.canvas{position:relative;width:1080px;height:1350px;color:var(--text);text-align:center}
+canvas{position:absolute;inset:0}
+.frame{position:absolute;inset:34px;border:1.5px solid rgba(214,178,94,.75);outline:1px solid rgba(214,178,94,.35);outline-offset:-10px}
+.frame i{position:absolute;width:14px;height:14px;background:var(--title);transform:rotate(45deg)}
+.frame i:nth-child(1){left:-8px;top:-8px}.frame i:nth-child(2){right:-8px;top:-8px}
+.frame i:nth-child(3){left:-8px;bottom:-8px}.frame i:nth-child(4){right:-8px;bottom:-8px}
+.gold{background:linear-gradient(180deg,#FFF3C4 0%,#E9C46E 40%,#A97C2B 64%,#F2D58A 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 22px rgba(214,178,94,.35)) drop-shadow(0 4px 2px rgba(0,0,0,.8))}
+.abs{position:absolute;left:0;right:0}
+.live{top:96px;display:flex;justify-content:center}
+.live span{display:inline-flex;align-items:center;gap:14px;font-family:Cinzel;font-weight:700;font-size:26px;letter-spacing:.32em;padding:12px 26px 12px 30px;
+  border:2px solid var(--accent);border-radius:999px;background:rgba(179,38,30,.16);color:var(--text);box-shadow:0 0 26px rgba(179,38,30,.35)}
+.live b{width:16px;height:16px;border-radius:50%;background:#E0362B;box-shadow:0 0 12px #E0362B}
+.kicker{top:186px;font-family:Cinzel;font-size:30px;letter-spacing:.34em;color:var(--title)}
+.stats{top:262px;display:flex;justify-content:center;align-items:flex-start;gap:0}
+.stat{width:400px}
+.num{font-family:Cinzel;font-weight:700;font-size:104px;line-height:1;letter-spacing:0}
+.lbl{margin-top:22px;font-family:Cardo;font-size:36px;line-height:1.2;color:var(--text)}
+.lbl div{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:6px}
+.lbl small{display:block;font-size:24px;letter-spacing:.24em;text-transform:uppercase;color:rgba(239,230,207,.7)}
+.lbl svg{width:42px;height:42px;flex:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.amp{width:110px;padding-top:22px;font-family:Cardo;font-size:68px;color:var(--title);opacity:.9}
+.orn{top:548px;display:flex;justify-content:center;align-items:center;gap:18px}
+.orn hr{border:0;height:1.5px;width:250px;background:linear-gradient(90deg,transparent,var(--title))}
+.orn hr:last-child{background:linear-gradient(270deg,transparent,var(--title))}
+.orn i{width:12px;height:12px;background:var(--title);transform:rotate(45deg)}
+.title{top:592px;font-family:Cinzel;font-weight:700;font-size:96px;line-height:1.05;letter-spacing:.06em;color:var(--text);text-shadow:0 0 30px rgba(214,178,94,.18),0 4px 10px rgba(0,0,0,.7)}
+.rule{top:716px;margin:0 auto;width:220px;height:4px;background:var(--accent);box-shadow:0 0 14px rgba(179,38,30,.7)}
+.when{top:770px;margin:0 auto;width:760px;padding:30px 40px 34px;background:rgba(42,34,28,.78);border:1.5px solid rgba(214,178,94,.55);box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.when .day{font-family:Cinzel;font-weight:700;font-size:34px;letter-spacing:.2em;color:var(--text)}
+.when .time{margin-top:10px;font-family:Cinzel;font-weight:700;font-size:84px;line-height:1;color:var(--highlight)}
+.when .time em{font-style:normal;font-size:44px;letter-spacing:.06em;color:var(--title)}
+.when .meta{margin-top:16px;font-family:Cardo;font-size:28px;color:rgba(239,230,207,.82)}
+.on{top:1066px;font-family:Cardo;font-size:28px;letter-spacing:.2em;text-transform:uppercase;color:var(--title)}
+.plats{top:1112px;display:flex;justify-content:center;gap:56px;font-family:Cardo;font-weight:700;font-size:38px;color:var(--text)}
+.plats span{display:flex;align-items:center;gap:14px}
+.plats svg{width:50px;height:50px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.sig{top:1214px;text-shadow:0 2px 6px rgba(0,0,0,.8)}
+.sig .name{font-family:Cardo;font-size:32px;line-height:1.1;color:var(--text)}
+.sig .name span{font-family:Dabanol;font-size:34px}
+.sig .url{margin-top:4px;font-family:Cardo;font-size:24px;letter-spacing:.06em;color:var(--title)}
+</style></head>
+<body><div class="canvas">
+<canvas id="c" width="1080" height="1350"></canvas>
+<div class="frame"><i></i><i></i><i></i><i></i></div>
+
+<div class="abs live"><span><b></b>Live</span></div>
+<div class="abs kicker">A CELEBRATION OF</div>
+
+<div class="abs stats">
+  <div class="stat">
+    <div class="num gold">20,000</div>
+    <div class="lbl"><small>followers on</small><div><svg viewBox="0 0 48 48"><rect x="2" y="9" width="44" height="30" rx="8" fill="#FF0000"/><path d="M19.5 17v14l12-7z" fill="#fff"/></svg>YouTube</div></div>
+  </div>
+  <div class="amp">&amp;</div>
+  <div class="stat">
+    <div class="num gold">15,000</div>
+    <div class="lbl"><small>followers on</small><div><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#1877F2"/><path d="M26.6 46V30.2h5.3l.8-6.2h-6.1v-3.9c0-1.8.5-3 3.1-3h3.2v-5.5c-.6-.1-2.5-.2-4.7-.2-4.6 0-7.8 2.8-7.8 8v4.6h-5.2v6.2h5.2V46z" fill="#fff"/></svg>Facebook</div></div>
+  </div>
+</div>
+
+<div class="abs orn"><hr><i></i><hr></div>
+<div class="abs title">A LIVE STREAM</div>
+<div class="abs rule"></div>
+
+<div class="abs when">
+  <div class="day">SATURDAY · 10 OCTOBER</div>
+  <div class="time">8:00 <em>PM</em></div>
+  <div class="meta">One hour · Bangladesh time (GMT+6)</div>
+</div>
+
+<div class="abs on">Streaming simultaneously on</div>
+<div class="abs plats">
+  <span><svg viewBox="0 0 48 48"><rect x="2" y="9" width="44" height="30" rx="8" fill="#FF0000"/><path d="M19.5 17v14l12-7z" fill="#fff"/></svg>YouTube</span>
+  <span><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#1877F2"/><path d="M26.6 46V30.2h5.3l.8-6.2h-6.1v-3.9c0-1.8.5-3 3.1-3h3.2v-5.5c-.6-.1-2.5-.2-4.7-.2-4.6 0-7.8 2.8-7.8 8v4.6h-5.2v6.2h5.2V46z" fill="#fff"/></svg>Facebook</span>
+</div>
+
+<div class="abs sig"><div class="name">Musings of <span>মাকসুদ</span></div><div class="url">www.musingsofmaksud.com</div></div>
+</div>
+<script>
+const W=1080,H=1350,ctx=document.getElementById('c').getContext('2d');
+let s=11;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+// base: warm ink with a glow behind the numbers and a softer one behind the date
+let g=ctx.createRadialGradient(540,360,20,540,360,720);
+g.addColorStop(0,'#3A2C1C');g.addColorStop(.45,'#1C1612');g.addColorStop(1,'#0B0908');
+ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+g=ctx.createRadialGradient(540,880,10,540,880,480);
+g.addColorStop(0,'rgba(179,38,30,.16)');g.addColorStop(1,'rgba(179,38,30,0)');
+ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+// light rays fanning down from the top
+ctx.save();ctx.globalCompositeOperation='lighter';
+for(let i=0;i<14;i++){const a=Math.PI/2+(i-6.5)*0.11+(rnd()-.5)*.04,len=1100,w=.018+rnd()*.03;
+  ctx.beginPath();ctx.moveTo(540,-120);ctx.lineTo(540+Math.cos(a-w)*len,-120+Math.sin(a-w)*len);ctx.lineTo(540+Math.cos(a+w)*len,-120+Math.sin(a+w)*len);ctx.closePath();
+  const rg=ctx.createLinearGradient(540,-120,540,900);rg.addColorStop(0,`rgba(214,178,94,${.05+rnd()*.05})`);rg.addColorStop(1,'rgba(214,178,94,0)');
+  ctx.fillStyle=rg;ctx.fill();}
+// gold dust and a few sparkles
+for(let i=0;i<260;i++){const x=rnd()*W,y=rnd()*H,r=.4+rnd()*rnd()*2.6,a=.15+rnd()*.55;
+  ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=`rgba(243,223,162,${a})`;ctx.shadowColor='rgba(240,200,110,.8)';ctx.shadowBlur=6;ctx.fill();}
+ctx.shadowBlur=0;
+const spark=(x,y,r)=>{ctx.save();ctx.translate(x,y);ctx.fillStyle='rgba(255,240,200,.85)';ctx.shadowColor='rgba(240,200,110,.9)';ctx.shadowBlur=14;
+  ctx.beginPath();for(let k=0;k<4;k++){ctx.rotate(Math.PI/2);ctx.moveTo(0,0);ctx.quadraticCurveTo(r*.12,r*.12,0,r);ctx.quadraticCurveTo(-r*.12,r*.12,0,0);}ctx.fill();ctx.restore();};
+[[120,215,24],[960,200,20],[96,560,14],[985,560,18],[100,900,16],[982,1180,14],[120,1180,12]].forEach(p=>spark(...p));
+ctx.restore();
+// vignette
+g=ctx.createRadialGradient(540,640,420,540,640,900);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.6)');
+ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+</script>
+</body></html>
