@@ -1,0 +1,16 @@
+{
+  "day": 5,
+  "total": 100,
+  "arc": 1,
+  "arcName": "Avengers core",
+  "hero": "Hulk",
+  "tagline": "রাগের নিচে লুকিয়ে থাকা এক ভয় পাওয়া শিশু",
+  "image": "../images/day-005-hulk.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-005-hulk.webp"
+}

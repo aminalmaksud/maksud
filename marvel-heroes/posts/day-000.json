@@ -1,0 +1,17 @@
+{
+  "day": 0,
+  "total": 100,
+  "arc": 1,
+  "arcName": "Avengers core",
+  "dayLabel": "Opening",
+  "hero": "Marvel Heroes",
+  "tagline": "১০০ দিন, ১০০ জন নায়ক, আর প্রতিটা মুখোশের নিচে একজন মানুষ",
+  "image": "../images/day-000-opening.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-000-opening.webp"
+}

@@ -1,6 +1,6 @@
 # Marvel Heroes: 100-day post image series
 
-One 1920x1080 (16:9) post card per day. Day 1 is `posts/day-001-spider-man.webp`. Cards are saved as lossless WebP (no quality loss).
+One 1920x1080 (16:9) post card per day. Day 1 is `posts/day-001-spider-man.webp`; the opening post is `posts/day-000-opening.webp`. Cards are saved as lossless WebP (no quality loss).
 Every later day reuses the same template, so only a small JSON file and the art change.
 
 ## Making a new day (instructions for whoever builds days 2 to 100)
@@ -18,10 +18,14 @@ Every later day reuses the same template, so only a small JSON file and the art 
    | `hero` | Hero name, English, as it should read (rendered in caps) | `"Iron Man"` |
    | `tagline` | Bangla sub-line from the image heading | `"..."` |
    | `image` | Path to the art, relative to the JSON file | `"../images/day-002-iron-man.png"` |
+   | `pos` | Where the title block sits: `bottom-left` (default), `bottom-right`, `top-left`, `top-right`, `middle`, `bottom` | `"bottom-left"` |
+   | `dayLabel` | Optional. Replaces the right badge text (used for the opening post: `"Opening"`). Leave out on normal days | `"Opening"` |
    | `art` | Art placement on the 1920x1080 canvas | see below |
    | `output` | File name, written next to the JSON. Use `.webp` (lossless); `.png` also works | `"day-002-iron-man.webp"` |
 
 3. Render: `node marvel-heroes/template/render.js marvel-heroes/posts/day-NNN.json`
+   (lossless WebP of detailed art takes about 40 seconds; run it in the background if your
+   shell has a short timeout. For quick position tests, use a `.png` output name.)
 4. Open the PNG and check it (checklist below).
 
 ### Art placement (`art`)
@@ -36,6 +40,24 @@ The art must cover the full 1920x1080 canvas.
   to keep the face in frame).
 - Optional `scrimHeight` (default 520) makes the dark fade at the bottom taller or shorter.
   Keep the hero's face above the fade and out of the lower-left text block.
+
+### Title position (`pos`)
+
+The title block (hero name, rule, Bangla line) must never cover the hero's face or mouth.
+Pick the position that keeps the face clear:
+
+| `pos` | Title block | Links block | Good when |
+|---|---|---|---|
+| `bottom-left` | bottom, left | bottom-right | Default. Face in the upper or centre area. Used for Days 1 to 5 and the opening |
+| `bottom-right` | bottom, right-aligned | moves to bottom-left | Subject sits low-left, face upper-left |
+| `bottom` | bottom, centred | centred under the title | Face upper-centre, wide empty bottom |
+| `top-left` | below the badges, left | bottom-right | Face low or on the right |
+| `top-right` | below the badges, right-aligned | bottom-right | Face low or on the left |
+| `middle` | centred, on a dark band | bottom-right | Face in the top third and the body below is empty |
+
+The top and middle positions darken the art behind the title, so only use them when the face
+is somewhere else. Render once and look: the face and mouth must be fully visible.
+Long Bangla lines shrink first, then wrap onto two lines (the opening post does this).
 
 ## Image heading rules
 

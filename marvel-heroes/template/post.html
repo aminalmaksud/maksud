@@ -23,6 +23,13 @@ html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
   background:linear-gradient(to top,var(--bg) 0%,rgba(11,11,13,.94) 30%,rgba(11,11,13,.7) 55%,rgba(11,11,13,0) 100%)}
 #topscrim{position:absolute;left:0;right:0;top:0;height:200px;
   background:linear-gradient(to bottom,rgba(11,11,13,.55),rgba(11,11,13,0))}
+#midscrim{display:none;position:absolute;left:0;right:0;top:50%;height:640px;margin-top:-320px;
+  background:linear-gradient(to bottom,rgba(11,11,13,0),rgba(11,11,13,.78) 28%,rgba(11,11,13,.78) 72%,rgba(11,11,13,0))}
+/* title block at the top or middle: darken there, keep a small fade under the links */
+.p-top-left #topscrim,.p-top-right #topscrim{height:640px;
+  background:linear-gradient(to bottom,rgba(11,11,13,.9) 0%,rgba(11,11,13,.82) 40%,rgba(11,11,13,0) 100%)}
+.p-top-left #scrim,.p-top-right #scrim,.p-middle #scrim{height:340px}
+.p-middle #midscrim{display:block}
 /* halftone overlay, 10 percent, only in the lower block */
 #dots{position:absolute;left:0;right:0;bottom:0;height:380px;opacity:.10;
   background-image:radial-gradient(circle,var(--accent) 1.8px,transparent 2.4px);
@@ -44,8 +51,16 @@ html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
 #day{right:96px;background:var(--title)}
 #day span{color:var(--bg)}
 
-/* text block, lower left */
-#block{position:absolute;left:96px;bottom:78px;max-width:1220px}
+/* text block: position comes from the post's "pos" (class p-... on #c); default is bottom-left */
+#block{position:absolute;max-width:1728px}
+.p-bottom-left #block{left:96px;bottom:78px}
+.p-bottom-right #block{right:96px;bottom:78px;text-align:right}
+.p-top-left #block{left:96px;top:188px}
+.p-top-right #block{right:96px;top:188px;text-align:right}
+.p-middle #block{left:50%;top:50%;transform:translate(-50%,-50%);text-align:center}
+.p-bottom #block{left:50%;transform:translateX(-50%);text-align:center}
+.p-bottom-right #rule,.p-top-right #rule{margin-left:auto}
+.p-middle #rule,.p-bottom #rule{margin-left:auto;margin-right:auto}
 #hero{font-family:"CB Title";font-size:var(--hero-size,180px);line-height:.95;
   color:var(--title);text-transform:uppercase;letter-spacing:3px;white-space:nowrap;
   -webkit-text-stroke:6px var(--bg);paint-order:stroke fill;
@@ -56,9 +71,15 @@ html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
   border-left:12px solid var(--accent);padding:14px 34px 20px 30px;
   box-shadow:9px 9px 0 #000;white-space:nowrap}
 #tag p{font-family:"Dabanol";font-size:var(--tag-size,62px);line-height:1.4;color:var(--text)}
+#tag.wrap{white-space:normal;text-align:left}
+#tag.wrap p{line-height:1.3}
 
-/* signature and links, lower right */
+/* signature and links: lower right, moves left or centre when the title takes that corner */
 #sig{position:absolute;right:96px;bottom:78px;text-align:right;color:var(--text)}
+.p-bottom-right #sig{right:auto;left:96px;text-align:left}
+.p-bottom-right #sig .link{justify-content:flex-start}
+.p-bottom #sig{right:auto;left:50%;transform:translateX(-50%);text-align:center}
+.p-bottom #sig .link{justify-content:center}
 #sig .name{font-family:"Dabanol";font-size:32px;line-height:1.4;opacity:.75;margin-bottom:10px}
 #sig .link{display:flex;align-items:center;justify-content:flex-end;gap:12px;
   font-family:"Barlow";font-weight:700;font-size:25px;line-height:1;opacity:.9;margin-top:10px}
@@ -70,6 +91,7 @@ html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
   <img id="art" alt="">
   <div id="topscrim"></div>
   <div id="scrim"></div>
+  <div id="midscrim"></div>
   <div id="dots"></div>
 
   <div id="arc" class="badge"><span class="n"></span><span class="name"></span></div>
@@ -113,7 +135,9 @@ art.style.width = a.width+'px'; art.style.left = a.left+'px'; art.style.top = a.
 if (a.scrimHeight) document.documentElement.style.setProperty('--scrim-h', a.scrimHeight+'px');
 $('#arc .n').textContent = 'Arc ' + P.arc;
 $('#arc .name').textContent = P.arcName;
-$('#day span').textContent = `Day ${P.day} of ${P.total}`;
+$('#day span').textContent = P.dayLabel || `Day ${P.day} of ${P.total}`;
+const POS = ['bottom-left','bottom-right','top-left','top-right','middle','bottom'].includes(P.pos) ? P.pos : 'bottom-left';
+$('#c').classList.add('p-' + POS);
 $('#hero').textContent = P.hero;
 $('#tag p').textContent = P.tagline;
 $('#web span').textContent = SITE;
@@ -126,9 +150,19 @@ function fit(el, varName, start, min, maxW){
   while (el.scrollWidth > maxW && s > min){ s -= 2; document.documentElement.style.setProperty(varName, s+'px'); }
 }
 window.fitAll = () => {
-  const room = 1920 - 96 - $('#sig').offsetWidth - 60 - 96;
+  const sig = $('#sig'), tag = $('#tag');
+  // beside the links block only when the title shares the bottom edge with it
+  const room = (POS === 'bottom-left' || POS === 'bottom-right')
+    ? 1920 - 96 - sig.offsetWidth - 60 - 96 : 1728;
+  if (POS === 'bottom') $('#block').style.bottom = (78 + sig.offsetHeight + 34) + 'px';
+  tag.classList.remove('wrap'); tag.style.maxWidth = '';
   fit($('#hero'),'--hero-size',180,100,room);
-  fit($('#tag'),'--tag-size',62,44,room);
+  fit(tag,'--tag-size',62,50,room);
+  // a very long Bangla line wraps onto two lines instead of shrinking further
+  if (tag.scrollWidth > room){
+    tag.classList.add('wrap'); tag.style.maxWidth = room + 'px';
+    document.documentElement.style.setProperty('--tag-size','54px');
+  }
 };
 document.fonts.ready.then(window.fitAll);
 </script>

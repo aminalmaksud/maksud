@@ -1,0 +1,16 @@
+{
+  "day": 2,
+  "total": 100,
+  "arc": 1,
+  "arcName": "Avengers core",
+  "hero": "Iron Man",
+  "tagline": "বর্মটা ধাতুর, ক্ষতটা হৃদয়ের",
+  "image": "../images/day-002-iron-man.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-002-iron-man.webp"
+}

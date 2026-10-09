@@ -1,0 +1,16 @@
+{
+  "day": 3,
+  "total": 100,
+  "arc": 1,
+  "arcName": "Avengers core",
+  "hero": "Captain America",
+  "tagline": "একটা দেশের না, একটা স্বপ্নের সৈনিক",
+  "image": "../images/day-003-captain-america.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-003-captain-america.webp"
+}
