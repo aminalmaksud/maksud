@@ -11,14 +11,16 @@ The system lives in the GitHub repo `aminalmaksud/maksud`, branch `claude/funny-
 The folder contains:
 - `README.md`: the full rules. Read it first and follow it.
 - `template/post.html`: the card design (HTML/CSS, filled from a JSON file).
-- `template/render.js`: renders the card with Playwright/Chromium and saves lossless WebP.
-- `template/fonts/`: Comic Book Bold Italic, Comic Book Bold, Dabanol, Barlow. All fonts are bundled, so nothing else is needed.
+- `template/render.js`: renders the card with Playwright/Chromium and saves lossless WebP. It also picks the hero-name colour (see section 3).
+- `template/pick_color.py`: the colour picker that `render.js` calls.
+- `template/assets/`: `follow-bar.webp` (the yellow follow bar) and `mh-badge.png` (the MH starburst, without its number).
+- `template/fonts/`: Comic Book Bold Italic, Comic Book Bold, Dabanol. All fonts are bundled, so nothing else is needed.
 - `posts/day-001.json` and `posts/day-001-spider-man.webp`: the finished Day 1 example. Use it as the reference for how every card must look.
 - `images/`: the source art.
 
-Requirements: Node with Playwright and Chromium, and Python 3 with Pillow (for WebP). `render.js` loads Playwright from `/opt/node22/lib/node_modules/playwright`; if it lives elsewhere, set the `PLAYWRIGHT` environment variable to its path. Do not run `playwright install` if a Chromium is already present.
+Requirements: Node with Playwright and Chromium, and Python 3 with Pillow and NumPy (WebP and the colour picker). `render.js` loads Playwright from `/opt/node22/lib/node_modules/playwright`; if it lives elsewhere, set the `PLAYWRIGHT` environment variable to its path. Do not run `playwright install` if a Chromium is already present.
 
-Check the setup by running `node marvel-heroes/template/render.js marvel-heroes/posts/day-001.json` and confirming the output matches the Day 1 card (1920x1080, no "fonts failed to load" warning).
+Check the setup by running `node marvel-heroes/template/render.js marvel-heroes/posts/day-001.json` and confirming the output matches the Day 1 card (1920x1080, yellow follow bar at the bottom, MH 1 badge, no "fonts failed to load" warning).
 
 ## 2. Making each day
 
@@ -26,7 +28,7 @@ I will send, for each day: the 16:9 art (Midjourney, `--ar 16:9`), the hero name
 
 1. Save the art to `marvel-heroes/images/day-NNN-hero-name.<ext>` (NNN is three digits).
 2. Copy `posts/day-001.json` to `posts/day-NNN.json` and edit only: `day`, `arc`, `arcName`, `hero`, `tagline`, `image`, `art`, `output`. Keep `total` at 100. Set `output` to `day-NNN-hero-name.webp`.
-3. Set `art` so the art covers the whole 1920x1080 canvas (exact 16:9 art is `{ "width": 1920, "left": 0, "top": 0 }`; the README has the formulas for other sizes). Set `pos` to where the title block goes: `bottom-left` (default), `bottom-right`, `bottom`, `top-left`, `top-right` or `middle`. The title block must never cover the hero's face or mouth, so look at the art and pick the position that keeps the face clear; the README has a table of what each position is good for. Only the opening post uses `dayLabel` (it replaces the "Day N of 100" badge).
+3. Set `art` so the art covers the whole 1920x1080 canvas (exact 16:9 art is `{ "width": 1920, "left": 0, "top": 0 }`; the README has the formulas for other sizes). Set `pos` to where the title block goes: `bottom-left` (default), `bottom-right`, `bottom`, `top-left`, `top-right` or `middle`. The title block must never cover the hero's face or mouth, so look at the art and pick the position that keeps the face clear; the README has a table of what each position is good for. Only the opening post uses `dayLabel` (it replaces the "Day N of 100" badge). The MH badge number follows `day` automatically, so the opening (day 0) shows MH 0.
 4. Render: `node marvel-heroes/template/render.js marvel-heroes/posts/day-NNN.json`
 5. Open the result and check it (see section 4). Fix and re-render until it passes. Lossless WebP of detailed art takes about 40 seconds, so run the render in the background if your shell times out. Use a `.png` output name for quick position tests.
 6. Show me the finished image. Commit and push only when I ask.
@@ -38,16 +40,20 @@ Never edit `post.html` or `render.js` for a single day. If you think the templat
 - Size 1920x1080, saved as lossless WebP (pixel-identical to the PNG render).
 - Style: Marvel "comic ink". Colours only from this list: bg `#0B0B0D`, surface `#1B2A4A`, title red `#E23636`, accent yellow `#F7C948`, text `#F5F3EE`. Nothing off-palette.
 - Top-left badge: `ARC N` (yellow) plus the arc name. Top-right badge: `DAY N OF 100` (red).
-- Default position, lower-left (see `pos`): the hero name in English (Comic Book Bold Italic, all caps, red, black stroke and hard offset shadow), a short yellow rule, then the Bangla sub-line (Dabanol, on a navy box with a yellow left bar).
-- Lower-right, stacked: `Musings of মাকসুদ`, `www.musingsofmaksud.com`, `https://www.youtube.com/@MusingsofMaksud`. These are fixed in the template and must stay identical on every day.
-- Art is full-bleed, fading into black at the bottom, with a thin yellow inner frame.
+- Default position, lower-left (see `pos`): the hero name in English (Comic Book Bold Italic, all caps, black stroke and hard offset shadow), a short yellow rule, then the Bangla sub-line (Dabanol, on a navy box with a yellow left bar).
+- Hero-name colour changes with the background. `render.js` picks red, yellow or paper white from the artwork's colour (rules are in `pick_color.py` and the README). Do not hard-code a colour unless I ask; if I do, set `heroColor` in the post's JSON to one of `#E23636`, `#F7C948`, `#F5F3EE`.
+- Bottom edge: the yellow follow bar (FOLLOW, YouTube/Instagram/Facebook icons, `www.musingsofmaksud.com`, `@MUSINGSOFMAKSUD`). It is fixed and identical on every day. There is no separate signature or link text anywhere else.
+- Bottom-right, above the bar: the MH starburst badge with the post number (`MH 0` for the opening, then `MH 1`, `MH 2` and so on). It follows `day` automatically.
+- Art is full-bleed behind the bar, fading into black above it, with a thin yellow inner frame that stops at the bar.
 
 ## 4. Check before showing me
 
 - The render prints no "fonts failed to load" warning.
 - Zoom in on the Bangla line. Joined letters must be shaped correctly (for example প্রায়শ্চিত্ত, ক্ষ, ন্ত্র).
-- The hero name and the Bangla line do not collide with the links block, and nothing is cut off.
-- The hero's face is not covered by a badge or the bottom fade.
+- The hero name and the Bangla line do not touch the MH badge, and nothing is cut off. The website text sits clear of the icons and the handle on the bar.
+- The MH number matches the day.
+- The hero-name colour reads clearly against the art behind it.
+- The hero's face is not covered by a badge, the title block or the bottom fade. The title block sits above the bar, so it starts about 150 px higher than it did before the bar was added.
 - At roughly 320x180 the hero name still reads.
 - No em dashes or en dashes anywhere on the card. Proper nouns stay in English. No Marvel logo or wordmark.
 - File is 1920x1080 and ends in `.webp`.
