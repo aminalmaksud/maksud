@@ -14,6 +14,7 @@ html,body{width:2000px;height:1125px;background:var(--bg);overflow:hidden}
 /* hide the painted scroll borders, gentle vignette */
 .top{background:linear-gradient(to bottom,rgba(26,34,24,.97) 0,rgba(26,34,24,.95) 56px,rgba(26,34,24,.45) 90px,rgba(26,34,24,0) 170px)}
 .bottom{background:linear-gradient(to top,rgba(26,34,24,1) 0,rgba(26,34,24,.96) 60px,rgba(26,34,24,.7) 130px,rgba(26,34,24,0) 280px)}
+.corner{background:radial-gradient(ellipse 620px 260px at 100% 100%,rgba(26,34,24,.85) 0%,rgba(26,34,24,.55) 50%,rgba(26,34,24,0) 100%)}
 .vignette{background:radial-gradient(ellipse 75% 80% at 55% 45%,rgba(26,34,24,0) 62%,rgba(26,34,24,.45) 100%)}
 /* title cartouche in the open sky, clear of the star, peaks, Numenor wave and volcano */
 .panel{position:absolute;right:96px;top:86px;width:600px;padding:26px 30px 28px;text-align:center;
@@ -31,13 +32,16 @@ html,body{width:2000px;height:1125px;background:var(--bg);overflow:hidden}
 .sig{position:absolute;right:96px;bottom:44px;text-align:right;text-shadow:0 2px 6px rgba(0,0,0,.8),0 0 16px rgba(0,0,0,.6)}
 .sig .name{font-family:"IM Fell English";font-size:38px;line-height:1.15;color:var(--text)}
 .sig .name span{font-family:Dabanol;font-size:40px}
-.sig .url{font-family:Cardo;font-size:30px;line-height:1.2;letter-spacing:.03em;color:var(--title)}
+.sig .url{font-family:Cardo;font-size:30px;line-height:1.25;letter-spacing:.03em;color:var(--title)}
+.sig .yt{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:6px;font-family:Cardo;font-size:30px;line-height:1;letter-spacing:.02em;color:var(--text)}
+.sig .yt svg{width:44px;height:31px;flex:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 </style></head>
 <body><div class="canvas">
 <img class="art" src="main.webp" alt="">
 <div class="layer vignette"></div>
 <div class="layer top"></div>
 <div class="layer bottom"></div>
+<div class="layer corner"></div>
 <div class="panel">
   <div class="kicker">The Complete History of</div>
   <div class="title">Middle-earth</div>
@@ -45,5 +49,5 @@ html,body{width:2000px;height:1125px;background:var(--bg);overflow:hidden}
   <div class="bn">এক পৃথিবীর জন্ম থেকে বিদায়</div>
 </div>
 <div class="badge">Post 0 of 220</div>
-<div class="sig"><div class="name">Musings of <span>মাকসুদ</span></div><div class="url">www.musingsofmaksud.com</div></div>
+<div class="sig"><div class="name">Musings of <span>মাকসুদ</span></div><div class="url">www.musingsofmaksud.com</div><div class="yt"><svg viewBox="0 0 28 20" aria-label="YouTube"><rect width="28" height="20" rx="4.5" fill="#FF0000"/><path d="M11.2 5.7v8.6l7.4-4.3z" fill="#FFFFFF"/></svg><span>Musingsofmaksud</span></div></div>
 </div></body></html>
