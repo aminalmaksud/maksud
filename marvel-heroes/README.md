@@ -1,6 +1,6 @@
 # Marvel Heroes: 100-day post image series
 
-One 1920x1080 (16:9) post card per day. Day 1 is `posts/day-001-spider-man.png`.
+One 1920x1080 (16:9) post card per day. Day 1 is `posts/day-001-spider-man.webp`. Cards are saved as lossless WebP (no quality loss).
 Every later day reuses the same template, so only a small JSON file and the art change.
 
 ## Making a new day (instructions for whoever builds days 2 to 100)
@@ -19,7 +19,7 @@ Every later day reuses the same template, so only a small JSON file and the art 
    | `tagline` | Bangla sub-line from the image heading | `"..."` |
    | `image` | Path to the art, relative to the JSON file | `"../images/day-002-iron-man.png"` |
    | `art` | Art placement on the 1920x1080 canvas | see below |
-   | `output` | PNG file name, written next to the JSON | `"day-002-iron-man.png"` |
+   | `output` | File name, written next to the JSON. Use `.webp` (lossless); `.png` also works | `"day-002-iron-man.webp"` |
 
 3. Render: `node marvel-heroes/template/render.js marvel-heroes/posts/day-NNN.json`
 4. Open the PNG and check it (checklist below).
