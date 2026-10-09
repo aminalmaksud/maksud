@@ -1,0 +1,43 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Ringbearer;src:url(fonts/Ringbearer.ttf)}
+@font-face{font-family:"IM Fell English";src:url(fonts/IMFellEnglish-400.ttf)}
+@font-face{font-family:Cardo;src:url(fonts/Cardo-400.ttf)}
+@font-face{font-family:Dabanol;src:url(fonts/Dabanol.ttf)}
+:root{--bg:#1A2218;--surface:#4F6B3A;--title:#C6A350;--accent:#9C2F12;--highlight:#C9CED6;--text:#EFE6CF}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:2000px;height:1125px;background:var(--bg);overflow:hidden}
+.canvas{position:relative;width:2000px;height:1125px}
+.art{position:absolute;left:0;top:0;width:2000px;height:1120px}
+.layer{position:absolute;inset:0;pointer-events:none}
+/* hide the scroll borders, gentle vignette, scrim behind the text block */
+.top{background:linear-gradient(to bottom,rgba(26,34,24,.97) 0,rgba(26,34,24,.95) 56px,rgba(26,34,24,.55) 100px,rgba(26,34,24,0) 210px)}
+.bottom{background:linear-gradient(to top,rgba(26,34,24,1) 0,rgba(26,34,24,.96) 60px,rgba(26,34,24,.6) 110px,rgba(26,34,24,0) 280px)}
+.corner{background:radial-gradient(ellipse 980px 620px at 0% 100%,rgba(26,34,24,.93) 0%,rgba(26,34,24,.78) 45%,rgba(26,34,24,0) 100%)}
+.vignette{background:radial-gradient(ellipse 75% 80% at 55% 45%,rgba(26,34,24,0) 60%,rgba(26,34,24,.5) 100%)}
+.badge{position:absolute;left:100px;top:84px;font-family:Cardo;font-variant-numeric:lining-nums;letter-spacing:.04em;font-size:32px;line-height:1;color:var(--title);
+  padding:12px 26px 14px;border:2px solid var(--title);border-radius:999px;background:rgba(26,34,24,.82)}
+.block{position:absolute;left:100px;bottom:122px}
+.kicker{font-family:Ringbearer;font-size:52px;line-height:1.05;color:var(--title);text-shadow:0 2px 14px rgba(0,0,0,.65)}
+.title{font-family:Ringbearer;font-size:120px;line-height:1.02;color:var(--title);text-shadow:0 3px 22px rgba(0,0,0,.7),0 0 40px rgba(198,163,80,.18)}
+.rule{width:230px;height:4px;background:var(--accent);margin:20px 0 18px;box-shadow:0 0 14px rgba(156,47,18,.7)}
+.bn{font-family:Dabanol;font-size:66px;line-height:1.4;color:var(--text);text-shadow:0 2px 14px rgba(0,0,0,.7)}
+.sig{position:absolute;right:100px;bottom:40px;font-family:"IM Fell English";font-size:24px;color:rgba(239,230,207,.6)}
+.sig span{font-family:Dabanol;font-size:26px}
+</style></head>
+<body><div class="canvas">
+<img class="art" src="main.webp" alt="">
+<div class="layer vignette"></div>
+<div class="layer top"></div>
+<div class="layer bottom"></div>
+<div class="layer corner"></div>
+<div class="badge">Post 0 of 220</div>
+<div class="block">
+  <div class="kicker">The Complete History of</div>
+  <div class="title">Middle-earth</div>
+  <div class="rule"></div>
+  <div class="bn">এক পৃথিবীর জন্ম থেকে বিদায়</div>
+</div>
+<div class="sig">Musings of <span>মাকসুদ</span></div>
+</div></body></html>
