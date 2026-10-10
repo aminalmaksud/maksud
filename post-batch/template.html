@@ -1,0 +1,102 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Post layout for the batch pipeline. Same design as middle-earth-history/post-000.
+     render.js opens this page with the post data as JSON in the URL hash. The layout is
+     2000x1125 and is drawn at scale 0.96, so the final image is 1920x1080. -->
+<style>
+:root{--bg:#1A2218;--surface:#4F6B3A;--title:#C6A350;--accent:#9C2F12;--highlight:#C9CED6;--text:#EFE6CF}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:2000px;height:1125px;background:var(--bg);overflow:hidden}
+.canvas{position:relative;width:2000px;height:1125px}
+.art{position:absolute;left:0;top:0;width:2000px;height:1125px;object-fit:cover}
+.layer{position:absolute;inset:0;pointer-events:none}
+/* top and bottom fades (also hide painted scroll borders), corner scrim for the signature, vignette */
+.top{background:linear-gradient(to bottom,rgba(26,34,24,.97) 0,rgba(26,34,24,.95) 56px,rgba(26,34,24,.45) 90px,rgba(26,34,24,0) 170px)}
+.bottom{background:linear-gradient(to top,rgba(26,34,24,1) 0,rgba(26,34,24,.96) 60px,rgba(26,34,24,.7) 130px,rgba(26,34,24,0) 280px)}
+.corner{background:radial-gradient(ellipse 620px 260px at 100% 100%,rgba(26,34,24,.85) 0%,rgba(26,34,24,.55) 50%,rgba(26,34,24,0) 100%)}
+.vignette{background:radial-gradient(ellipse 75% 80% at 55% 45%,rgba(26,34,24,0) 62%,rgba(26,34,24,.45) 100%)}
+/* title panel: top-left, top-middle or top-right */
+.panel{position:absolute;top:86px;width:600px;padding:26px 30px 28px;text-align:center;
+  background:rgba(26,34,24,.80);backdrop-filter:blur(6px);
+  border:1.5px solid rgba(198,163,80,.85);outline:1px solid rgba(198,163,80,.4);outline-offset:-9px;
+  box-shadow:0 10px 40px rgba(0,0,0,.45)}
+.panel.left{left:96px}
+.panel.middle{left:700px}
+.panel.right{left:1304px}
+.kicker{font-family:Ringbearer;font-size:36px;white-space:nowrap;line-height:1.1;color:var(--title)}
+.title{font-family:Ringbearer;font-size:82px;white-space:nowrap;line-height:1.02;color:var(--title);text-shadow:0 0 30px rgba(198,163,80,.2)}
+.rule{width:200px;height:3px;background:var(--accent);margin:16px auto 12px;box-shadow:0 0 12px rgba(156,47,18,.6)}
+.bn{font-family:Dabanol;font-size:50px;white-space:nowrap;line-height:1.4;color:var(--text)}
+.kicker,.title,.bn{text-shadow:0 2px 10px rgba(0,0,0,.6)}
+.kicker:empty{display:none}
+/* fixed series slot: bottom-left on every post */
+.badge{position:absolute;left:96px;bottom:44px;font-family:Cardo;font-variant-numeric:lining-nums;letter-spacing:.04em;font-size:42px;line-height:1;color:var(--title);
+  padding:16px 34px 18px;border:2.5px solid var(--title);border-radius:999px;background:rgba(26,34,24,.88);box-shadow:0 4px 18px rgba(0,0,0,.5)}
+.sig{position:absolute;right:96px;bottom:44px;text-align:right;text-shadow:0 2px 6px rgba(0,0,0,.8),0 0 16px rgba(0,0,0,.6)}
+.sig .name{font-family:"IM Fell English";font-size:38px;line-height:1.15;color:var(--text)}
+.sig .name span{font-family:Dabanol;font-size:40px}
+.sig .url{font-family:Cardo;font-size:30px;line-height:1.25;letter-spacing:.03em;color:var(--title)}
+.sig .yt{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:6px;font-family:Cardo;font-size:30px;line-height:1;letter-spacing:.02em;color:var(--text)}
+.sig .yt svg{width:44px;height:31px;flex:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+</style></head>
+<body><div class="canvas">
+<img class="art" alt="">
+<div class="layer vignette"></div>
+<div class="layer top"></div>
+<div class="layer bottom"></div>
+<div class="layer corner"></div>
+<div class="panel">
+  <div class="kicker"></div>
+  <div class="title"></div>
+  <div class="rule"></div>
+  <div class="bn"></div>
+</div>
+<div class="badge"></div>
+<div class="sig"><div class="name">Musings of <span>মাকসুদ</span></div><div class="url">www.musingsofmaksud.com</div><div class="yt"><svg viewBox="0 0 28 20" aria-label="YouTube"><rect width="28" height="20" rx="4.5" fill="#FF0000"/><path d="M11.2 5.7v8.6l7.4-4.3z" fill="#FFFFFF"/></svg><span>Musingsofmaksud</span></div></div>
+</div>
+<script>
+(async () => {
+  // {image, fonts, position, kicker, title, bangla, post, total}
+  const d = JSON.parse(decodeURIComponent(location.hash.slice(1)));
+  const fonts = [['Ringbearer', 'middle-earth/Ringbearer.ttf'], ['Cardo', 'middle-earth/Cardo-400.ttf'],
+                 ['IM Fell English', 'middle-earth/IMFellEnglish-400.ttf'], ['Dabanol', 'bangla/Dabanol.ttf']];
+  for (const [family, file] of fonts) {
+    const f = new FontFace(family, `url("${d.fonts}/${file}")`);
+    document.fonts.add(await f.load());
+  }
+  const $ = s => document.querySelector(s);
+  const panel = $('.panel');
+  panel.classList.add(d.position);
+  $('.kicker').textContent = d.kicker || '';
+  $('.title').textContent = d.title;
+  $('.bn').textContent = d.bangla;
+  $('.badge').textContent = `Post ${d.post} of ${d.total}`;
+  const img = $('.art');
+  img.src = d.image;
+  await img.decode();
+
+  // Shrink a line until it fits the panel width. Past the floor, wrap onto two lines and
+  // keep shrinking until it fits in two; anything still longer is reported.
+  const inner = 540;
+  const warnings = [];
+  const fit = (el, name, start, floor, wrapStart, wrapFloor) => {
+    let size = start;
+    el.style.fontSize = size + 'px';
+    while (el.scrollWidth > inner && size > floor) el.style.fontSize = (size -= 2) + 'px';
+    if (el.scrollWidth <= inner) return;
+    el.style.whiteSpace = 'normal';
+    const lines = () => Math.round(el.getBoundingClientRect().height / (parseFloat(getComputedStyle(el).lineHeight)));
+    size = wrapStart;
+    el.style.fontSize = size + 'px';
+    while (lines() > 2 && size > wrapFloor) el.style.fontSize = (size -= 2) + 'px';
+    if (lines() > 2) warnings.push(`${name} too long: ${lines()} lines even at the smallest size`);
+  };
+  if (d.kicker) fit($('.kicker'), 'small line', 36, 26, 30, 24);
+  fit($('.title'), 'title', 82, 56, 60, 40);
+  fit($('.bn'), 'Bangla line', 50, 38, 44, 34);
+  const r = panel.getBoundingClientRect();
+  window.LAYOUT = {panel: [r.left, r.top, r.right, r.bottom], warnings};
+  window.READY = true;
+})().catch(e => { window.ERROR = String(e); });
+</script>
+</body></html>

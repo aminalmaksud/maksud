@@ -1,0 +1,3 @@
+# batch pipeline scratch output (large PNGs, regenerated on every run)
+batches/*/out/work/
+batches/*/out/candidates/
