@@ -20,7 +20,7 @@ The folder contains:
 
 Requirements: Node with Playwright and Chromium, and Python 3 with Pillow and NumPy (WebP and the colour picker). `render.js` loads Playwright from `/opt/node22/lib/node_modules/playwright`; if it lives elsewhere, set the `PLAYWRIGHT` environment variable to its path. Do not run `playwright install` if a Chromium is already present.
 
-Check the setup by running `node marvel-heroes/template/render.js marvel-heroes/posts/day-001.json` and confirming the output matches the Day 1 card (1920x1080, MH 1 stamp under the ARC badge, signature block bottom-right, no "fonts failed to load" warning).
+Check the setup by running `node marvel-heroes/template/render.js marvel-heroes/posts/day-001.json` and confirming the output matches the Day 1 card (1920x1080, MH 1 stamp left of the ARC badge, signature block bottom-right, no "fonts failed to load" warning).
 
 ## 2. Making each day
 
@@ -45,7 +45,7 @@ Never edit `post.html` or `render.js` for a single day. If you think the templat
 - Default position, lower-left (see `pos`): the hero name in English (Comic Book Bold Italic, all caps, black stroke and hard offset shadow), a short yellow rule, then the Bangla sub-line (Dabanol, on a navy box with a yellow left bar).
 - Hero-name colour changes with the background. `render.js` picks red, yellow or paper white from the artwork's colour (rules are in `pick_color.py` and the README). Do not hard-code a colour unless I ask; if I do, set `heroColor` in the post's JSON to one of `#E23636`, `#F7C948`, `#F5F3EE`.
 - Bottom-right, stacked: `Musings of মাকসুদ`, `www.musingsofmaksud.com`, `https://www.youtube.com/@MusingsofMaksud`. These are fixed in the template and must stay identical on every day. There is no footer bar; do not add one.
-- The MH starburst stamp hangs off the bottom-left of the ARC badge (top-left, small, tilted slightly). It shows the post number (`MH 0` for the opening, then `MH 1`, `MH 2` and so on) and follows `day` automatically.
+- The MH starburst stamp sits to the left of the ARC badge in the top-left corner (small, tilted slightly; the ARC badge is shifted right to make room). It shows the post number (`MH 0` for the opening, then `MH 1`, `MH 2` and so on) and follows `day` automatically.
 - Art is full-bleed, fading into black at the bottom, with a thin yellow inner frame.
 
 ## 4. Check before showing me

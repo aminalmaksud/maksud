@@ -16,7 +16,7 @@ TW, TH, COLS, ROWS = 480, 270, 4, 3
 # approximate title zones in 1920x1080 canvas pixels (x0, y0, x1, y1)
 ZONES = {
     "bottom-left": (96, 640, 1300, 1002), "bottom-right": (620, 640, 1824, 1002),
-    "bottom": (330, 470, 1590, 820), "top-left": (96, 306, 1300, 650),
+    "bottom": (330, 470, 1590, 820), "top-left": (96, 188, 1300, 540),
     "top-right": (620, 188, 1824, 540), "middle": (330, 370, 1590, 710),
 }
 
