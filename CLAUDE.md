@@ -8,6 +8,7 @@
 
 When asked to run a post batch on `batches/<name>/` (see `post-batch/README.md`):
 
+0. The user uploads through GitHub's web uploader, so first `git pull` the branch to get their images and `posts.csv`. If they paste titles in chat instead, write `posts.csv` (UTF-8) yourself.
 1. Run `python3 post-batch/batch.py candidates --csv batches/<name>/posts.csv --images batches/<name>/images --out batches/<name>/out`. If it stops on CSV problems, report them to the user and stop.
 2. Choose positions with Sonnet, not yourself: start `post-placement` agents (`.claude/agents/post-placement.md`, model sonnet; if that agent type isn't listed, use a general-purpose agent with model sonnet told to read and follow that file), 10 posts each, all in one message so they run in parallel. Posts that already have a `position` in posts.csv don't need a reviewer. Don't open the choice sheets yourself.
 3. Run the same command with `final` instead of `candidates`.

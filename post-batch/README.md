@@ -5,22 +5,31 @@ paintings, in the same design as `middle-earth-history/post-000`.
 
 ## What you provide
 
-Make a folder `batches/<name>/` (for example `batches/posts-001-100/`) with:
+A batch folder is ready at `batches/batch-01/`. Upload on GitHub in your browser
+(drag the files in, then press **Commit changes**):
 
-- `images/`: the paintings, any common format (PNG, JPG, WebP), ideally 16:9.
-- `posts.csv`: one row per post, saved as UTF-8 (Google Sheets: File > Download > CSV).
-  Start from `post-batch/posts-template.csv`.
+- Images: https://github.com/aminalmaksud/maksud/upload/claude/lotr-history-post-image-slhzfp/batches/batch-01/images
+  Name each image with its post number: `1.png`, `post-002.jpg`, `003 Ainur.webp`.
+  Up to 100 files and 25 MB per file in one upload.
+- `posts.csv`: https://github.com/aminalmaksud/maksud/upload/claude/lotr-history-post-image-slhzfp/batches/batch-01
+  Upload a file named exactly `posts.csv` (it replaces the empty one). From Google Sheets:
+  File > Download > Comma-separated values, then rename it. Or paste the titles to Claude
+  in chat and it will make the file.
+
+`posts.csv` columns (start from `post-batch/posts-template.csv`):
 
 | Column | Required | Example |
 |---|---|---|
 | `post` | yes | `1` (shown as "Post 1 of 220") |
 | `english_title` | yes | `The Music of the Ainur` |
 | `bangla_subtitle` | yes | `গানের ভেতর দিয়ে জগতের জন্ম` |
-| `image` | yes | `post-001.png` (file name inside `images/`) |
-| `english_kicker` | no | Small line above the title. Left empty, a long title is split at "of" when that gives a short main line, like "The Complete History of / Middle-earth". |
-| `position` | no | `left`, `middle` or `right` to fix the title position yourself. Left empty, it is chosen for you. |
+| `image` | no | File name inside `images/`. Left out, the image named with the post number is used. |
+| `english_kicker` | no | Small line above the title. Left out, a long title is split at "of" when that gives a short main line, like "The Complete History of / Middle-earth". |
+| `position` | no | `left`, `middle` or `right` to fix the title position yourself. Left out, it is chosen for you. |
 
-Then ask Claude: "Run the post batch in `batches/<name>`".
+For the next batch, ask Claude to make `batches/batch-02/` the same way.
+
+Then ask Claude: "Run the post batch in `batches/batch-01`".
 
 ## What happens
 

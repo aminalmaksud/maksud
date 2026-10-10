@@ -23,8 +23,10 @@ Step 3, final images (no model needed):
   Position priority: a `position` column in posts.csv (you), then out/decisions/*.csv
   (reviewer), then the automatic suggestion.
 
-posts.csv columns (UTF-8): post, english_title, bangla_subtitle, image
-  Optional: english_kicker (small line above the title), position (left/middle/right).
+posts.csv columns (UTF-8): post, english_title, bangla_subtitle
+  Optional: image (file name in the images folder; left empty, the image whose name starts
+  with the post number is used, e.g. 1.png or post-001.jpg), english_kicker (small line
+  above the title), position (left/middle/right).
   If english_kicker is empty and a long title contains "of", the part up to the last
   "of" becomes the small line, as in "The Complete History of / Middle-earth".
 """
@@ -57,28 +59,53 @@ def find_fonts():
     sys.exit("Fonts not found. Set UNIVERSE_FONTS to the universe-style-system assets/fonts folder.")
 
 
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".avif", ".tif", ".tiff", ".bmp"}
+
+
+def images_by_number(images_dir):
+    """Map post number -> image file, from names like 1.png, post-001.jpg or 001 Ainur.webp
+    (the first number in the name)."""
+    found = {}
+    for f in sorted(Path(images_dir).iterdir()):
+        m = re.search(r"\d+", f.stem)
+        if f.suffix.lower() in IMAGE_EXTS and m:
+            found.setdefault(int(m.group()), []).append(f)
+    return found
+
+
 def read_posts(csv_path, images_dir):
     with open(csv_path, encoding="utf-8-sig", newline="") as f:
         rows = list(csv.DictReader(f))
-    need = {"post", "english_title", "bangla_subtitle", "image"}
+    need = {"post", "english_title", "bangla_subtitle"}
     missing = need - set(rows[0].keys() if rows else [])
     if missing:
         sys.exit(f"{csv_path} is missing columns: {', '.join(sorted(missing))}")
+    by_number = images_by_number(images_dir)
     posts, problems = [], []
     for i, r in enumerate(rows, start=2):
         r = {k.strip(): (v or "").strip() for k, v in r.items() if k}
         if not r["post"]:
             continue
-        img = Path(images_dir) / r["image"]
-        if not img.exists():
-            problems.append(f"line {i}: image not found: {img}")
+        num = int(re.sub(r"\D", "", r["post"]) or 0)
+        if r.get("image"):
+            img = Path(images_dir) / r["image"]
+            if not img.exists():
+                problems.append(f"line {i}: image not found: {img}")
+        else:
+            matches = by_number.get(num, [])
+            if len(matches) != 1:
+                problems.append(f"line {i}: post {num}: " + (
+                    "no image with that number in its name" if not matches else
+                    "several images with that number: " + ", ".join(m.name for m in matches)))
+                continue
+            img = matches[0]
         pos = r.get("position", "").lower()
         if pos and pos not in POSITIONS:
             problems.append(f"line {i}: position must be left, middle or right, not {pos!r}")
         kicker, title = r.get("english_kicker", ""), r["english_title"]
         if not kicker:
             kicker, title = split_title(title)
-        posts.append({"post": r["post"], "num": int(re.sub(r"\D", "", r["post"]) or 0),
+        posts.append({"post": r["post"], "num": num,
                       "kicker": kicker, "title": title, "full_title": r["english_title"],
                       "bangla": r["bangla_subtitle"], "image": img.resolve(), "position": pos})
     if problems:
