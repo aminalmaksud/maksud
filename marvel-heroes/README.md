@@ -48,18 +48,19 @@ The art must cover the full 1920x1080 canvas.
 The title block (hero name, rule, Bangla line) must never cover the hero's face or mouth.
 Pick the position that keeps the face clear:
 
-| `pos` | Title block | MH badge | Good when |
+| `pos` | Title block | Signature block | Good when |
 |---|---|---|---|
 | `bottom-left` | bottom, left | bottom-right | Default. Face in the upper or centre area. Used for Days 1 to 5 and the opening |
 | `bottom-right` | bottom, right-aligned | moves to bottom-left | Subject sits low-left, face upper-left |
-| `bottom` | bottom, centred (kept narrow to clear the badge) | bottom-right | Face upper-centre, wide empty bottom |
+| `bottom` | bottom, centred, raised above the signature | centred at the bottom | Face upper-centre, wide empty bottom |
 | `top-left` | below the badges, left | bottom-right | Face low or on the right |
 | `top-right` | below the badges, right-aligned | bottom-right | Face low or on the left |
 | `middle` | centred, on a dark band | bottom-right | Face in the top third and the body below is empty |
 
 The top and middle positions darken the art behind the title, so only use them when the face
 is somewhere else. Render once and look: the face and mouth must be fully visible.
-Long Bangla lines shrink first, then wrap onto two lines (the opening post does this).
+Long Bangla lines shrink first, then wrap onto two lines. The MH badge adds about 250 px to the title row,
+so a long hero name shrinks a little more when the title is not in a bottom corner.
 
 ### Hero-name colour
 
@@ -80,16 +81,16 @@ A pick under 3:1 contrast against the real background is swapped for the best-co
 To force a colour, set `"heroColor": "#F5F3EE"` (any of the three) in the post's JSON.
 `MH_DEBUG=1 node ...render.js ...` prints what the picker measured.
 
-### Bottom bar and MH badge
+### MH badge and signature block
 
-- The yellow follow bar (`template/assets/follow-bar.webp`) closes the bottom 150 px of every card:
-  FOLLOW, YouTube, Instagram and Facebook icons, `WWW.MUSINGSOFMAKSUD.COM`, `@MUSINGSOFMAKSUD`.
-  It is fixed. The website text is set in `template/post.html` (`SITE`). The bar replaces the old
-  signature and link text.
-- The MH badge (`template/assets/mh-badge.png`, "MH" in the art, number drawn on top) sits bottom-right
-  just above the bar and shows the post number: `MH 0` for the opening, then `MH 1`, `MH 2` and so on.
-  It follows `day`; set `"mh"` in the JSON only to override. With `pos: "bottom-right"` it moves to the bottom-left.
-- The title block now sits above the bar, about 150 px higher than before the bar existed. Check faces.
+- The MH badge (`template/assets/mh-badge.png`, "MH" in the art, number drawn on top) is stuck to the end
+  of the hero name like a comic sticker, tilted 7 degrees. It shows the post number: `MH 0` for the
+  opening, then `MH 1`, `MH 2` and so on. It follows `day`; set `"mh"` in the JSON only to override.
+  It travels with the title block, so it stays wherever `pos` puts the title.
+- The signature block sits bottom-right (see `pos` for when it moves): `Musings of মাকসুদ`, then
+  `www.musingsofmaksud.com` (globe icon), then `https://www.youtube.com/@MusingsofMaksud` (play icon).
+  It is fixed in `template/post.html` (`SITE`, `YOUTUBE`); do not change it per day.
+- There is no footer bar. Do not add one.
 
 ## Image heading rules
 
@@ -101,7 +102,7 @@ The image heading from each post is written as `MAIN / sub-line`. On the card:
 - **sub-line** = the Bangla line (`tagline`). Dabanol, comic paper `#F5F3EE`, on a night navy
   `#1B2A4A` caption box with a halftone-yellow left bar.
 - Top-left badge: `ARC N` (yellow) + arc name. Top-right badge: `DAY N OF 100` (red).
-- Bottom: the follow bar and the MH badge (see above). Do not change them per day.
+- The MH badge sits at the end of the hero name and the signature block sits bottom-right (see above).
 - No em dashes or en dashes anywhere on the card. Proper nouns stay in English.
 - Rotate the shape of the Bangla sub-line from day to day (a fact, a quote, a single noun,
   a question). At most one mirrored "[A]-এর X, [B]-এর Y" line per batch of four.
@@ -117,14 +118,14 @@ The image heading from each post is written as `MAIN / sub-line`. On the card:
 | text | `#F5F3EE` | Bangla sub-line; one of the three hero-name colours |
 
 Fonts live in `template/fonts/`: Comic Book Bold Italic (hero name), Comic Book Bold (badges),
-Dabanol (Bangla). The bar and the MH badge are supplied artwork and bring their own blue, cream and black;
-do not add other colours.
+Dabanol (Bangla), Barlow Bold (signature links). The MH badge is supplied artwork and brings its own blue,
+cream and black; do not add other colours.
 
 ## Check before delivering
 
 - The render prints no "fonts failed to load" warning.
 - Bangla conjuncts are shaped (zoom in on words like প্রায়শ্চিত্ত, ক্ষ, ন্ত্র).
 - The hero's face is clear of the badges, the title block and the bottom fade. The MH number matches the day.
-- The hero-name colour reads clearly against the art; the website text on the bar has room either side.
+- The hero-name colour reads clearly against the art; the MH badge and the signature block do not touch.
 - At 320x180 the hero name still reads.
 - No dashes, no off-palette colours, no Marvel logo or wordmark on the card.

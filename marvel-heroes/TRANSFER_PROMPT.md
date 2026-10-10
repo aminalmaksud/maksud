@@ -13,14 +13,14 @@ The folder contains:
 - `template/post.html`: the card design (HTML/CSS, filled from a JSON file).
 - `template/render.js`: renders the card with Playwright/Chromium and saves lossless WebP. It also picks the hero-name colour (see section 3).
 - `template/pick_color.py`: the colour picker that `render.js` calls.
-- `template/assets/`: `follow-bar.webp` (the yellow follow bar) and `mh-badge.png` (the MH starburst, without its number).
+- `template/assets/mh-badge.png`: the MH starburst, without its number.
 - `template/fonts/`: Comic Book Bold Italic, Comic Book Bold, Dabanol. All fonts are bundled, so nothing else is needed.
 - `posts/day-001.json` and `posts/day-001-spider-man.webp`: the finished Day 1 example. Use it as the reference for how every card must look.
 - `images/`: the source art.
 
 Requirements: Node with Playwright and Chromium, and Python 3 with Pillow and NumPy (WebP and the colour picker). `render.js` loads Playwright from `/opt/node22/lib/node_modules/playwright`; if it lives elsewhere, set the `PLAYWRIGHT` environment variable to its path. Do not run `playwright install` if a Chromium is already present.
 
-Check the setup by running `node marvel-heroes/template/render.js marvel-heroes/posts/day-001.json` and confirming the output matches the Day 1 card (1920x1080, yellow follow bar at the bottom, MH 1 badge, no "fonts failed to load" warning).
+Check the setup by running `node marvel-heroes/template/render.js marvel-heroes/posts/day-001.json` and confirming the output matches the Day 1 card (1920x1080, MH 1 sticker after the hero name, signature block bottom-right, no "fonts failed to load" warning).
 
 ## 2. Making each day
 
@@ -42,18 +42,18 @@ Never edit `post.html` or `render.js` for a single day. If you think the templat
 - Top-left badge: `ARC N` (yellow) plus the arc name. Top-right badge: `DAY N OF 100` (red).
 - Default position, lower-left (see `pos`): the hero name in English (Comic Book Bold Italic, all caps, black stroke and hard offset shadow), a short yellow rule, then the Bangla sub-line (Dabanol, on a navy box with a yellow left bar).
 - Hero-name colour changes with the background. `render.js` picks red, yellow or paper white from the artwork's colour (rules are in `pick_color.py` and the README). Do not hard-code a colour unless I ask; if I do, set `heroColor` in the post's JSON to one of `#E23636`, `#F7C948`, `#F5F3EE`.
-- Bottom edge: the yellow follow bar (FOLLOW, YouTube/Instagram/Facebook icons, `www.musingsofmaksud.com`, `@MUSINGSOFMAKSUD`). It is fixed and identical on every day. There is no separate signature or link text anywhere else.
-- Bottom-right, above the bar: the MH starburst badge with the post number (`MH 0` for the opening, then `MH 1`, `MH 2` and so on). It follows `day` automatically.
-- Art is full-bleed behind the bar, fading into black above it, with a thin yellow inner frame that stops at the bar.
+- Bottom-right, stacked: `Musings of মাকসুদ`, `www.musingsofmaksud.com`, `https://www.youtube.com/@MusingsofMaksud`. These are fixed in the template and must stay identical on every day. There is no footer bar; do not add one.
+- The MH starburst badge is stuck to the end of the hero name like a comic sticker (tilted slightly). It shows the post number (`MH 0` for the opening, then `MH 1`, `MH 2` and so on) and follows `day` automatically.
+- Art is full-bleed, fading into black at the bottom, with a thin yellow inner frame.
 
 ## 4. Check before showing me
 
 - The render prints no "fonts failed to load" warning.
 - Zoom in on the Bangla line. Joined letters must be shaped correctly (for example প্রায়শ্চিত্ত, ক্ষ, ন্ত্র).
-- The hero name and the Bangla line do not touch the MH badge, and nothing is cut off. The website text sits clear of the icons and the handle on the bar.
+- The hero name, the MH badge and the Bangla line do not touch the signature block, and nothing is cut off.
 - The MH number matches the day.
 - The hero-name colour reads clearly against the art behind it.
-- The hero's face is not covered by a badge, the title block or the bottom fade. The title block sits above the bar, so it starts about 150 px higher than it did before the bar was added.
+- The hero's face is not covered by a badge, the title block, the MH sticker or the bottom fade.
 - At roughly 320x180 the hero name still reads.
 - No em dashes or en dashes anywhere on the card. Proper nouns stay in English. No Marvel logo or wordmark.
 - File is 1920x1080 and ends in `.webp`.

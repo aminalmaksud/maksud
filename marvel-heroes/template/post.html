@@ -6,10 +6,11 @@
 @font-face{font-family:"CB Title";src:url(fonts/ComicBook-BoldItalic.otf)}
 @font-face{font-family:"CB Support";src:url(fonts/ComicBook-Bold.otf)}
 @font-face{font-family:"Dabanol";src:url(fonts/Dabanol.ttf)}
+@font-face{font-family:"Barlow";src:url(fonts/Barlow-400.ttf);font-weight:400}
+@font-face{font-family:"Barlow";src:url(fonts/Barlow-700.ttf);font-weight:700}
 :root{
   --bg:#0B0B0D;--surface:#1B2A4A;--title:#E23636;
   --accent:#F7C948;--highlight:#7A8291;--text:#F5F3EE;
-  --bar-h:150px;               /* follow bar: 2000x156 image scaled to the 1920 width */
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
@@ -17,44 +18,27 @@ html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
 
 /* art */
 #art{position:absolute;display:block}
-/* scrim: fade the art into ink black under the text block (ends at the top of the bar) */
-#scrim{position:absolute;left:0;right:0;bottom:var(--bar-h);height:var(--scrim-h,520px);
+/* scrim: fade the art into ink black under the text block */
+#scrim{position:absolute;left:0;right:0;bottom:0;height:var(--scrim-h,520px);
   background:linear-gradient(to top,var(--bg) 0%,rgba(11,11,13,.94) 30%,rgba(11,11,13,.7) 55%,rgba(11,11,13,0) 100%)}
 #topscrim{position:absolute;left:0;right:0;top:0;height:200px;
   background:linear-gradient(to bottom,rgba(11,11,13,.55),rgba(11,11,13,0))}
 #midscrim{display:none;position:absolute;left:0;right:0;top:50%;height:640px;margin-top:-320px;
   background:linear-gradient(to bottom,rgba(11,11,13,0),rgba(11,11,13,.78) 28%,rgba(11,11,13,.78) 72%,rgba(11,11,13,0))}
-/* title block at the top or middle: darken there, keep a small fade above the bar */
+/* title block at the top or middle: darken there, keep a small fade under the links */
 .p-top-left #topscrim,.p-top-right #topscrim{height:640px;
   background:linear-gradient(to bottom,rgba(11,11,13,.9) 0%,rgba(11,11,13,.82) 40%,rgba(11,11,13,0) 100%)}
 .p-top-left #scrim,.p-top-right #scrim,.p-middle #scrim{height:340px}
 .p-middle #midscrim{display:block}
 /* halftone overlay, 10 percent, only in the lower block */
-#dots{position:absolute;left:0;right:0;bottom:var(--bar-h);height:380px;opacity:.10;
+#dots{position:absolute;left:0;right:0;bottom:0;height:380px;opacity:.10;
   background-image:radial-gradient(circle,var(--accent) 1.8px,transparent 2.4px);
   background-size:14px 14px;
   -webkit-mask-image:linear-gradient(to top,#000 0%,#000 30%,transparent 100%);
           mask-image:linear-gradient(to top,#000 0%,#000 30%,transparent 100%)}
-/* thick comic panel border around the art; the bar closes the bottom */
-#frame{position:absolute;left:0;right:0;top:0;bottom:var(--bar-h);border:12px solid var(--bg);border-bottom:0;pointer-events:none}
-#frame::after{content:"";position:absolute;inset:16px 16px 0 16px;border:3px solid var(--accent);border-bottom:0;opacity:.9}
-
-/* follow bar */
-#bar{position:absolute;left:0;bottom:0;width:1920px;height:var(--bar-h);display:block}
-#site{position:absolute;left:640px;top:930px;height:var(--bar-h);display:flex;align-items:center;gap:14px;
-  padding-top:0;margin-top:0;transform:translateY(-3px);
-  font-family:"CB Title";font-size:var(--site-size,38px);line-height:1;color:var(--bg);
-  text-transform:uppercase;white-space:nowrap;letter-spacing:1px}
-#site svg{width:1em;height:1em;flex:none}
-
-/* MH number badge: the 620px badge art, scaled to 240px, number drawn on top */
-#mh{position:absolute;right:80px;bottom:calc(var(--bar-h) - 16px);width:240px;height:240px}
-.p-bottom-right #mh{right:auto;left:80px}
-#mh .in{position:absolute;left:0;top:0;width:620px;height:620px;transform:scale(.3871);transform-origin:0 0}
-#mh img{position:absolute;inset:0;width:620px;height:620px;display:block}
-#mh .n{position:absolute;left:148px;top:262px;width:290px;height:190px;display:flex;align-items:center;justify-content:center;
-  font-family:"CB Support";font-size:var(--mh-size,190px);line-height:1;color:#F4EBD9;
-  -webkit-text-stroke:20px #0F0B08;paint-order:stroke fill;text-shadow:12px 12px 0 #0F0B08;letter-spacing:-2px}
+/* thick comic panel border */
+#frame{position:absolute;inset:0;border:12px solid var(--bg);pointer-events:none}
+#frame::after{content:"";position:absolute;inset:16px;border:3px solid var(--accent);opacity:.9}
 
 /* badges */
 .badge{position:absolute;top:62px;display:flex;transform:skewX(-10deg);
@@ -69,19 +53,29 @@ html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
 
 /* text block: position comes from the post's "pos" (class p-... on #c); default is bottom-left */
 #block{position:absolute;max-width:1728px}
-.p-bottom-left #block{left:96px;bottom:calc(var(--bar-h) + 26px)}
-.p-bottom-right #block{right:96px;bottom:calc(var(--bar-h) + 26px);text-align:right}
+.p-bottom-left #block{left:96px;bottom:78px}
+.p-bottom-right #block{right:96px;bottom:78px;text-align:right}
 .p-top-left #block{left:96px;top:188px}
 .p-top-right #block{right:96px;top:188px;text-align:right}
 .p-middle #block{left:50%;top:50%;transform:translate(-50%,-50%);text-align:center}
-.p-bottom #block{left:50%;bottom:calc(var(--bar-h) + 26px);transform:translateX(-50%);text-align:center}
+.p-bottom #block{left:50%;transform:translateX(-50%);text-align:center}
 .p-bottom-right #rule,.p-top-right #rule{margin-left:auto}
 .p-middle #rule,.p-bottom #rule{margin-left:auto;margin-right:auto}
-#hero{font-family:"CB Title";font-size:var(--hero-size,180px);line-height:.92;
+/* hero name with the MH number badge stuck on its end, like a comic sticker */
+#heroRow{display:flex;align-items:center;gap:24px}
+.p-bottom-right #heroRow,.p-top-right #heroRow{justify-content:flex-end}
+.p-middle #heroRow,.p-bottom #heroRow{justify-content:center}
+#mh{position:relative;flex:none;width:230px;height:230px;margin:-34px 0 -34px;transform:rotate(-7deg)}
+#mh .in{position:absolute;left:0;top:0;width:620px;height:620px;transform:scale(.371);transform-origin:0 0}
+#mh img{position:absolute;inset:0;width:620px;height:620px;display:block}
+#mh .n{position:absolute;left:148px;top:262px;width:290px;height:190px;display:flex;align-items:center;justify-content:center;
+  font-family:"CB Support";font-size:var(--mh-size,190px);line-height:1;color:#F4EBD9;
+  -webkit-text-stroke:20px #0F0B08;paint-order:stroke fill;text-shadow:12px 12px 0 #0F0B08;letter-spacing:-2px}
+#hero{font-family:"CB Title";font-size:var(--hero-size,180px);line-height:.95;
   color:var(--hero-color,var(--title));text-transform:uppercase;letter-spacing:3px;white-space:nowrap;
   -webkit-text-stroke:6px var(--bg);paint-order:stroke fill;
   text-shadow:10px 10px 0 var(--bg)}
-#rule{width:260px;height:7px;background:var(--accent);margin:16px 0 20px;
+#rule{width:260px;height:7px;background:var(--accent);margin:22px 0 24px;
   transform:skewX(-20deg);box-shadow:5px 5px 0 var(--bg)}
 #tag{display:inline-block;background:var(--surface);
   border-left:12px solid var(--accent);padding:14px 34px 20px 30px;
@@ -89,6 +83,17 @@ html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
 #tag p{font-family:"Dabanol";font-size:var(--tag-size,62px);line-height:1.4;color:var(--text)}
 #tag.wrap{white-space:normal;text-align:left}
 #tag.wrap p{line-height:1.3}
+
+/* signature and links: lower right, moves left or centre when the title takes that corner */
+#sig{position:absolute;right:96px;bottom:78px;text-align:right;color:var(--text)}
+.p-bottom-right #sig{right:auto;left:96px;text-align:left}
+.p-bottom-right #sig .link{justify-content:flex-start}
+.p-bottom #sig{right:auto;left:50%;transform:translateX(-50%);text-align:center}
+.p-bottom #sig .link{justify-content:center}
+#sig .name{font-family:"Dabanol";font-size:32px;line-height:1.4;opacity:.75;margin-bottom:10px}
+#sig .link{display:flex;align-items:center;justify-content:flex-end;gap:12px;
+  font-family:"Barlow";font-weight:700;font-size:25px;line-height:1;opacity:.9;margin-top:10px}
+#sig svg{width:28px;height:28px;flex:none}
 </style>
 </head>
 <body>
@@ -103,18 +108,26 @@ html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
   <div id="day" class="badge"><span></span></div>
 
   <div id="block">
-    <div id="hero"></div>
+    <div id="heroRow">
+      <div id="hero"></div>
+      <div id="mh"><div class="in"><img src="assets/mh-badge.png" alt=""><div class="n"></div></div></div>
+    </div>
     <div id="rule"></div>
     <div id="tag"><p></p></div>
   </div>
 
-  <div id="frame"></div>
-  <img id="bar" src="assets/follow-bar.webp" alt="">
-  <div id="site">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#0B0B0D" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c3 3.2 3 16.8 0 20M12 2c-3 3.2-3 16.8 0 20"/></svg>
-    <span></span>
+  <div id="sig">
+    <div class="name">Musings of মাকসুদ</div>
+    <div class="link" id="web">
+      <span></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#F7C948" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c3 3.2 3 16.8 0 20M12 2c-3 3.2-3 16.8 0 20"/></svg>
+    </div>
+    <div class="link" id="yt">
+      <span></span>
+      <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="5" fill="#F7C948"/><path d="M10 8.5v7l6-3.5z" fill="#0B0B0D"/></svg>
+    </div>
   </div>
-  <div id="mh"><div class="in"><img src="assets/mh-badge.png" alt=""><div class="n"></div></div></div>
+  <div id="frame"></div>
 </div>
 <script>
 // window.POST is injected by render.js; this default is a preview of Day 1.
@@ -125,6 +138,7 @@ const P = window.POST || {
   art:{width:1929,left:-4,top:0}
 };
 const SITE = "www.musingsofmaksud.com";
+const YOUTUBE = "https://www.youtube.com/@MusingsofMaksud";
 
 const $ = s => document.querySelector(s);
 const art = $('#art');
@@ -138,14 +152,10 @@ $('#day span').textContent = P.dayLabel || `Day ${P.day} of ${P.total}`;
 const POS = ['bottom-left','bottom-right','top-left','top-right','middle','bottom'].includes(P.pos) ? P.pos : 'bottom-left';
 $('#c').classList.add('p-' + POS);
 $('#hero').textContent = P.hero;
-$('#tag p').textContent = P.tagline;
-$('#site span').textContent = SITE;
-
 // MH tag: "MH" is part of the badge art, the number is the post's day (MH 0 for the opening)
 const MH = String(P.mh !== undefined ? P.mh : P.day);
 $('#mh .n').textContent = MH;
 document.documentElement.style.setProperty('--mh-size', (MH.length >= 3 ? 110 : MH.length === 2 ? 150 : 190) + 'px');
-
 // hero colour: render.js picks it from the background; a post can force one with "heroColor"
 window.setHeroColor = c => document.documentElement.style.setProperty('--hero-color', c);
 if (P.heroColor) window.setHeroColor(P.heroColor);
@@ -155,28 +165,30 @@ window.heroRect = () => {
   const b = r.getBoundingClientRect();
   return {x:Math.max(0,b.x), y:Math.max(0,b.y), width:Math.min(1920-b.x,b.width), height:b.height};
 };
+$('#tag p').textContent = P.tagline;
+$('#web span').textContent = SITE;
+$('#yt span').textContent = YOUTUBE;
 
-// shrink long names / taglines so they never run into the badge
+// shrink long names / taglines so they never run into the links block
 function fit(el, varName, start, min, maxW){
   let s = start;
   document.documentElement.style.setProperty(varName, s+'px');
   while (el.scrollWidth > maxW && s > min){ s -= 2; document.documentElement.style.setProperty(varName, s+'px'); }
 }
 window.fitAll = () => {
-  const tag = $('#tag');
-  // the MH badge sits bottom-right (bottom-left when the title takes that corner)
-  const heroRoom = (POS === 'bottom-left' || POS === 'bottom-right') ? 1080 : 1728;
-  const tagRoom = (POS === 'bottom-left' || POS === 'bottom-right') ? 1448 : POS === 'bottom' ? 1260 : 1728;
+  const sig = $('#sig'), tag = $('#tag');
+  // beside the links block only when the title shares the bottom edge with it
+  const room = (POS === 'bottom-left' || POS === 'bottom-right')
+    ? 1920 - 96 - sig.offsetWidth - 60 - 96 : 1728;
+  if (POS === 'bottom') $('#block').style.bottom = (78 + sig.offsetHeight + 34) + 'px';
   tag.classList.remove('wrap'); tag.style.maxWidth = '';
-  fit($('#hero'),'--hero-size',180,100,heroRoom);
-  fit(tag,'--tag-size',62,50,tagRoom);
+  fit($('#hero'),'--hero-size',180,100,room - ((POS === 'bottom-left' || POS === 'bottom-right') ? 0 : 254));
+  fit(tag,'--tag-size',62,50,room);
   // a very long Bangla line wraps onto two lines instead of shrinking further
-  if (tag.scrollWidth > tagRoom){
-    tag.classList.add('wrap'); tag.style.maxWidth = tagRoom + 'px';
+  if (tag.scrollWidth > room){
+    tag.classList.add('wrap'); tag.style.maxWidth = room + 'px';
     document.documentElement.style.setProperty('--tag-size','54px');
   }
-  // website text must stay inside the gap between the social icons and the handle
-  fit($('#site'),'--site-size',38,26,500);
 };
 document.fonts.ready.then(window.fitAll);
 </script>
