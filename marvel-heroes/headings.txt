@@ -1,0 +1,20 @@
+# Headings for the whole series. One line per post, same format as always:
+#   ARC 2 | Arc name        starts an arc; applies to every DAY line below it
+#   DAY 11 — HERO NAME / Bangla line
+# Lines starting with # are ignored. Days that already have a card (opening and Days 1 to 10)
+# are listed for reference and are never re-made.
+
+ARC 1 — Avengers core
+OPENING — MARVEL HEROES / ১০০ দিন, ১০০ জন নায়ক, আর প্রতিটা মুখোশের নিচে একজন মানুষ
+DAY 1 — SPIDER-MAN / এক রাতের ভুল, সারাজীবনের প্রায়শ্চিত্ত
+DAY 2 — IRON MAN / বর্মটা ধাতুর, ক্ষতটা হৃদয়ের
+DAY 3 — CAPTAIN AMERICA / একটা দেশের না, একটা স্বপ্নের সৈনিক
+DAY 4 — THOR / দেবতা হতে হলে আগে মানুষ হতে হয়
+DAY 5 — HULK / রাগের নিচে লুকিয়ে থাকা এক ভয় পাওয়া শিশু
+DAY 6 — BLACK WIDOW / যে নারী নিজের স্মৃতিকেও বিশ্বাস করতে পারেন না
+DAY 7 — HAWKEYE / দেবতাদের ভিড়ে একজন সাধারণ মানুষ
+DAY 8 — BLACK PANTHER / মুকুটটাই তাঁর সবচেয়ে ভারী বর্ম
+DAY 9 — CAPTAIN MARVEL / যে নারী নিজের গল্প নিজেই ফিরিয়ে নিয়েছিলেন
+DAY 10 — SCARLET WITCH / যে শোক বাস্তবতাকেই ভেঙে দিয়েছিল
+
+# Paste Days 11 to 100 below this line, with an ARC line above each new arc.

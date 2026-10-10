@@ -3,7 +3,29 @@
 One 1920x1080 (16:9) post card per day. Day 1 is `posts/day-001-spider-man.webp`; the opening post is `posts/day-000-opening.webp`. Cards are saved as lossless WebP (no quality loss).
 Every later day reuses the same template, so only a small JSON file and the art change.
 
-## Making a new day (instructions for whoever builds days 2 to 100)
+## Doing many days at once (Days 11 to 100)
+
+Chat uploads are limited to a few images, so the art goes in through the repo and the cards are
+made in bulk. Files live under `marvel-heroes/`; tools are run from the repo root.
+
+1. `headings.txt`: every heading, `ARC` lines and `DAY n — HERO / Bangla line` lines.
+2. `inbox/`: all the art. Name files with the day number to skip matching (`11.webp`), or leave the
+   original names and match by eye (then list them in `map.txt`, one `filename = day` per line).
+3. `python3 -I marvel-heroes/tools/prepare.py` reads both, moves the art to `images/`, and writes
+   `posts/day-NNN.json` for every new day. It reports unmatched files, headings without art,
+   dashes in a Bangla line, and art that is not 16:9. `--dry-run` changes nothing.
+4. Choose title positions: `python3 -I marvel-heroes/tools/sheet.py art --days 11-22 --out DIR`
+   makes labelled contact sheets with a red box where the title block will sit. If the box covers a
+   face, add `day = position` to `layout.txt` and run `prepare.py` again (it applies layout changes
+   to existing configs).
+5. `python3 -I marvel-heroes/tools/render_all.py` renders every card that is missing or out of date,
+   4 at a time, about 15 to 20 minutes for 90 cards. Run it in the background. `--days 11-20` and
+   `--force` narrow or widen it.
+6. Review with `sheet.py cards --days 11-22 --out DIR`, fix, re-render the days you changed.
+
+## Making a single day by hand
+
+(The same steps, one day. Everything above is the bulk version of this.)
 
 1. Put the day's art in `images/` as `day-NNN-hero-name.<ext>`. Generate it 16:9: end the Midjourney
    prompt with `--ar 16:9` (not the `--ar 1:1` the older series used).
