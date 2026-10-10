@@ -75,14 +75,14 @@ Pick the position that keeps the face clear:
 | `bottom-left` | bottom, left | bottom-right | Default. Face in the upper or centre area. Used for Days 1 to 5 and the opening |
 | `bottom-right` | bottom, right-aligned | moves to bottom-left | Subject sits low-left, face upper-left |
 | `bottom` | bottom, centred, raised above the signature | centred at the bottom | Face upper-centre, wide empty bottom |
-| `top-left` | below the badges, left | bottom-right | Face low or on the right |
+| `top-left` | below the MH stamp, left | bottom-right | Face low or on the right |
 | `top-right` | below the badges, right-aligned | bottom-right | Face low or on the left |
 | `middle` | centred, on a dark band | bottom-right | Face in the top third and the body below is empty |
 
 The top and middle positions darken the art behind the title, so only use them when the face
 is somewhere else. Render once and look: the face and mouth must be fully visible.
-Long Bangla lines shrink first, then wrap onto two lines. The MH badge adds about 250 px to the title row,
-so a long hero name shrinks a little more when the title is not in a bottom corner.
+Long Bangla lines shrink first, then wrap onto two lines. With `top-left` the title starts lower (306 px)
+to clear the MH stamp under the ARC badge.
 
 ### Hero-name colour
 
@@ -105,10 +105,11 @@ To force a colour, set `"heroColor": "#F5F3EE"` (any of the three) in the post's
 
 ### MH badge and signature block
 
-- The MH badge (`template/assets/mh-badge.png`, "MH" in the art, number drawn on top) is stuck to the end
-  of the hero name like a comic sticker, tilted 7 degrees. It shows the post number: `MH 0` for the
-  opening, then `MH 1`, `MH 2` and so on. It follows `day`; set `"mh"` in the JSON only to override.
-  It travels with the title block, so it stays wherever `pos` puts the title.
+- The MH stamp (`template/assets/mh-badge.png`, "MH" in the art, number drawn on top) hangs off the
+  bottom-left of the ARC badge, top-left, 170 px wide and tilted 7 degrees. It shows the post number:
+  `MH 0` for the opening, then `MH 1`, `MH 2` and so on. It follows `day`; set `"mh"` in the JSON only
+  to override. It is fixed in place. Check that it does not cover a face in the top-left corner (it did
+  on the opening, which is why it sits at the frame edge).
 - The signature block sits bottom-right (see `pos` for when it moves): `Musings of মাকসুদ`, then
   `www.musingsofmaksud.com` (globe icon), then `https://www.youtube.com/@MusingsofMaksud` (play icon).
   It is fixed in `template/post.html` (`SITE`, `YOUTUBE`); do not change it per day.
@@ -124,7 +125,7 @@ The image heading from each post is written as `MAIN / sub-line`. On the card:
 - **sub-line** = the Bangla line (`tagline`). Dabanol, comic paper `#F5F3EE`, on a night navy
   `#1B2A4A` caption box with a halftone-yellow left bar.
 - Top-left badge: `ARC N` (yellow) + arc name. Top-right badge: `DAY N OF 100` (red).
-- The MH badge sits at the end of the hero name and the signature block sits bottom-right (see above).
+- The MH stamp hangs under the ARC badge and the signature block sits bottom-right (see above).
 - No em dashes or en dashes anywhere on the card. Proper nouns stay in English.
 - Rotate the shape of the Bangla sub-line from day to day (a fact, a quote, a single noun,
   a question). At most one mirrored "[A]-এর X, [B]-এর Y" line per batch of four.
@@ -147,7 +148,7 @@ cream and black; do not add other colours.
 
 - The render prints no "fonts failed to load" warning.
 - Bangla conjuncts are shaped (zoom in on words like প্রায়শ্চিত্ত, ক্ষ, ন্ত্র).
-- The hero's face is clear of the badges, the title block and the bottom fade. The MH number matches the day.
-- The hero-name colour reads clearly against the art; the MH badge and the signature block do not touch.
+- The hero's face is clear of the badges, the MH stamp, the title block and the bottom fade. The MH number matches the day.
+- The hero-name colour reads clearly against the art; the title block and the signature block do not touch.
 - At 320x180 the hero name still reads.
 - No dashes, no off-palette colours, no Marvel logo or wordmark on the card.

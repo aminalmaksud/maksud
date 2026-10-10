@@ -55,18 +55,16 @@ html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
 #block{position:absolute;max-width:1728px}
 .p-bottom-left #block{left:96px;bottom:78px}
 .p-bottom-right #block{right:96px;bottom:78px;text-align:right}
-.p-top-left #block{left:96px;top:188px}
+.p-top-left #block{left:96px;top:306px}   /* clears the MH stamp under the ARC badge */
 .p-top-right #block{right:96px;top:188px;text-align:right}
 .p-middle #block{left:50%;top:50%;transform:translate(-50%,-50%);text-align:center}
 .p-bottom #block{left:50%;transform:translateX(-50%);text-align:center}
 .p-bottom-right #rule,.p-top-right #rule{margin-left:auto}
 .p-middle #rule,.p-bottom #rule{margin-left:auto;margin-right:auto}
 /* hero name with the MH number badge stuck on its end, like a comic sticker */
-#heroRow{display:flex;align-items:center;gap:24px}
-.p-bottom-right #heroRow,.p-top-right #heroRow{justify-content:flex-end}
-.p-middle #heroRow,.p-bottom #heroRow{justify-content:center}
-#mh{position:relative;flex:none;width:230px;height:230px;margin:-34px 0 -34px;transform:rotate(-7deg)}
-#mh .in{position:absolute;left:0;top:0;width:620px;height:620px;transform:scale(.371);transform-origin:0 0}
+/* MH number stamp: hangs off the bottom-left corner of the ARC badge (top-left), tilted like a sticker */
+#mh{position:absolute;left:22px;top:114px;width:170px;height:170px;transform:rotate(-7deg)}
+#mh .in{position:absolute;left:0;top:0;width:620px;height:620px;transform:scale(.2742);transform-origin:0 0}
 #mh img{position:absolute;inset:0;width:620px;height:620px;display:block}
 #mh .n{position:absolute;left:148px;top:262px;width:290px;height:190px;display:flex;align-items:center;justify-content:center;
   font-family:"CB Support";font-size:var(--mh-size,190px);line-height:1;color:#F4EBD9;
@@ -106,12 +104,10 @@ html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
 
   <div id="arc" class="badge"><span class="n"></span><span class="name"></span></div>
   <div id="day" class="badge"><span></span></div>
+  <div id="mh"><div class="in"><img src="assets/mh-badge.png" alt=""><div class="n"></div></div></div>
 
   <div id="block">
-    <div id="heroRow">
-      <div id="hero"></div>
-      <div id="mh"><div class="in"><img src="assets/mh-badge.png" alt=""><div class="n"></div></div></div>
-    </div>
+    <div id="hero"></div>
     <div id="rule"></div>
     <div id="tag"><p></p></div>
   </div>
@@ -182,7 +178,7 @@ window.fitAll = () => {
     ? 1920 - 96 - sig.offsetWidth - 60 - 96 : 1728;
   if (POS === 'bottom') $('#block').style.bottom = (78 + sig.offsetHeight + 34) + 'px';
   tag.classList.remove('wrap'); tag.style.maxWidth = '';
-  fit($('#hero'),'--hero-size',180,100,room - ((POS === 'bottom-left' || POS === 'bottom-right') ? 0 : 254));
+  fit($('#hero'),'--hero-size',180,100,room);
   fit(tag,'--tag-size',62,50,room);
   // a very long Bangla line wraps onto two lines instead of shrinking further
   if (tag.scrollWidth > room){
