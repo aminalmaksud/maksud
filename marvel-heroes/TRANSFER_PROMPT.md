@@ -14,6 +14,7 @@ The folder contains:
 - `template/render.js`: renders the card with Playwright/Chromium and saves lossless WebP. It also picks the hero-name colour (see section 3).
 - `template/pick_color.py`: the colour picker that `render.js` calls.
 - `template/assets/mh-badge.png`: the MH starburst, without its number.
+- `template/assets/marvel-logo.svg`: the logo shown above the signature block.
 - `template/fonts/`: Comic Book Bold Italic, Comic Book Bold, Dabanol. All fonts are bundled, so nothing else is needed.
 - `posts/day-001.json` and `posts/day-001-spider-man.webp`: the finished Day 1 example. Use it as the reference for how every card must look.
 - `images/`: the source art.
@@ -44,7 +45,7 @@ Never edit `post.html` or `render.js` for a single day. If you think the templat
 - Top-left badge: `ARC N` (yellow) plus the arc name. Top-right badge: `DAY N OF 100` (red).
 - Default position, lower-left (see `pos`): the hero name in English (Comic Book Bold Italic, all caps, black stroke and hard offset shadow), a short yellow rule, then the Bangla sub-line (Dabanol, on a navy box with a yellow left bar).
 - Hero-name colour changes with the background. `render.js` picks red, yellow or paper white from the artwork's colour (rules are in `pick_color.py` and the README). Do not hard-code a colour unless I ask; if I do, set `heroColor` in the post's JSON to one of `#E23636`, `#F7C948`, `#F5F3EE`.
-- Bottom-right, stacked: `Musings of মাকসুদ`, `www.musingsofmaksud.com`, `https://www.youtube.com/@MusingsofMaksud`. These are fixed in the template and must stay identical on every day. There is no footer bar; do not add one.
+- Bottom-right, stacked: the Marvel logo (supplied file, small), `Musings of মাকসুদ`, `www.musingsofmaksud.com`, `https://www.youtube.com/@MusingsofMaksud`. These are fixed in the template and must stay identical on every day. There is no footer bar; do not add one.
 - The MH starburst stamp sits to the left of the ARC badge in the top-left corner (small, tilted slightly; the ARC badge is shifted right to make room). It shows the post number (`MH 0` for the opening, then `MH 1`, `MH 2` and so on) and follows `day` automatically.
 - Art is full-bleed, fading into black at the bottom, with a thin yellow inner frame.
 
@@ -57,7 +58,7 @@ Never edit `post.html` or `render.js` for a single day. If you think the templat
 - The hero-name colour reads clearly against the art behind it.
 - The hero's face is not covered by a badge, the title block, the MH stamp or the bottom fade.
 - At roughly 320x180 the hero name still reads.
-- No em dashes or en dashes anywhere on the card. Proper nouns stay in English. No Marvel logo or wordmark.
+- No em dashes or en dashes anywhere on the card. Proper nouns stay in English. The only logo allowed is the supplied `template/assets/marvel-logo.svg`, already placed by the template; do not redraw, recolour or add any other logo.
 - File is 1920x1080 and ends in `.webp`.
 
 ## 5. Text rules for the heading

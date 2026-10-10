@@ -109,7 +109,8 @@ To force a colour, set `"heroColor": "#F5F3EE"` (any of the three) in the post's
   and tilted 7 degrees. It shows the post number:
   `MH 0` for the opening, then `MH 1`, `MH 2` and so on. It follows `day`; set `"mh"` in the JSON only
   to override. It is fixed in place. Check that it does not cover a face in the top-left corner.
-- The signature block sits bottom-right (see `pos` for when it moves): `Musings of মাকসুদ`, then
+- The signature block sits bottom-right (see `pos` for when it moves). Top to bottom: the Marvel logo
+  (`template/assets/marvel-logo.svg`, the supplied file, 150 px wide, right-aligned), `Musings of মাকসুদ`, then
   `www.musingsofmaksud.com` (globe icon), then `https://www.youtube.com/@MusingsofMaksud` (play icon).
   It is fixed in `template/post.html` (`SITE`, `YOUTUBE`); do not change it per day.
 - There is no footer bar. Do not add one.
@@ -150,4 +151,4 @@ cream and black; do not add other colours.
 - The hero's face is clear of the badges, the MH stamp, the title block and the bottom fade. The MH number matches the day.
 - The hero-name colour reads clearly against the art; the title block and the signature block do not touch.
 - At 320x180 the hero name still reads.
-- No dashes, no off-palette colours, no Marvel logo or wordmark on the card.
+- No dashes, no off-palette colours. The only logo on the card is the supplied `template/assets/marvel-logo.svg`, unmodified; never redraw or recolour it.

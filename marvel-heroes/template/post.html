@@ -88,6 +88,10 @@ html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
 .p-bottom-right #sig .link{justify-content:flex-start}
 .p-bottom #sig{right:auto;left:50%;transform:translateX(-50%);text-align:center}
 .p-bottom #sig .link{justify-content:center}
+/* logo (supplied file, unmodified) sits at the top of the signature block, aligned like the text */
+#sig #logo{display:block;width:150px;height:auto;margin:0 0 16px auto;box-shadow:5px 5px 0 #000}
+.p-bottom-right #sig #logo{margin:0 0 16px 0}
+.p-bottom #sig #logo{margin:0 auto 16px}
 #sig .name{font-family:"Dabanol";font-size:32px;line-height:1.4;opacity:.75;margin-bottom:10px}
 #sig .link{display:flex;align-items:center;justify-content:flex-end;gap:12px;
   font-family:"Barlow";font-weight:700;font-size:25px;line-height:1;opacity:.9;margin-top:10px}
@@ -113,6 +117,7 @@ html,body{width:1920px;height:1080px;background:var(--bg);overflow:hidden}
   </div>
 
   <div id="sig">
+    <img id="logo" src="assets/marvel-logo.svg" alt="">
     <div class="name">Musings of মাকসুদ</div>
     <div class="link" id="web">
       <span></span>
