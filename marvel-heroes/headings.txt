@@ -1,20 +1,127 @@
-# Headings for the whole series. One line per post, same format as always:
-#   ARC 2 | Arc name        starts an arc; applies to every DAY line below it
+# Headings for the whole series. One line per post:
+#   ARC 2 — Arc name        starts an arc; applies to every line below it
 #   DAY 11 — HERO NAME / Bangla line
-# Lines starting with # are ignored. Days that already have a card (opening and Days 1 to 10)
-# are listed for reference and are never re-made.
+#   OPENING — ... / ...     is day 0 (MH 0);  GOODBYE — ... / ...  is day 101 (MH 101, badge "Goodbye")
+# The pasted two-line form ("Day 11 · VISION" then "VISION / line") also works.
+# Lines starting with # are ignored. Days that already have a card are never re-made by
+# prepare.py; to change their text, edit the tagline in posts/day-NNN.json and re-render.
 
 ARC 1 — Avengers core
-OPENING — MARVEL HEROES / ১০০ দিন, ১০০ জন নায়ক, আর প্রতিটা মুখোশের নিচে একজন মানুষ
+OPENING — MARVEL HEROES / ১৯৩৯ সালের দশ সেন্টের এক কমিক থেকে আজকের একশো জন নায়ক
 DAY 1 — SPIDER-MAN / এক রাতের ভুল, সারাজীবনের প্রায়শ্চিত্ত
-DAY 2 — IRON MAN / বর্মটা ধাতুর, ক্ষতটা হৃদয়ের
-DAY 3 — CAPTAIN AMERICA / একটা দেশের না, একটা স্বপ্নের সৈনিক
-DAY 4 — THOR / দেবতা হতে হলে আগে মানুষ হতে হয়
-DAY 5 — HULK / রাগের নিচে লুকিয়ে থাকা এক ভয় পাওয়া শিশু
-DAY 6 — BLACK WIDOW / যে নারী নিজের স্মৃতিকেও বিশ্বাস করতে পারেন না
-DAY 7 — HAWKEYE / দেবতাদের ভিড়ে একজন সাধারণ মানুষ
-DAY 8 — BLACK PANTHER / মুকুটটাই তাঁর সবচেয়ে ভারী বর্ম
-DAY 9 — CAPTAIN MARVEL / যে নারী নিজের গল্প নিজেই ফিরিয়ে নিয়েছিলেন
-DAY 10 — SCARLET WITCH / যে শোক বাস্তবতাকেই ভেঙে দিয়েছিল
+DAY 2 — IRON MAN / বুকে বোমার টুকরো, হাতে এক সপ্তাহ, জঙ্গলের খাঁচায় বসে প্রথম বর্ম বানিয়েছিলেন Tony
+DAY 3 — CAPTAIN AMERICA / Hitler-এর মুখে একটা ঘুষির জন্য স্রষ্টাদের লেগেছিল পুলিশ পাহারা
+DAY 4 — THOR / ১৯৬২ সালের প্রথম পাতায় Thor ছিলেন লাঠি হাতে এক খোঁড়া ডাক্তার
+DAY 5 — HULK / ১৯৬২ সালে Hulk-এর রং ছিল ধূসর
+DAY 6 — BLACK WIDOW / ব্যালের স্মৃতিটাও Red Room-এর বানানো
+DAY 7 — HAWKEYE / Avengers #16-এ দলে ঢুকেছিলেন Iron Man-এর সুপারিশে
+DAY 8 — BLACK PANTHER / তেরো সংখ্যা জুড়ে একটাই প্রশ্ন, তিনি আসলে কার রাজা?
+DAY 9 — CAPTAIN MARVEL / Ms. Marvel থেকে Captain Marvel, নিজের নাম পেতে লেগেছিল চুয়াল্লিশ বছর
+DAY 10 — SCARLET WITCH / তিনটা শব্দ, No more mutants, আর লাখো Mutant-এর ক্ষমতা শেষ
 
-# Paste Days 11 to 100 below this line, with an ARC line above each new arc.
+ARC 2 — Avengers extended
+DAY 11 — VISION / Avengers #58-এ প্রথমবার কেঁদেছিলেন এক যন্ত্রমানব
+DAY 12 — HANK PYM / Ultron-এর মস্তিষ্ক গড়া হয়েছিল তাঁর নিজের মস্তিষ্কের ছাপে
+DAY 13 — WASP / Avengers নামটা রেখেছিলেন পাঁচ ইঞ্চির এই নারী
+DAY 14 — ANT-MAN / মেয়ের প্রাণ বাঁচাতে suit চুরি করেছিলেন যে বাবা
+DAY 15 — FALCON / Exile Island থেকে ঢাল পর্যন্ত, পঁয়তাল্লিশ বছরের পথ
+DAY 16 — WINTER SOLDIER / পঞ্চাশ বছরে জেগে ছিলেন সব মিলিয়ে হয়তো কয়েক মাস
+DAY 17 — WAR MACHINE / দুই বছর Iron Man ছিলেন Rhodey, পৃথিবী টেরও পায়নি
+DAY 18 — SHE-HULK / TV শো-র ভয়ে জন্ম নেওয়া চরিত্র কীভাবে হলেন নিজের গল্পের মালিক?
+DAY 19 — WONDER MAN / বারো বছর পর খোলা কফিনের ঢাকনা
+DAY 20 — MONICA RAMBEAU / Avengers #279, ১৯৮৭: প্রথম কৃষ্ণাঙ্গ নারী নেতা
+
+ARC 3 — Street level
+DAY 21 — DAREDEVIL / বইয়ে মুখ গুঁজে থাকা এক কিশোরকে ঠাট্টা করে দেওয়া নাম, ষাট বছর পরও তাঁর পরিচয়
+DAY 22 — LUKE CAGE / June 1972, Hero for Hire #1: নিজের নামে সিরিজ পাওয়া প্রথম কৃষ্ণাঙ্গ নায়ক
+DAY 23 — IRON FIST / তেত্রিশ বছর পেরোনো Iron Fist কয়জন?
+DAY 24 — JESSICA JONES / আট মাসের বন্দিদশার পর costume আর কোনোদিন গায়ে তোলেননি
+DAY 25 — PUNISHER / ১৯৭৪ সালে প্রথম এসেছিলেন Spider-Man-এর শিকারি হয়ে
+DAY 26 — ELEKTRA / নিজের sai-তেই প্রাণ গিয়েছিল, Daredevil #181-এর পাতায়
+DAY 27 — MISTY KNIGHT / Marvel Premiere #21, Storm-এর দুই মাস আগে
+DAY 28 — COLLEEN WING / ১৯৭৪ সালের Marvel Premiere #19 থেকে দাদুর katana তাঁর হাতে
+DAY 29 — SHANG-CHI / উনিশ বছর বয়সে বাবার আদেশে লন্ডনে প্রথম খুন করেছিলেন তিনি
+DAY 30 — BLACK CAT / Peter মুখোশ খোলার পর যিনি তাঁকে আবার মুখোশ পরতে বলেছিলেন
+DAY 31 — CLOAK & DAGGER / শক্তি পাওয়ার আগে কে কার ব্যাগ ফিরিয়ে দিয়েছিলেন?
+DAY 32 — SPIDER-WOMAN / Marvel Spotlight #32, ১৯৭৭: একটা trademark বাঁচাতে যাঁর জন্ম
+DAY 33 — ECHO / মুখে বাবার শেষ স্পর্শ, সাদা রঙে আঁকা
+DAY 34 — MOCKINGBIRD / পঁয়তাল্লিশ বছর অপেক্ষার পর নিজের নামে প্রথম সিরিজ
+DAY 35 — DEADPOOL / Hospice-এর মৃত্যুর বাজি থেকে পাওয়া একটা নাম
+
+ARC 4 — Cosmic
+DAY 36 — STAR-LORD / যে আকাশ মাকে কেড়ে নিল, সেখানেই কেন পরিবার খুঁজলেন Peter?
+DAY 37 — GAMORA / Zen-Whoberi জাতির শেষ জীবিত মেয়ে, বড় হয়েছেন Thanos-এর ঘরে
+DAY 38 — DRAX THE DESTROYER / Thanos-এর হৃদপিণ্ড পর্যন্ত পৌঁছাতে লেগেছিল তেত্রিশ বছর
+DAY 39 — ROCKET RACCOON / ১৯৭৬ সালে তাঁর নাম ছিল Rocky, Beatles-এর এক গান থেকে নেওয়া
+DAY 40 — GROOT / ১৯৬০ সালে উইপোকার কাছে হেরেছিলেন এই গাছ
+DAY 41 — NEBULA / The Avengers #257, ১৯৮৫: নিজেকে Thanos-এর নাতনি বলে পরিচয় দিয়েছিলেন
+DAY 42 — MANTIS / নিজেকে "this one" ডাকতেন Thor-কে হারানো এই যোদ্ধা
+DAY 43 — SILVER SURFER / Fantastic Four #48, ১৯৬৬: Kirby-র পাতায় হঠাৎ এক রুপালি অতিথি
+DAY 44 — ADAM WARLOCK / গুটি থেকে জন্ম, নাম ছিল শুধু একটা সর্বনাম
+DAY 45 — NOVA / হাজার হাজার Nova সৈনিকের মধ্যে বেঁচে রইলেন কে?
+
+ARC 5 — First family
+DAY 46 — MISTER FANTASTIC / Lee আর Kirby-র ১০২ সংখ্যার কেন্দ্রে ছিলেন এই বিজ্ঞানী
+DAY 47 — INVISIBLE WOMAN / Fantastic Four #284, ১৯৮৫ সাল, নামের শেষে Girl কেটে বসল Woman
+DAY 48 — HUMAN TORCH / দরজার ওপাশে থাকার কথা ছিল Ben-এর, Johnny কেন তাঁকে ঠেলে সরালেন?
+DAY 49 — THE THING / Yancy Street-এর ছেলে, একচল্লিশ বছর পর হিব্রু প্রার্থনায় হাঁটু গেড়ে বসলেন
+DAY 50 — CAPTAIN MARVEL (MAR-VELL) / ১৯৮২, Marvel-এর প্রথম গ্রাফিক নভেল, একজন Kree সৈনিকের শেষ বিছানা
+
+ARC 6 — X-Men
+DAY 51 — WOLVERINE / James Howlett, Alberta-র এক রাতে বাবার খুনির নামটাই নিজের করে নিলেন
+DAY 52 — PROFESSOR X / টাকমাথা শিক্ষকের চেহারা এসেছিল Yul Brynner-এর মুখ থেকে
+DAY 53 — CYCLOPS / লাল কাচের আড়ালে এক নেতা, যিনি কখনো হাত আলগা করেননি
+DAY 54 — JEAN GREY / যে আগুন সবাইকে উষ্ণ রাখে, তাকেও আগলে রাখা দরকার
+DAY 55 — STORM / Uncanny X-Men #201: ক্ষমতা ছাড়াই Cyclops-কে হারিয়েছিলেন যে নেতা
+DAY 56 — BEAST / জন্তুর শরীরে বাস করা সবচেয়ে সভ্য মন
+DAY 57 — ICEMAN / X-Men-এর সবচেয়ে ছোট সদস্য, মুখ খুলতে লাগল প্রায় পঞ্চাশ বছর
+DAY 58 — ROGUE / প্রথম চুমুতেই কোমায় চলে গিয়েছিলেন Cody Robbins
+DAY 59 — GAMBIT / হাতে তাস, মুখে হাসি, বুকে লুকানো এক রাত
+DAY 60 — NIGHTCRAWLER / চেহারায় শয়তান, মনে দেবদূত
+DAY 61 — COLOSSUS / Uncanny X-Men #390-এ নিজের প্রাণ দিয়ে Legacy Virus থামিয়েছিলেন সাইবেরিয়ার এই কৃষকের ছেলে
+DAY 62 — KITTY PRYDE / যাঁর চোখ দিয়ে এক প্রজন্ম X-Men-কে চিনেছিল
+DAY 63 — PSYLOCKE / একটা শরীর, দুটো মন, আর তিরিশ বছরের প্রশ্ন
+DAY 64 — JUBILEE / অন্ধকার আকাশে জোর করে আলো ফোটানো এক মেয়ে
+DAY 65 — CABLE / বাবার ছেড়ে দেওয়া হাত, ছেলের কোলে একটা আশা
+DAY 66 — BISHOP / মুখে M দাগ নিয়ে ভবিষ্যৎ থেকে আসা এক পুলিশ, যিনি ভয়ের কাছে প্রায় হেরে গিয়েছিলেন
+DAY 67 — EMMA FROST / হীরার মতো শক্ত এক নারী, যিনি এক কোটি ষাট লক্ষ মৃত্যুর মাঝে একা বেঁচে ছিলেন
+DAY 68 — MAGNETO / Auschwitz থেকে বেঁচে ফেরা এক মানুষ, যিনি প্রতিজ্ঞা করেছিলেন আর কখনো না
+DAY 69 — QUICKSILVER / পৃথিবীর সবচেয়ে দ্রুত মানুষটার সবচেয়ে বড় শত্রু, অপেক্ষা
+DAY 70 — X-23 / অস্ত্র হিসেবে বানানো একটা মেয়ে, যাঁকে মা শেষ নিঃশ্বাসে একটা নাম দিয়ে গিয়েছিলেন
+
+ARC 7 — Mystic
+DAY 71 — DOCTOR STRANGE / কাঁপা হাতে পৃথিবী পাহারা দেওয়া এক অহংকারী সার্জন
+DAY 72 — GHOST RIDER / ভালোবাসার মানুষকে বাঁচাতে যিনি নিজের আত্মা বিক্রি করেছিলেন
+DAY 73 — MOON KNIGHT / Werewolf by Night #32, ১৯৭৫: প্রথম পাতায় তিনি ছিলেন werewolf ধরতে আসা ভাড়াটে শিকারি
+DAY 74 — BLADE / দুই জগতের মাঝখানে জন্মানো এক শিকারি, যিনি Marvel-এর সিনেমার দরজা খুলে দিয়েছিলেন
+DAY 75 — WONG / ষাট বছর চা বানানো এক পার্শ্বচরিত্র, যিনি পর্দায় হয়ে উঠলেন Sorcerer Supreme
+DAY 76 — CLEA / অন্ধকার জগতের এক রাজকন্যা, যাঁর নিজের নামে দাঁড়াতে ষাট বছর লেগেছিল
+DAY 77 — DOCTOR VOODOO / মৃত ভাইয়ের আত্মাকে বুকে নিয়ে বাঁচা এক হাইতিয়ান জাদুকর
+DAY 78 — WEREWOLF BY NIGHT / আঠারো বছরের জন্মদিনে পরিবারের পুরোনো অভিশাপ জেগে উঠেছিল যাঁর শরীরে
+DAY 79 — MAN-THING / মন হারানো এক জলার দানব, যাঁর ছোঁয়ায় শুধু ভয় পুড়ে যায়
+DAY 80 — HELLSTROM / শয়তানের ঘরে জন্ম নিয়ে যিনি সারাজীবন লড়েছেন নিজের রক্তের বিরুদ্ধে
+
+ARC 8 — New generation
+DAY 81 — MILES MORALES / Brooklyn-এর এক কিশোর, যিনি প্রমাণ করেছেন মুখোশটা যে কেউ পরতে পারেন
+DAY 82 — MS. MARVEL / Jersey City-র এক পাকিস্তানি মুসলিম মেয়ে, যিনি নিজের রূপেই নায়িকা হলেন
+DAY 83 — KATE BISHOP / কোনো ক্ষমতা ছাড়া, নিজের ক্ষত থেকে নিজেকে গড়ে তোলা এক তীরন্দাজ
+DAY 84 — AMERICA CHAVEZ / দুই মা হারানো এক মেয়ে, যিনি লাথি মেরে এক জগৎ থেকে আরেক জগতে দরজা খোলেন
+DAY 85 — SQUIRREL GIRL / Galactus-কে কথা দিয়ে ফিরিয়ে দেওয়া এক কাঠবিড়ালি-মেয়ে, যাঁর আসল ক্ষমতা সহানুভূতি
+DAY 86 — GHOST-SPIDER / অন্য এক পৃথিবীতে মাকড়সা কামড়েছিল Gwen-কে, আর মারা গিয়েছিলেন Peter
+DAY 87 — IRONHEART / গুলিতে বাবা আর বান্ধবী হারানো এক মেয়ে, যিনি শোক দিয়ে বানালেন বর্ম
+DAY 88 — SHURI / দেবী যাঁকে অযোগ্য বলেছিলেন, তিনিই হলেন Wakanda-র Black Panther
+DAY 89 — WICCAN / Scarlet Witch-এর হারিয়ে যাওয়া সন্তান, যিনি অন্য নামে, অন্য পরিবারে ফিরে এলেন
+DAY 90 — NOVA / যে বাবাকে মাতাল মিথ্যুক ভেবেছিলেন, তিনিই ছিলেন মহাকাশের এক যোদ্ধা
+DAY 91 — MOON GIRL / নয় বছরের এক মেয়ে আর একটা লাল ডাইনোসর, Marvel-এর সবচেয়ে বুদ্ধিমান মস্তিষ্ক
+
+ARC 9 — Deep cuts
+DAY 92 — SENTRY / এক লক্ষ সূর্যের শক্তি নিয়েও যিনি হারতেন নিজের মনের অন্ধকারের কাছে
+DAY 93 — HERCULES / অলিম্পাসের সবচেয়ে উঁচু হাসি, আর তার নিচে সবচেয়ে পুরোনো কান্না
+DAY 94 — CAPTAIN BRITAIN / তলোয়ার ফেলে যিনি তাবিজ তুলে নিয়েছিলেন, আর যাঁর শক্তি মাপা হয় আত্মবিশ্বাসে
+DAY 95 — SILK / বন্ধ ঘরে হারানো দশ বছর, আর আঙুলের ডগায় নতুন করে বোনা জীবন
+DAY 96 — BLUE MARVEL / মুখোশ ছিঁড়ে যাওয়ার পর যাঁকে সরে দাঁড়াতে বলা হয়েছিল, আর যিনি পদকটা রেখে এসেছিলেন চাঁদে
+DAY 97 — AGENT VENOM / স্কুলের নিষ্ঠুর ছেলেটা যুদ্ধে দুই পা হারালেন, তারপর এক কালো symbiote-এর সাথে ফিরে পেলেন পা, সাথে একটা নেশাও
+DAY 98 — SPIDER-MAN 2099 / যে Spider-Man-কে কোনো মাকড়সা কামড়ায়নি, বানিয়েছিল একটা কোম্পানি, একটা নেশা আর একজনের ঈর্ষা
+DAY 99 — THE ORIGINAL HUMAN TORCH / ১৯৩৯ সালের আগুনের যন্ত্রমানব, যিনি সারাজীবন মানুষ হতে চেয়েছিলেন
+DAY 100 — NAMOR / যেখানে শুরু হয়েছিল সব: সমুদ্র থেকে উঠে আসা প্রথম রাজকুমার, অর্ধেক মানুষ, অর্ধেক সমুদ্র
+GOODBYE — MARVEL HEROES / ১০০ দিনের যাত্রা শেষ, কিন্তু মুখোশের নিচের মানুষগুলো থেকে যাবেন

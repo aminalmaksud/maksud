@@ -166,7 +166,15 @@ window.heroRect = () => {
   const b = r.getBoundingClientRect();
   return {x:Math.max(0,b.x), y:Math.max(0,b.y), width:Math.min(1920-b.x,b.width), height:b.height};
 };
-$('#tag p').textContent = P.tagline;
+// keep English-plus-Bangla words ("Mutant-এর", "Spider-Man-কে") on one line: no break after the hyphen
+(function(){
+  const p = $('#tag p'); p.textContent = '';
+  P.tagline.split(/([A-Za-z0-9#.'&]+(?:-[A-Za-z0-9]+)*-[\u0980-\u09FF]+)/).forEach((t, i) => {
+    if (!t) return;
+    if (i % 2) { const sp = document.createElement('span'); sp.style.whiteSpace = 'nowrap'; sp.textContent = t; p.appendChild(sp); }
+    else p.appendChild(document.createTextNode(t));
+  });
+})();
 $('#web span').textContent = SITE;
 $('#yt span').textContent = YOUTUBE;
 

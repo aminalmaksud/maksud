@@ -9,11 +9,14 @@ Inputs (under the marvel-heroes folder, or --root):
   headings.txt  one heading per line, in the format the series already uses:
                   ARC 2 | Street level          (also: "Arc - 2 - Street level", "ARC 2: Street level")
                   DAY 11 — DAREDEVIL / বাংলা লাইন
+                  OPENING — HERO / line   and   GOODBYE — HERO / line   (day 0 and day 101)
+                The pasted two-line form also works: "Day 11 · VISION" then "VISION / line".
                 An ARC line applies to every DAY line below it until the next ARC line.
   inbox/        the art. A file whose name starts with the day number (11.webp, 011.webp,
                 day-11-anything.webp) is matched automatically. Other files are listed as
                 "unmatched" and can be matched with map.txt (one line: filename = day).
   map.txt       optional, "filename = day" lines for files that do not start with a number.
+  --sync-text   also refresh the text of days that already have a config (see below)
   layout.txt    optional, "day = position" lines (bottom-left, bottom-right, bottom, top-left,
                 top-right, middle). Applied on every run, also to days that already exist.
 
@@ -32,31 +35,51 @@ DASHES = "—–"
 
 
 def parse_headings(path):
-    arcs, days, arc = {}, {}, None
-    warns = []
-    for n, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-        line = raw.strip()
-        if not line or line.startswith(("```", "#")):
-            continue
-        m = re.match(r"^arc\s*[-—–:/|]?\s*(\d+)\s*[-—–:/|]\s*(.+)$", line, re.I)
-        if m:
-            arc = (int(m.group(1)), m.group(2).strip())
-            continue
-        m = re.match(r"^opening\s*[-—–:]\s*(.+?)\s*/\s*(.+)$", line, re.I)
-        if m:
-            days[0] = dict(hero=m.group(1).strip(), tagline=m.group(2).strip(), arc=arc, opening=True)
-            continue
-        m = re.match(r"^day\s*(\d+)\s*[-—–:]\s*(.+?)\s*/\s*(.+)$", line, re.I)
-        if not m:
-            warns.append(f"headings.txt line {n}: not understood, skipped: {line[:60]}")
-            continue
-        d = int(m.group(1))
-        tag = m.group(3).strip()
+    """Accepts one-line entries (DAY 11 — HERO / line, OPENING — ..., GOODBYE — ...) and the pasted
+    two-line form (a label line such as "Day 11 · VISION" or "Series Goodbye · MARVEL HEROES",
+    followed by the "HERO / line" heading). ARC lines apply to every entry below them."""
+    days, warns, arc, pending = {}, [], None, None
+    SPECIAL = {"opening": (0, "Opening"), "goodbye": (101, "Goodbye")}
+
+    def add(d, hero, tag, label, line_no):
         if any(c in tag for c in DASHES):
             warns.append(f"Day {d}: the Bangla line contains a dash, rewrite it: {tag}")
         if d in days:
             warns.append(f"Day {d} appears twice in headings.txt, the later line wins")
-        days[d] = dict(hero=m.group(2).strip(), tagline=tag, arc=arc)
+        days[d] = dict(hero=hero.strip(), tagline=tag.strip(), arc=arc, label=label)
+
+    for n, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith(("```", "#")):
+            continue
+        m = re.match(r"^arc\s*[-\u2014\u2013:/|]?\s*(\d+)\s*[-\u2014\u2013:/|]\s*(.+)$", line, re.I)
+        if m:
+            arc = (int(m.group(1)), m.group(2).strip())
+            continue
+        # label line of the two-line form
+        m = re.match(r"^(?:series\s+(opening|goodbye)|day\s*(\d+))\s*[\u00b7\u2022]\s*.+$", line, re.I)
+        if m and "/" not in line:
+            pending = SPECIAL[m.group(1).lower()] + (None,) if m.group(1) else (int(m.group(2)), None, None)
+            continue
+        # one-line forms
+        m = re.match(r"^(opening|goodbye)\s*[-\u2014\u2013:]\s*(.+?)\s*/\s*(.+)$", line, re.I)
+        if m:
+            d, label = SPECIAL[m.group(1).lower()]
+            add(d, m.group(2), m.group(3), label, n)
+            pending = None
+            continue
+        m = re.match(r"^day\s*(\d+)\s*[-\u2014\u2013:]\s*(.+?)\s*/\s*(.+)$", line, re.I)
+        if m:
+            add(int(m.group(1)), m.group(2), m.group(3), None, n)
+            pending = None
+            continue
+        # heading line of the two-line form
+        m = re.match(r"^(.+?)\s+/\s+(.+)$", line)
+        if m and pending:
+            add(pending[0], m.group(1), m.group(2), pending[1], n)
+            pending = None
+            continue
+        warns.append(f"headings.txt line {n}: not understood, skipped: {line[:60]}")
     return days, warns
 
 
@@ -89,6 +112,9 @@ def main():
     ap.add_argument("--root", default=str(Path(__file__).resolve().parent.parent))
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--force", action="store_true", help="rewrite configs that already exist")
+    ap.add_argument("--sync-text", action="store_true",
+                    help="update hero, Bangla line, arc and badge text of EXISTING configs from headings.txt "
+                         "(position, art placement and everything else are kept)")
     a = ap.parse_args()
     root = Path(a.root)
     posts, images, inbox = root / "posts", root / "images", root / "inbox"
@@ -128,8 +154,8 @@ def main():
         arc = h["arc"] or (1, "Avengers core")
         name = f"day-{d:03d}-{slug(h['hero'])}"
         cfg = {"day": d, "total": 100, "arc": arc[0], "arcName": arc[1]}
-        if h.get("opening"):
-            cfg["dayLabel"] = "Opening"
+        if h.get("label"):
+            cfg["dayLabel"] = h["label"]
         cfg.update({"hero": h["hero"], "tagline": h["tagline"], "image": f"../images/{name}{f.suffix.lower()}",
                     "pos": "bottom-left", "art": art_for(w, hh), "output": f"{name}.webp"})
         made.append(d)
@@ -150,9 +176,30 @@ def main():
                     p.write_text(json.dumps(c, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
                     changed.append(d)
 
+    synced = []
+    if a.sync_text:
+        for cp in sorted(posts.glob("day-*.json")):
+            d = int(cp.stem.split("-")[1])
+            h = days.get(d)
+            if not h:
+                continue
+            c = json.loads(cp.read_text(encoding="utf-8"))
+            new = dict(c)
+            new["hero"], new["tagline"] = h["hero"], h["tagline"]
+            if h["arc"]:
+                new["arc"], new["arcName"] = h["arc"]
+            if h.get("label"):
+                new["dayLabel"] = h["label"]
+            if new != c:
+                synced.append(d)
+                if not a.dry_run:
+                    cp.write_text(json.dumps(new, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
     have_art = set(matched) | {int(p.stem.split("-")[1]) for p in posts.glob("day-*.json")}
     missing = [d for d in sorted(days) if d not in have_art]
     print(f"headings: {len(days)} days   art matched: {len(matched)}   new configs: {len(made)}   already existed: {len(kept)}")
+    if a.sync_text:
+        print("text updated for days:", ", ".join(map(str, synced)) or "none")
     if changed:
         print("position changed for days:", ", ".join(map(str, changed)))
     if unmatched:

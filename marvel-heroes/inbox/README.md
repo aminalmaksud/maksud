@@ -1,4 +1,4 @@
-# inbox: drop the art for Days 11 to 100 here
+# inbox: drop the art for Days 11 to 100 and the Goodbye card here (91 images)
 
 1. Put every image (any mix of .webp .png .jpg, 16:9, Midjourney `--ar 16:9`) in this folder.
 2. No renaming needed. If a file name starts with the day number (`11.webp`, `011.webp`,

@@ -3,13 +3,17 @@
 One 1920x1080 (16:9) post card per day. Day 1 is `posts/day-001-spider-man.webp`; the opening post is `posts/day-000-opening.webp`. Cards are saved as lossless WebP (no quality loss).
 Every later day reuses the same template, so only a small JSON file and the art change.
 
-## Doing many days at once (Days 11 to 100)
+## Doing many days at once (Days 11 to 100 and the Goodbye card)
 
 Chat uploads are limited to a few images, so the art goes in through the repo and the cards are
 made in bulk. Files live under `marvel-heroes/`; tools are run from the repo root.
 
-1. `headings.txt`: every heading, `ARC` lines and `DAY n — HERO / Bangla line` lines.
-2. `inbox/`: all the art. Name files with the day number to skip matching (`11.webp`), or leave the
+1. `headings.txt`: every heading (already filled in for the whole series: opening, Days 1 to 100, goodbye).
+   Format: `ARC n — name` lines and `DAY n — HERO / Bangla line` lines; `OPENING — ...` is day 0 and
+   `GOODBYE — ...` is day 101 (badge says Goodbye, stamp MH 101). The pasted two-line form
+   (`Day 11 · VISION` then `VISION / line`) also works. To change a heading's text later, edit
+   `headings.txt` and run `python3 -I marvel-heroes/tools/prepare.py --sync-text`, then re-render.
+2. `inbox/`: all the art, 91 images: Days 11 to 100 and the Goodbye card (day 101). Name files with the day number to skip matching (`11.webp`), or leave the
    original names and match by eye (then list them in `map.txt`, one `filename = day` per line).
 3. `python3 -I marvel-heroes/tools/prepare.py` reads both, moves the art to `images/`, and writes
    `posts/day-NNN.json` for every new day. It reports unmatched files, headings without art,

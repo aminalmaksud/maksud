@@ -34,7 +34,7 @@ I will send, for each day: the 16:9 art (Midjourney, `--ar 16:9`), the hero name
 5. Open the result and check it (see section 4). Fix and re-render until it passes. Lossless WebP of detailed art takes about 40 seconds, so run the render in the background if your shell times out. Use a `.png` output name for quick position tests.
 6. Show me the finished image. Commit and push only when I ask.
 
-For many days at once (the rest of the series), use the bulk tools described in the README section "Doing many days at once": `headings.txt`, `inbox/`, `tools/prepare.py`, `tools/sheet.py`, `tools/render_all.py`.
+For many days at once (the rest of the series), use the bulk tools described in the README section "Doing many days at once": `headings.txt` (already filled in for the whole series, 102 entries), `inbox/` (91 images: Days 11 to 100 plus the Goodbye card, day 101), `tools/prepare.py` (`--sync-text` refreshes text of existing cards), `tools/sheet.py`, `tools/render_all.py`.
 
 Never edit `post.html` or `render.js` for a single day. If you think the template itself needs a change, tell me first, because every day must look the same.
 
