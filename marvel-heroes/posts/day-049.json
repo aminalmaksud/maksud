@@ -1,0 +1,16 @@
+{
+  "day": 49,
+  "total": 100,
+  "arc": 5,
+  "arcName": "First family",
+  "hero": "THE THING",
+  "tagline": "Yancy Street-এর ছেলে, একচল্লিশ বছর পর হিব্রু প্রার্থনায় হাঁটু গেড়ে বসলেন",
+  "image": "../images/day-049-the-thing.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-049-the-thing.webp"
+}

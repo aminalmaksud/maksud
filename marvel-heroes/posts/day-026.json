@@ -1,0 +1,16 @@
+{
+  "day": 26,
+  "total": 100,
+  "arc": 3,
+  "arcName": "Street level",
+  "hero": "ELEKTRA",
+  "tagline": "নিজের sai-তেই প্রাণ গিয়েছিল, Daredevil #181-এর পাতায়",
+  "image": "../images/day-026-elektra.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-026-elektra.webp"
+}

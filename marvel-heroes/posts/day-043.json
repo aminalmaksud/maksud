@@ -1,0 +1,16 @@
+{
+  "day": 43,
+  "total": 100,
+  "arc": 4,
+  "arcName": "Cosmic",
+  "hero": "SILVER SURFER",
+  "tagline": "Fantastic Four #48, ১৯৬৬: Kirby-র পাতায় হঠাৎ এক রুপালি অতিথি",
+  "image": "../images/day-043-silver-surfer.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-043-silver-surfer.webp"
+}

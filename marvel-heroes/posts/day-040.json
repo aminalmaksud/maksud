@@ -1,0 +1,16 @@
+{
+  "day": 40,
+  "total": 100,
+  "arc": 4,
+  "arcName": "Cosmic",
+  "hero": "GROOT",
+  "tagline": "১৯৬০ সালে উইপোকার কাছে হেরেছিলেন এই গাছ",
+  "image": "../images/day-040-groot.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-040-groot.webp"
+}

@@ -1,0 +1,16 @@
+{
+  "day": 78,
+  "total": 100,
+  "arc": 7,
+  "arcName": "Mystic",
+  "hero": "WEREWOLF BY NIGHT",
+  "tagline": "আঠারো বছরের জন্মদিনে পরিবারের পুরোনো অভিশাপ জেগে উঠেছিল যাঁর শরীরে",
+  "image": "../images/day-078-werewolf-by-night.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-078-werewolf-by-night.webp"
+}

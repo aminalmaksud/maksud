@@ -1,0 +1,16 @@
+{
+  "day": 15,
+  "total": 100,
+  "arc": 2,
+  "arcName": "Avengers extended",
+  "hero": "FALCON",
+  "tagline": "Exile Island থেকে ঢাল পর্যন্ত, পঁয়তাল্লিশ বছরের পথ",
+  "image": "../images/day-015-falcon.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-015-falcon.webp"
+}

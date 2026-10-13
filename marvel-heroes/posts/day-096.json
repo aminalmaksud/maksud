@@ -1,0 +1,16 @@
+{
+  "day": 96,
+  "total": 100,
+  "arc": 9,
+  "arcName": "Deep cuts",
+  "hero": "BLUE MARVEL",
+  "tagline": "মুখোশ ছিঁড়ে যাওয়ার পর যাঁকে সরে দাঁড়াতে বলা হয়েছিল, আর যিনি পদকটা রেখে এসেছিলেন চাঁদে",
+  "image": "../images/day-096-blue-marvel.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-096-blue-marvel.webp"
+}

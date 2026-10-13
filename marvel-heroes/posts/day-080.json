@@ -1,0 +1,16 @@
+{
+  "day": 80,
+  "total": 100,
+  "arc": 7,
+  "arcName": "Mystic",
+  "hero": "HELLSTROM",
+  "tagline": "শয়তানের ঘরে জন্ম নিয়ে যিনি সারাজীবন লড়েছেন নিজের রক্তের বিরুদ্ধে",
+  "image": "../images/day-080-hellstrom.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-080-hellstrom.webp"
+}

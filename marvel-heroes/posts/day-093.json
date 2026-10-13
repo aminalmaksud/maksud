@@ -1,0 +1,16 @@
+{
+  "day": 93,
+  "total": 100,
+  "arc": 9,
+  "arcName": "Deep cuts",
+  "hero": "HERCULES",
+  "tagline": "অলিম্পাসের সবচেয়ে উঁচু হাসি, আর তার নিচে সবচেয়ে পুরোনো কান্না",
+  "image": "../images/day-093-hercules.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-093-hercules.webp"
+}

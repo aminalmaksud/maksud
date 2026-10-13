@@ -1,0 +1,2 @@
+# day = position   (bottom-left default; bottom-right, bottom, top-left, top-right, middle)
+69 = bottom-right

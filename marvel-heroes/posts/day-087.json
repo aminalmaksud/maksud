@@ -1,0 +1,16 @@
+{
+  "day": 87,
+  "total": 100,
+  "arc": 8,
+  "arcName": "New generation",
+  "hero": "IRONHEART",
+  "tagline": "গুলিতে বাবা আর বান্ধবী হারানো এক মেয়ে, যিনি শোক দিয়ে বানালেন বর্ম",
+  "image": "../images/day-087-ironheart.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-087-ironheart.webp"
+}

@@ -1,0 +1,16 @@
+{
+  "day": 44,
+  "total": 100,
+  "arc": 4,
+  "arcName": "Cosmic",
+  "hero": "ADAM WARLOCK",
+  "tagline": "গুটি থেকে জন্ম, নাম ছিল শুধু একটা সর্বনাম",
+  "image": "../images/day-044-adam-warlock.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-044-adam-warlock.webp"
+}

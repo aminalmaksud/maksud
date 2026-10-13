@@ -1,0 +1,16 @@
+{
+  "day": 72,
+  "total": 100,
+  "arc": 7,
+  "arcName": "Mystic",
+  "hero": "GHOST RIDER",
+  "tagline": "ভালোবাসার মানুষকে বাঁচাতে যিনি নিজের আত্মা বিক্রি করেছিলেন",
+  "image": "../images/day-072-ghost-rider.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-072-ghost-rider.webp"
+}

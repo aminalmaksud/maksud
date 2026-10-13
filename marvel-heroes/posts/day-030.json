@@ -1,0 +1,16 @@
+{
+  "day": 30,
+  "total": 100,
+  "arc": 3,
+  "arcName": "Street level",
+  "hero": "BLACK CAT",
+  "tagline": "Peter মুখোশ খোলার পর যিনি তাঁকে আবার মুখোশ পরতে বলেছিলেন",
+  "image": "../images/day-030-black-cat.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-030-black-cat.webp"
+}

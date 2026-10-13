@@ -1,0 +1,16 @@
+{
+  "day": 32,
+  "total": 100,
+  "arc": 3,
+  "arcName": "Street level",
+  "hero": "SPIDER-WOMAN",
+  "tagline": "Marvel Spotlight #32, ১৯৭৭: একটা trademark বাঁচাতে যাঁর জন্ম",
+  "image": "../images/day-032-spider-woman.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-032-spider-woman.webp"
+}

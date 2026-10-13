@@ -1,0 +1,16 @@
+{
+  "day": 28,
+  "total": 100,
+  "arc": 3,
+  "arcName": "Street level",
+  "hero": "COLLEEN WING",
+  "tagline": "১৯৭৪ সালের Marvel Premiere #19 থেকে দাদুর katana তাঁর হাতে",
+  "image": "../images/day-028-colleen-wing.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-028-colleen-wing.webp"
+}

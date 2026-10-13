@@ -1,0 +1,16 @@
+{
+  "day": 22,
+  "total": 100,
+  "arc": 3,
+  "arcName": "Street level",
+  "hero": "LUKE CAGE",
+  "tagline": "June 1972, Hero for Hire #1: নিজের নামে সিরিজ পাওয়া প্রথম কৃষ্ণাঙ্গ নায়ক",
+  "image": "../images/day-022-luke-cage.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-022-luke-cage.webp"
+}

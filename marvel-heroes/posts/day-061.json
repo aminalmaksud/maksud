@@ -1,0 +1,16 @@
+{
+  "day": 61,
+  "total": 100,
+  "arc": 6,
+  "arcName": "X-Men",
+  "hero": "COLOSSUS",
+  "tagline": "Uncanny X-Men #390-এ নিজের প্রাণ দিয়ে Legacy Virus থামিয়েছিলেন সাইবেরিয়ার এই কৃষকের ছেলে",
+  "image": "../images/day-061-colossus.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-061-colossus.webp"
+}

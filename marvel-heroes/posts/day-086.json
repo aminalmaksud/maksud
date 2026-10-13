@@ -1,0 +1,16 @@
+{
+  "day": 86,
+  "total": 100,
+  "arc": 8,
+  "arcName": "New generation",
+  "hero": "GHOST-SPIDER",
+  "tagline": "অন্য এক পৃথিবীতে মাকড়সা কামড়েছিল Gwen-কে, আর মারা গিয়েছিলেন Peter",
+  "image": "../images/day-086-ghost-spider.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-086-ghost-spider.webp"
+}

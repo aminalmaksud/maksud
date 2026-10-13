@@ -1,0 +1,16 @@
+{
+  "day": 100,
+  "total": 100,
+  "arc": 9,
+  "arcName": "Deep cuts",
+  "hero": "NAMOR",
+  "tagline": "যেখানে শুরু হয়েছিল সব: সমুদ্র থেকে উঠে আসা প্রথম রাজকুমার, অর্ধেক মানুষ, অর্ধেক সমুদ্র",
+  "image": "../images/day-100-namor.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-100-namor.webp"
+}

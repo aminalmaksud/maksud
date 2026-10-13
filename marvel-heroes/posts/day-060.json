@@ -1,0 +1,16 @@
+{
+  "day": 60,
+  "total": 100,
+  "arc": 6,
+  "arcName": "X-Men",
+  "hero": "NIGHTCRAWLER",
+  "tagline": "চেহারায় শয়তান, মনে দেবদূত",
+  "image": "../images/day-060-nightcrawler.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-060-nightcrawler.webp"
+}

@@ -1,0 +1,16 @@
+{
+  "day": 77,
+  "total": 100,
+  "arc": 7,
+  "arcName": "Mystic",
+  "hero": "DOCTOR VOODOO",
+  "tagline": "মৃত ভাইয়ের আত্মাকে বুকে নিয়ে বাঁচা এক হাইতিয়ান জাদুকর",
+  "image": "../images/day-077-doctor-voodoo.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-077-doctor-voodoo.webp"
+}

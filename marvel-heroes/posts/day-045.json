@@ -1,0 +1,16 @@
+{
+  "day": 45,
+  "total": 100,
+  "arc": 4,
+  "arcName": "Cosmic",
+  "hero": "NOVA",
+  "tagline": "হাজার হাজার Nova সৈনিকের মধ্যে বেঁচে রইলেন কে?",
+  "image": "../images/day-045-nova.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-045-nova.webp"
+}

@@ -1,0 +1,16 @@
+{
+  "day": 69,
+  "total": 100,
+  "arc": 6,
+  "arcName": "X-Men",
+  "hero": "QUICKSILVER",
+  "tagline": "পৃথিবীর সবচেয়ে দ্রুত মানুষটার সবচেয়ে বড় শত্রু, অপেক্ষা",
+  "image": "../images/day-069-quicksilver.webp",
+  "pos": "bottom-right",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-069-quicksilver.webp"
+}

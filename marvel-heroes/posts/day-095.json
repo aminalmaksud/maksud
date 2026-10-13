@@ -1,0 +1,16 @@
+{
+  "day": 95,
+  "total": 100,
+  "arc": 9,
+  "arcName": "Deep cuts",
+  "hero": "SILK",
+  "tagline": "বন্ধ ঘরে হারানো দশ বছর, আর আঙুলের ডগায় নতুন করে বোনা জীবন",
+  "image": "../images/day-095-silk.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-095-silk.webp"
+}

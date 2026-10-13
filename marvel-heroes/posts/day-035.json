@@ -1,0 +1,16 @@
+{
+  "day": 35,
+  "total": 100,
+  "arc": 3,
+  "arcName": "Street level",
+  "hero": "DEADPOOL",
+  "tagline": "Hospice-এর মৃত্যুর বাজি থেকে পাওয়া একটা নাম",
+  "image": "../images/day-035-deadpool.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-035-deadpool.webp"
+}

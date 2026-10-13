@@ -1,0 +1,16 @@
+{
+  "day": 33,
+  "total": 100,
+  "arc": 3,
+  "arcName": "Street level",
+  "hero": "ECHO",
+  "tagline": "মুখে বাবার শেষ স্পর্শ, সাদা রঙে আঁকা",
+  "image": "../images/day-033-echo.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-033-echo.webp"
+}

@@ -1,0 +1,16 @@
+{
+  "day": 24,
+  "total": 100,
+  "arc": 3,
+  "arcName": "Street level",
+  "hero": "JESSICA JONES",
+  "tagline": "আট মাসের বন্দিদশার পর costume আর কোনোদিন গায়ে তোলেননি",
+  "image": "../images/day-024-jessica-jones.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-024-jessica-jones.webp"
+}

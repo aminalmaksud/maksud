@@ -1,0 +1,16 @@
+{
+  "day": 91,
+  "total": 100,
+  "arc": 8,
+  "arcName": "New generation",
+  "hero": "MOON GIRL",
+  "tagline": "নয় বছরের এক মেয়ে আর একটা লাল ডাইনোসর, Marvel-এর সবচেয়ে বুদ্ধিমান মস্তিষ্ক",
+  "image": "../images/day-091-moon-girl.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-091-moon-girl.webp"
+}

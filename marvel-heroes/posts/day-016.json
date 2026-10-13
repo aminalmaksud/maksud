@@ -1,0 +1,16 @@
+{
+  "day": 16,
+  "total": 100,
+  "arc": 2,
+  "arcName": "Avengers extended",
+  "hero": "WINTER SOLDIER",
+  "tagline": "পঞ্চাশ বছরে জেগে ছিলেন সব মিলিয়ে হয়তো কয়েক মাস",
+  "image": "../images/day-016-winter-soldier.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-016-winter-soldier.webp"
+}

@@ -1,0 +1,16 @@
+{
+  "day": 56,
+  "total": 100,
+  "arc": 6,
+  "arcName": "X-Men",
+  "hero": "BEAST",
+  "tagline": "জন্তুর শরীরে বাস করা সবচেয়ে সভ্য মন",
+  "image": "../images/day-056-beast.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-056-beast.webp"
+}

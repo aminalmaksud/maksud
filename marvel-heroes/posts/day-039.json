@@ -1,0 +1,16 @@
+{
+  "day": 39,
+  "total": 100,
+  "arc": 4,
+  "arcName": "Cosmic",
+  "hero": "ROCKET RACCOON",
+  "tagline": "১৯৭৬ সালে তাঁর নাম ছিল Rocky, Beatles-এর এক গান থেকে নেওয়া",
+  "image": "../images/day-039-rocket-raccoon.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-039-rocket-raccoon.webp"
+}

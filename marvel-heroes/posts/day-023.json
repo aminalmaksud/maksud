@@ -1,0 +1,16 @@
+{
+  "day": 23,
+  "total": 100,
+  "arc": 3,
+  "arcName": "Street level",
+  "hero": "IRON FIST",
+  "tagline": "তেত্রিশ বছর পেরোনো Iron Fist কয়জন?",
+  "image": "../images/day-023-iron-fist.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-023-iron-fist.webp"
+}

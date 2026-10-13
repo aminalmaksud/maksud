@@ -1,0 +1,16 @@
+{
+  "day": 41,
+  "total": 100,
+  "arc": 4,
+  "arcName": "Cosmic",
+  "hero": "NEBULA",
+  "tagline": "The Avengers #257, ১৯৮৫: নিজেকে Thanos-এর নাতনি বলে পরিচয় দিয়েছিলেন",
+  "image": "../images/day-041-nebula.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-041-nebula.webp"
+}

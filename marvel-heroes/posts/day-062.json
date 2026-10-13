@@ -1,0 +1,16 @@
+{
+  "day": 62,
+  "total": 100,
+  "arc": 6,
+  "arcName": "X-Men",
+  "hero": "KITTY PRYDE",
+  "tagline": "যাঁর চোখ দিয়ে এক প্রজন্ম X-Men-কে চিনেছিল",
+  "image": "../images/day-062-kitty-pryde.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-062-kitty-pryde.webp"
+}

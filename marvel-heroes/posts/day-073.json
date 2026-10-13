@@ -1,0 +1,16 @@
+{
+  "day": 73,
+  "total": 100,
+  "arc": 7,
+  "arcName": "Mystic",
+  "hero": "MOON KNIGHT",
+  "tagline": "Werewolf by Night #32, ১৯৭৫: প্রথম পাতায় তিনি ছিলেন werewolf ধরতে আসা ভাড়াটে শিকারি",
+  "image": "../images/day-073-moon-knight.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-073-moon-knight.webp"
+}

@@ -1,0 +1,16 @@
+{
+  "day": 85,
+  "total": 100,
+  "arc": 8,
+  "arcName": "New generation",
+  "hero": "SQUIRREL GIRL",
+  "tagline": "Galactus-কে কথা দিয়ে ফিরিয়ে দেওয়া এক কাঠবিড়ালি-মেয়ে, যাঁর আসল ক্ষমতা সহানুভূতি",
+  "image": "../images/day-085-squirrel-girl.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-085-squirrel-girl.webp"
+}

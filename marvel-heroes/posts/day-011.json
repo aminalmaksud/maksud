@@ -1,0 +1,16 @@
+{
+  "day": 11,
+  "total": 100,
+  "arc": 2,
+  "arcName": "Avengers extended",
+  "hero": "VISION",
+  "tagline": "Avengers #58-এ প্রথমবার কেঁদেছিলেন এক যন্ত্রমানব",
+  "image": "../images/day-011-vision.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-011-vision.webp"
+}

@@ -1,0 +1,16 @@
+{
+  "day": 92,
+  "total": 100,
+  "arc": 9,
+  "arcName": "Deep cuts",
+  "hero": "SENTRY",
+  "tagline": "এক লক্ষ সূর্যের শক্তি নিয়েও যিনি হারতেন নিজের মনের অন্ধকারের কাছে",
+  "image": "../images/day-092-sentry.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-092-sentry.webp"
+}

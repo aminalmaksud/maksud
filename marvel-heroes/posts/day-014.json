@@ -1,0 +1,16 @@
+{
+  "day": 14,
+  "total": 100,
+  "arc": 2,
+  "arcName": "Avengers extended",
+  "hero": "ANT-MAN",
+  "tagline": "মেয়ের প্রাণ বাঁচাতে suit চুরি করেছিলেন যে বাবা",
+  "image": "../images/day-014-ant-man.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-014-ant-man.webp"
+}

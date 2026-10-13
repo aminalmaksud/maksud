@@ -1,0 +1,16 @@
+{
+  "day": 65,
+  "total": 100,
+  "arc": 6,
+  "arcName": "X-Men",
+  "hero": "CABLE",
+  "tagline": "বাবার ছেড়ে দেওয়া হাত, ছেলের কোলে একটা আশা",
+  "image": "../images/day-065-cable.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-065-cable.webp"
+}

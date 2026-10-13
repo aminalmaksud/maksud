@@ -1,0 +1,16 @@
+{
+  "day": 20,
+  "total": 100,
+  "arc": 2,
+  "arcName": "Avengers extended",
+  "hero": "MONICA RAMBEAU",
+  "tagline": "Avengers #279, ১৯৮৭: প্রথম কৃষ্ণাঙ্গ নারী নেতা",
+  "image": "../images/day-020-monica-rambeau.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-020-monica-rambeau.webp"
+}

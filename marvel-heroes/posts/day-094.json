@@ -1,0 +1,16 @@
+{
+  "day": 94,
+  "total": 100,
+  "arc": 9,
+  "arcName": "Deep cuts",
+  "hero": "CAPTAIN BRITAIN",
+  "tagline": "তলোয়ার ফেলে যিনি তাবিজ তুলে নিয়েছিলেন, আর যাঁর শক্তি মাপা হয় আত্মবিশ্বাসে",
+  "image": "../images/day-094-captain-britain.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-094-captain-britain.webp"
+}

@@ -1,0 +1,16 @@
+{
+  "day": 50,
+  "total": 100,
+  "arc": 5,
+  "arcName": "First family",
+  "hero": "CAPTAIN MARVEL (MAR-VELL)",
+  "tagline": "১৯৮২, Marvel-এর প্রথম গ্রাফিক নভেল, একজন Kree সৈনিকের শেষ বিছানা",
+  "image": "../images/day-050-captain-marvel-mar-vell.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-050-captain-marvel-mar-vell.webp"
+}

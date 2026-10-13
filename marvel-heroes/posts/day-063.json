@@ -1,0 +1,16 @@
+{
+  "day": 63,
+  "total": 100,
+  "arc": 6,
+  "arcName": "X-Men",
+  "hero": "PSYLOCKE",
+  "tagline": "একটা শরীর, দুটো মন, আর তিরিশ বছরের প্রশ্ন",
+  "image": "../images/day-063-psylocke.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-063-psylocke.webp"
+}

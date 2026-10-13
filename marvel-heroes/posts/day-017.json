@@ -1,0 +1,16 @@
+{
+  "day": 17,
+  "total": 100,
+  "arc": 2,
+  "arcName": "Avengers extended",
+  "hero": "WAR MACHINE",
+  "tagline": "দুই বছর Iron Man ছিলেন Rhodey, পৃথিবী টেরও পায়নি",
+  "image": "../images/day-017-war-machine.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-017-war-machine.webp"
+}

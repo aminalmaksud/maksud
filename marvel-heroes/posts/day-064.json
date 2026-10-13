@@ -1,0 +1,16 @@
+{
+  "day": 64,
+  "total": 100,
+  "arc": 6,
+  "arcName": "X-Men",
+  "hero": "JUBILEE",
+  "tagline": "অন্ধকার আকাশে জোর করে আলো ফোটানো এক মেয়ে",
+  "image": "../images/day-064-jubilee.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-064-jubilee.webp"
+}

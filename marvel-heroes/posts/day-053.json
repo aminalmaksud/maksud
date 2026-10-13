@@ -1,0 +1,16 @@
+{
+  "day": 53,
+  "total": 100,
+  "arc": 6,
+  "arcName": "X-Men",
+  "hero": "CYCLOPS",
+  "tagline": "লাল কাচের আড়ালে এক নেতা, যিনি কখনো হাত আলগা করেননি",
+  "image": "../images/day-053-cyclops.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-053-cyclops.webp"
+}

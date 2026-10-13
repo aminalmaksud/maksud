@@ -1,0 +1,16 @@
+{
+  "day": 47,
+  "total": 100,
+  "arc": 5,
+  "arcName": "First family",
+  "hero": "INVISIBLE WOMAN",
+  "tagline": "Fantastic Four #284, ১৯৮৫ সাল, নামের শেষে Girl কেটে বসল Woman",
+  "image": "../images/day-047-invisible-woman.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-047-invisible-woman.webp"
+}

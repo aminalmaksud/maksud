@@ -1,0 +1,16 @@
+{
+  "day": 97,
+  "total": 100,
+  "arc": 9,
+  "arcName": "Deep cuts",
+  "hero": "AGENT VENOM",
+  "tagline": "স্কুলের নিষ্ঠুর ছেলেটা যুদ্ধে দুই পা হারালেন, তারপর এক কালো symbiote-এর সাথে ফিরে পেলেন পা, সাথে একটা নেশাও",
+  "image": "../images/day-097-agent-venom.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-097-agent-venom.webp"
+}

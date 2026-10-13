@@ -1,0 +1,16 @@
+{
+  "day": 82,
+  "total": 100,
+  "arc": 8,
+  "arcName": "New generation",
+  "hero": "MS. MARVEL",
+  "tagline": "Jersey City-র এক পাকিস্তানি মুসলিম মেয়ে, যিনি নিজের রূপেই নায়িকা হলেন",
+  "image": "../images/day-082-ms-marvel.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-082-ms-marvel.webp"
+}

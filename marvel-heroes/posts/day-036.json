@@ -1,0 +1,16 @@
+{
+  "day": 36,
+  "total": 100,
+  "arc": 4,
+  "arcName": "Cosmic",
+  "hero": "STAR-LORD",
+  "tagline": "যে আকাশ মাকে কেড়ে নিল, সেখানেই কেন পরিবার খুঁজলেন Peter?",
+  "image": "../images/day-036-star-lord.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-036-star-lord.webp"
+}

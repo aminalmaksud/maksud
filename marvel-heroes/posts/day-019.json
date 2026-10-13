@@ -1,0 +1,16 @@
+{
+  "day": 19,
+  "total": 100,
+  "arc": 2,
+  "arcName": "Avengers extended",
+  "hero": "WONDER MAN",
+  "tagline": "বারো বছর পর খোলা কফিনের ঢাকনা",
+  "image": "../images/day-019-wonder-man.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-019-wonder-man.webp"
+}

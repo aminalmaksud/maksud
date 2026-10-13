@@ -1,0 +1,16 @@
+{
+  "day": 48,
+  "total": 100,
+  "arc": 5,
+  "arcName": "First family",
+  "hero": "HUMAN TORCH",
+  "tagline": "দরজার ওপাশে থাকার কথা ছিল Ben-এর, Johnny কেন তাঁকে ঠেলে সরালেন?",
+  "image": "../images/day-048-human-torch.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-048-human-torch.webp"
+}

@@ -1,0 +1,16 @@
+{
+  "day": 54,
+  "total": 100,
+  "arc": 6,
+  "arcName": "X-Men",
+  "hero": "JEAN GREY",
+  "tagline": "যে আগুন সবাইকে উষ্ণ রাখে, তাকেও আগলে রাখা দরকার",
+  "image": "../images/day-054-jean-grey.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-054-jean-grey.webp"
+}

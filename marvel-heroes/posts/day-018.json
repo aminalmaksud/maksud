@@ -1,0 +1,16 @@
+{
+  "day": 18,
+  "total": 100,
+  "arc": 2,
+  "arcName": "Avengers extended",
+  "hero": "SHE-HULK",
+  "tagline": "TV শো-র ভয়ে জন্ম নেওয়া চরিত্র কীভাবে হলেন নিজের গল্পের মালিক?",
+  "image": "../images/day-018-she-hulk.webp",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1929,
+    "left": -4,
+    "top": 0
+  },
+  "output": "day-018-she-hulk.webp"
+}
