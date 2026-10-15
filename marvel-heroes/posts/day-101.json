@@ -1,0 +1,17 @@
+{
+  "day": 101,
+  "total": 100,
+  "arc": 9,
+  "arcName": "Deep cuts",
+  "dayLabel": "Goodbye",
+  "hero": "MARVEL HEROES",
+  "tagline": "১০০ দিনের যাত্রা শেষ, কিন্তু মুখোশের নিচের মানুষগুলো থেকে যাবেন",
+  "image": "../images/day-101-marvel-heroes.png",
+  "pos": "bottom-left",
+  "art": {
+    "width": 1920,
+    "left": 0,
+    "top": 0
+  },
+  "output": "day-101-marvel-heroes.webp"
+}
