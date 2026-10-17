@@ -312,6 +312,8 @@ def cmd_final(a):
         flags = list(res[str(png)]["warnings"])
         if sc[pos] > 1.3 * min(sc.values()):
             flags.append(f"busy area under the title (score {sc[pos]:.2f}, quietest {min(sc, key=sc.get)} {min(sc.values()):.2f})")
+        if note.upper().startswith("CHECK"):
+            flags.append("reviewer: every position hides something")
         if q < 60:
             flags.append(f"low WebP quality {q} to fit 200 KB")
         report.append({"post": p["post"], "file": name, "position": pos, "chosen_by": src,
