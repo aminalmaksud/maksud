@@ -3,3 +3,6 @@ batches/*/out/work/
 batches/*/out/candidates/
 
 __pycache__/
+
+# download bundles (they repeat the committed posts)
+batches/*/*.zip
