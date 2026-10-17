@@ -26,7 +26,9 @@ Step 3, final images (no model needed):
 posts.csv columns (UTF-8): post, english_title, bangla_subtitle
   Optional: image (file name in the images folder; left empty, the image whose name starts
   with the post number is used, e.g. 1.png or post-001.jpg), english_kicker (small line
-  above the title), position (left/middle/right).
+  above the title), arc (shown in its own bar at the bottom centre), position (left,
+  middle or right at the top, or bottom-middle above the arc bar, or bottom-right above
+  the signature).
   If english_kicker is empty and a long title contains "of", the part up to the last
   "of" becomes the small line, as in "The Complete History of / Middle-earth".
 """
@@ -38,7 +40,8 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 HERE = Path(__file__).resolve().parent
-POSITIONS = ["left", "middle", "right"]
+POSITIONS = ["left", "middle", "right"]                     # chosen by reviewers
+ALL_POSITIONS = POSITIONS + ["bottom-middle", "bottom-right"]  # can also be set in posts.csv
 LAYOUT_W, LAYOUT_H = 2000, 1125
 FINAL_SCALE = 0.96          # 2000x1125 layout -> 1920x1080
 THUMB_SCALE = 0.4           # -> 800x450 for choice sheets
@@ -100,14 +103,15 @@ def read_posts(csv_path, images_dir):
                 continue
             img = matches[0]
         pos = r.get("position", "").lower()
-        if pos and pos not in POSITIONS:
-            problems.append(f"line {i}: position must be left, middle or right, not {pos!r}")
+        if pos and pos not in ALL_POSITIONS:
+            problems.append(f"line {i}: position must be one of {', '.join(ALL_POSITIONS)}, not {pos!r}")
         kicker, title = r.get("english_kicker", ""), r["english_title"]
         if not kicker:
             kicker, title = split_title(title)
         posts.append({"post": r["post"], "num": num,
                       "kicker": kicker, "title": title, "full_title": r["english_title"],
-                      "bangla": r["bangla_subtitle"], "image": img.resolve(), "position": pos})
+                      "bangla": r["bangla_subtitle"], "arc": r.get("arc", ""),
+                      "image": img.resolve(), "position": pos})
     if problems:
         sys.exit("Fix posts.csv first:\n  " + "\n  ".join(problems))
     return posts
@@ -137,7 +141,7 @@ def stem(p):
 
 def job_data(p, position, fonts, total):
     return {"image": p["image"].as_uri(), "fonts": fonts.as_uri(), "position": position,
-            "kicker": p["kicker"], "title": p["title"], "bangla": p["bangla"],
+            "kicker": p["kicker"], "title": p["title"], "bangla": p["bangla"], "arc": p["arc"],
             "post": p["post"], "total": total}
 
 
@@ -276,7 +280,7 @@ def read_decisions(out):
             for r in csv.DictReader(fh):
                 pos = (r.get("position") or "").strip().lower()
                 num = re.sub(r"\D", "", r.get("post") or "")
-                if pos in POSITIONS and num:
+                if pos in ALL_POSITIONS and num:
                     dec[int(num)] = (pos, (r.get("note") or "").strip())
     return dec
 
@@ -310,7 +314,7 @@ def cmd_final(a):
         name = f"{stem(p)}-{slug(p['full_title'])}.webp"
         q, size = encode_webp(png, out / name)
         flags = list(res[str(png)]["warnings"])
-        if sc[pos] > 1.3 * min(sc.values()):
+        if pos in sc and sc[pos] > 1.3 * min(sc.values()):
             flags.append(f"busy area under the title (score {sc[pos]:.2f}, quietest {min(sc, key=sc.get)} {min(sc.values()):.2f})")
         if note.upper().startswith("CHECK"):
             flags.append("reviewer: every position hides something")

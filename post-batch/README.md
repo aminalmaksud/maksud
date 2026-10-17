@@ -25,7 +25,8 @@ A batch folder is ready at `batches/batch-01/`. Upload on GitHub in your browser
 | `bangla_subtitle` | yes | `গানের ভেতর দিয়ে জগতের জন্ম` |
 | `image` | no | File name inside `images/`. Left out, the image named with the post number is used. |
 | `english_kicker` | no | Small line above the title. Left out, a long title is split at "of" when that gives a short main line, like "The Complete History of / Middle-earth". |
-| `position` | no | `left`, `middle` or `right` to fix the title position yourself. Left out, it is chosen for you. |
+| `arc` | no | Shown in its own bar at the bottom centre, like `Arc I · Before the World`. |
+| `position` | no | Fix the title position yourself: `left`, `middle` or `right` at the top, `bottom-middle` (just above the arc bar) or `bottom-right` (just above the signature). Left out, a reviewer picks left, middle or right. |
 
 For the next batch, ask Claude to make `batches/batch-02/` the same way.
 
