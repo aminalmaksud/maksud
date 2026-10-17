@@ -81,6 +81,7 @@ html,body{width:2000px;height:1125px;background:var(--bg);overflow:hidden}
   $('.bn').textContent = d.bangla;
   $('.badge').textContent = `Post ${d.post} of ${d.total}`;
   $('.arc').textContent = d.arc || '';
+  if (d.links === false) document.querySelectorAll('.sig .url, .sig .yt').forEach(e => e.remove());
   const img = $('.art');
   img.src = d.image;
   await img.decode();

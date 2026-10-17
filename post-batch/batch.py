@@ -139,10 +139,10 @@ def stem(p):
     return f"post-{p['num']:03d}"
 
 
-def job_data(p, position, fonts, total):
+def job_data(p, position, fonts, total, links=True):
     return {"image": p["image"].as_uri(), "fonts": fonts.as_uri(), "position": position,
             "kicker": p["kicker"], "title": p["title"], "bangla": p["bangla"], "arc": p["arc"],
-            "post": p["post"], "total": total}
+            "post": p["post"], "total": total, "links": links}
 
 
 def run_jobs(jobs, work, workers):
@@ -303,7 +303,7 @@ def cmd_final(a):
         else:
             pos, src, note = min(sc, key=sc.get), "auto", ""
         chosen[p["post"]] = (pos, src, note, sc)
-    jobs = [{"data": job_data(p, chosen[p["post"]][0], fonts, a.total),
+    jobs = [{"data": job_data(p, chosen[p["post"]][0], fonts, a.total, not a.no_links),
              "out": str(work / f"{stem(p)}.png"), "scale": FINAL_SCALE} for p in posts]
     res = run_jobs(jobs, out / "work", a.workers)
 
@@ -359,6 +359,7 @@ def main():
         s.add_argument("--out", required=True)
         s.add_argument("--total", default="220", help="series length shown in the badge")
         s.add_argument("--workers", type=int, default=4, help="parallel render processes")
+        s.add_argument("--no-links", action="store_true", help="leave the website and YouTube lines out of the signature")
     a = ap.parse_args()
     {"candidates": cmd_candidates, "final": cmd_final}[a.cmd](a)
 

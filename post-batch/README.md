@@ -66,4 +66,6 @@ python3 post-batch/batch.py final      --csv batches/<name>/posts.csv --images b
 
 Needs Python with Pillow and NumPy, Node with Playwright, and the fonts from the
 universe-style-system skill (found automatically, or set `UNIVERSE_FONTS` to its
-`assets/fonts` folder). `--total` changes the "of 220" in the badge.
+`assets/fonts` folder). `--total` changes the "of 220" in the badge. `final --no-links` leaves the website and
+YouTube lines out of the signature (use a separate `--out` folder, with a copy of
+`decisions/`, to keep both versions).
