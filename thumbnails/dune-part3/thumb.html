@@ -1,0 +1,85 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:DuneRise;src:url(fonts/DuneRise.ttf)}
+@font-face{font-family:Dabanol;src:url(fonts/Dabanol.ttf)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1280px;height:720px;overflow:hidden;background:#1a0d05}
+#c{position:relative;width:1280px;height:720px;overflow:hidden}
+.abs{position:absolute}
+/* background: Paul, mirrored so he sits on the left looking in */
+#bg{inset:0;background:url(paul.webp) 62% 30%/auto 118% no-repeat;transform:scaleX(-1);
+  filter:sepia(.35) saturate(1.25) contrast(1.1) brightness(1.02)}
+/* Dune grade: amber wash + right-side darkening for text */
+#grade{inset:0;background:
+  linear-gradient(90deg,rgba(20,8,2,0) 0%,rgba(20,8,2,.15) 40%,rgba(25,10,3,.7) 62%,rgba(20,8,2,.88) 100%),
+  linear-gradient(180deg,rgba(0,0,0,.25) 0%,rgba(0,0,0,0) 30%,rgba(60,25,5,.25) 75%,rgba(15,6,2,.85) 100%)}
+#warm{inset:0;background:radial-gradient(ellipse at 30% 35%,rgba(255,170,80,.35),rgba(170,80,20,.25) 55%,rgba(40,15,3,.4) 100%);mix-blend-mode:overlay}
+#haze{left:0;right:0;bottom:0;height:260px;background:linear-gradient(0deg,rgba(196,120,55,.55),rgba(196,120,55,0));mix-blend-mode:screen}
+#me{right:-30px;bottom:-6px;width:700px;filter:sepia(.18) saturate(1.05) drop-shadow(0 0 30px rgba(0,0,0,.6))}
+#rim{right:-30px;bottom:-6px;width:700px;height:394px;background:linear-gradient(90deg,rgba(255,160,70,.35),rgba(255,160,70,0) 40%);mix-blend-mode:soft-light;
+  -webkit-mask:url(me.png) center/100% 100%}
+#overlay{inset:0;background:url(sand_overlay.png);mix-blend-mode:screen;opacity:.9}
+#overlay2{inset:0;background:url(sand_overlay.png);transform:scale(-1,1) translateY(40px);mix-blend-mode:screen;opacity:.5;filter:blur(1.2px)}
+#vig{inset:0;box-shadow:inset 0 0 180px 40px rgba(10,4,0,.85)}
+/* titles with sand texture fill */
+.sand{background-size:cover;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+#title{right:44px;top:26px;text-align:right;filter:drop-shadow(0 4px 0 #3a1806) drop-shadow(0 10px 18px rgba(0,0,0,.85))}
+#dune{font-family:DuneRise;font-size:156px;-webkit-text-stroke:5px transparent;paint-order:stroke fill;letter-spacing:22px;line-height:1;margin-right:-22px;
+  background-image:url(sand_title.png)}
+#part{font-family:DuneRise;font-size:54px;-webkit-text-stroke:2.5px transparent;letter-spacing:17px;line-height:1;margin-top:8px;margin-right:-17px;
+  background-image:url(sand_title.png);background-position:0 70%}
+#rule{height:3px;margin:16px 0 0 auto;width:560px;background:linear-gradient(90deg,rgba(240,180,100,0),#e8a85c 30%,#f6d7a0)}
+#bn{left:34px;bottom:30px;font-family:Dabanol;line-height:1.08;filter:drop-shadow(0 4px 0 #2a1004) drop-shadow(0 8px 16px rgba(0,0,0,.9))}
+#bn .l1{font-size:78px;background-image:url(sand_bn.png)}
+#bn .l2{font-size:88px;background-image:url(sand_title.png);background-position:0 40%}
+/* stamp */
+#stamp{left:520px;top:262px;transform:rotate(-14deg);filter:url(#grunge) drop-shadow(0 3px 6px rgba(0,0,0,.6));mix-blend-mode:normal}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="grunge" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3 2.35" result="holes"/>
+    <feComposite in="SourceGraphic" in2="holes" operator="in" result="eaten"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="9" result="d"/>
+    <feDisplacementMap in="eaten" in2="d" scale="5"/>
+  </filter>
+</svg>
+<div id="c">
+  <div id="bg" class="abs"></div>
+  <div id="warm" class="abs"></div>
+  <div id="grade" class="abs"></div>
+  <div id="haze" class="abs"></div>
+  <img id="me" class="abs" src="me.png">
+  <div id="rim" class="abs"></div>
+  <div id="overlay2" class="abs"></div>
+
+  <div id="title" class="abs">
+    <div id="dune" class="sand">DUNE</div>
+    <div id="part" class="sand">PART 3</div>
+    <div id="rule"></div>
+  </div>
+
+  <div id="bn" class="abs">
+    <div class="l1 sand">দেখার আগে আপনার</div>
+    <div class="l2 sand">কি কি জানা দরকার</div>
+  </div>
+
+  <svg id="stamp" class="abs" width="210" height="210" viewBox="0 0 210 210">
+    <defs><path id="ring" d="M105,105 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0"/></defs>
+    <g fill="none" stroke="#d9441e" >
+      <circle cx="105" cy="105" r="100" stroke-width="7"/>
+      <circle cx="105" cy="105" r="90" stroke-width="2.5"/>
+      <circle cx="105" cy="105" r="58" stroke-width="2.5"/>
+    </g>
+    <text fill="#d9441e" font-family="DuneRise" font-size="15" letter-spacing="5">
+      <textPath href="#ring" startOffset="0">RECAP · ARRAKIS · RECAP · ARRAKIS ·</textPath>
+    </text>
+    <rect x="18" y="80" width="174" height="50" fill="#d9441e"/>
+    <text x="105" y="117" text-anchor="middle" fill="#2a0f04" font-family="DuneRise" font-size="31" letter-spacing="3">PART 1</text>
+  </svg>
+
+  <div id="overlay" class="abs"></div>
+  <div id="vig" class="abs"></div>
+</div>
+</body></html>
