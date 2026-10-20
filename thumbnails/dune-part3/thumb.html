@@ -33,18 +33,18 @@ html,body{width:1280px;height:720px;overflow:hidden;background:#1a0d05}
 #bn{left:34px;bottom:30px;font-family:Dabanol;line-height:1.08;filter:drop-shadow(0 4px 0 #2a1004) drop-shadow(0 8px 16px rgba(0,0,0,.9))}
 #bn .l1{font-size:78px;background-image:url(sand_bn.png)}
 #bn .l2{font-size:88px;background-image:url(sand_title.png);background-position:0 40%}
-/* stamp */
-#stamp{left:1062px;top:280px;transform:rotate(10deg);filter:url(#grunge) drop-shadow(0 3px 6px rgba(0,0,0,.6));mix-blend-mode:normal}
+/* পর্ব ১ badge (flipped recreation of the supplied plate) */
+#badge{left:996px;top:278px;width:282px;height:141px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.75))}
+#badge img{width:100%;height:100%;display:block}
+#badge .t{position:absolute;left:19.4%;width:38.6%;top:34%;height:32%;display:flex;align-items:center;justify-content:center;
+  font-family:Dabanol;font-size:47px;line-height:1;padding-top:4px;white-space:nowrap;
+  background:url(sand_title.png) 0 35%/300px auto;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+  -webkit-text-stroke:1.2px transparent}
+#badge .glow{position:absolute;left:19.4%;width:38.6%;top:34%;height:32%;display:flex;align-items:center;justify-content:center;
+  font-family:Dabanol;font-size:47px;line-height:1;padding-top:4px;white-space:nowrap;color:#ff9a3c;filter:blur(6px);opacity:.75}
+#badge .sh{position:absolute;left:19.4%;width:38.6%;top:34%;height:32%;display:flex;align-items:center;justify-content:center;
+  font-family:Dabanol;font-size:47px;line-height:1;padding-top:4px;white-space:nowrap;color:#1a0a02;transform:translate(2px,3px)}
 </style></head><body>
-<svg width="0" height="0" style="position:absolute">
-  <filter id="grunge" x="-10%" y="-10%" width="120%" height="120%">
-    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n"/>
-    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3 2.35" result="holes"/>
-    <feComposite in="SourceGraphic" in2="holes" operator="in" result="eaten"/>
-    <feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="9" result="d"/>
-    <feDisplacementMap in="eaten" in2="d" scale="5"/>
-  </filter>
-</svg>
 <div id="c">
   <div id="bg" class="abs"></div>
   <div id="warm" class="abs"></div>
@@ -65,20 +65,10 @@ html,body{width:1280px;height:720px;overflow:hidden;background:#1a0d05}
     <div class="l2 sand">কি কি জানা দরকার</div>
   </div>
 
-  <svg id="stamp" class="abs" width="190" height="190" viewBox="0 0 210 210">
-    <defs><path id="ring" d="M105,105 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0"/></defs>
-    <g fill="none" stroke="#33d6e6" >
-      <circle cx="105" cy="105" r="100" stroke-width="7"/>
-      <circle cx="105" cy="105" r="90" stroke-width="2.5"/>
-      <circle cx="105" cy="105" r="58" stroke-width="2.5"/>
-    </g>
-    <text fill="#33d6e6" font-family="DuneRise" font-size="15" letter-spacing="5">
-      <textPath href="#ring" startOffset="0">RECAP · ARRAKIS · RECAP · ARRAKIS ·</textPath>
-    </text>
-    <rect x="18" y="80" width="174" height="50" fill="#33d6e6"/>
-    <text x="105" y="122" text-anchor="middle" fill="#06262b" font-family="Dabanol" font-size="44">পর্ব ১</text>
-  </svg>
-
+  <div id="badge" class="abs">
+    <img src="badge.png">
+    <div class="glow">পর্ব ১</div><div class="sh">পর্ব ১</div><div class="t">পর্ব ১</div>
+  </div>
   <div id="overlay" class="abs"></div>
   <div id="vig" class="abs"></div>
 </div>
