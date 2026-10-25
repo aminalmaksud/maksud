@@ -25,7 +25,8 @@
 <dialog id="settings">
   <form method="dialog" id="settingsForm">
     <h2>Server settings</h2>
-    <label>Server address <input name="serverUrl" placeholder="http://10.10.10.10/movies/" required></label>
+    <label>Server addresses — one per line (movies, TV series, anime… each can be its own server)
+      <textarea name="servers" rows="4" placeholder="http://172.16.50.7/&#10;http://172.16.50.12/" required></textarea></label>
     <label>Username (optional) <input name="username" autocomplete="off"></label>
     <label>Password (optional) <input name="password" type="password" autocomplete="off" placeholder="leave blank to keep current"></label>
     <div class="row"><button type="button" id="cancelBtn">Cancel</button><button type="submit" class="primary">Save</button></div>

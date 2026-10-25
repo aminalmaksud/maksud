@@ -16,6 +16,7 @@ class LibraryException(message: String) : Exception(message)
 /** Reads an HTTP "Index of /" directory listing (nginx, Apache, lighttpd, caddy...). */
 class Library(rootUrl: String, user: String, pass: String) {
     val root: String = normalize(rootUrl)
+    val name: String = URL(root).let { decode(it.authority + it.path) }.trimEnd('/').replace("/", " / ")
     val authHeader: String? =
         if (user.isNotEmpty()) "Basic " + Base64.encodeToString("$user:$pass".toByteArray(), Base64.NO_WRAP) else null
 

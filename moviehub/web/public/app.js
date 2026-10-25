@@ -1,6 +1,6 @@
 const $ = (id) => document.getElementById(id);
 const grid = $('grid'), statusEl = $('status'), video = $('video');
-let currentPath = '', items = [];
+let currentPath = '', items = [], servers = [];
 
 const enc = (p) => encodeURIComponent(p);
 const setStatus = (msg, err = false) => { statusEl.textContent = msg; statusEl.className = err ? 'error' : ''; };
@@ -17,7 +17,7 @@ async function open(path) {
   setStatus('Loading…');
   try {
     const data = await api(`/api/browse?path=${enc(path)}`);
-    currentPath = data.path; items = data.items;
+    currentPath = data.path; items = data.items; servers = data.servers || [];
     $('filter').value = '';
     history.replaceState(null, '', '#' + currentPath);
     renderCrumbs(); render();
@@ -35,9 +35,10 @@ function renderCrumbs() {
   const mk = (label, p) => { const a = document.createElement('a'); a.textContent = label; a.onclick = () => open(p); return a; };
   nav.append(mk('Home', ''));
   let acc = '';
-  parts.forEach((seg) => {
+  parts.forEach((seg, i) => {
     acc += seg + '/';
-    nav.append(' / ', mk(decodeURIComponent(seg), acc));
+    if (i === 0 && servers.length < 2) return; // single server: Home is its root
+    nav.append(' / ', mk(i === 0 ? servers[Number(seg)] || seg : decodeURIComponent(seg), acc));
   });
 }
 
@@ -47,8 +48,9 @@ function render() {
   for (const it of items) {
     if (it.kind === 'sub' || (q && !it.name.toLowerCase().includes(q))) continue;
     const card = document.createElement('div');
+    const isServer = !currentPath;
     card.className = 'card'; card.tabIndex = 0;
-    const ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = it.isDir ? '📁' : '🎬';
+    const ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = isServer && servers.length > 1 ? '🖥' : it.isDir ? '📁' : '🎬';
     const label = document.createElement('div'); label.textContent = it.isDir ? it.name : stem(it.name);
     if (!it.isDir) {
       const pos = savedPos(it.path);
@@ -111,7 +113,7 @@ document.addEventListener('keydown', (e) => {
 async function openSettings() {
   const c = await api('/api/config');
   const f = $('settingsForm');
-  f.serverUrl.value = c.serverUrl; f.username.value = c.username; f.password.value = '';
+  f.servers.value = c.servers.join('\n'); f.username.value = c.username; f.password.value = '';
   f.password.placeholder = c.hasPassword ? '•••••• (saved — leave blank to keep)' : '';
   $('settings').showModal();
 }
@@ -123,7 +125,7 @@ $('settingsForm').onsubmit = async (e) => {
   try {
     const old = await api('/api/config');
     const keepPw = !f.password.value && old.hasPassword && f.username.value === old.username;
-    await api('/api/config', { method: 'POST', body: JSON.stringify({ serverUrl: f.serverUrl.value, username: f.username.value, password: f.password.value, keepPassword: keepPw }) });
+    await api('/api/config', { method: 'POST', body: JSON.stringify({ servers: f.servers.value, username: f.username.value, password: f.password.value, keepPassword: keepPw }) });
     $('settings').close();
     open('');
   } catch (err) { setStatus(err.message, true); }

@@ -5,7 +5,7 @@
     <string name="loading">Loading…</string>
     <string name="empty_folder">This folder has no movies or sub-folders.</string>
     <string name="no_server">Set your ISP server address in Settings.</string>
-    <string name="server_label">Server address (e.g. http://10.10.10.10/movies/)</string>
+    <string name="server_label">Server addresses, one per line (e.g. http://172.16.50.7/). Add each server: movies, TV series, anime…</string>
     <string name="user_label">Username (optional)</string>
     <string name="pass_label">Password (optional)</string>
     <string name="save">Save</string>

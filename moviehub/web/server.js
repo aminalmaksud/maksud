@@ -20,24 +20,29 @@ const MIME = {
   avi: 'video/x-msvideo', ts: 'video/mp2t', mpg: 'video/mpeg', mpeg: 'video/mpeg', wmv: 'video/x-ms-wmv', flv: 'video/x-flv',
 };
 
+function splitServers(v) {
+  return (Array.isArray(v) ? v : String(v || '').split(/[\n,]/)).map((x) => String(x).trim()).filter(Boolean);
+}
+
 function loadConfig() {
   let c = {};
   try { c = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')); } catch { /* first run */ }
   return {
-    serverUrl: process.env.SERVER_URL || c.serverUrl || '',
+    servers: splitServers(process.env.SERVER_URL || c.servers || c.serverUrl), // SERVER_URL may be comma-separated
     username: process.env.SERVER_USER ?? c.username ?? '',
     password: process.env.SERVER_PASS ?? c.password ?? '',
   };
 }
 let config = loadConfig();
 
-function baseUrl() {
-  if (!config.serverUrl) return null;
-  const u = new URL(/^https?:\/\//i.test(config.serverUrl) ? config.serverUrl : 'http://' + config.serverUrl);
+function toBase(s) {
+  const u = new URL(/^https?:\/\//i.test(s) ? s : 'http://' + s);
   if (!u.pathname.endsWith('/')) u.pathname += '/';
   u.search = ''; u.hash = '';
   return u;
 }
+const bases = () => config.servers.map(toBase);
+const serverName = (b) => decodeURIComponent(b.host + b.pathname).replace(/\/$/, '').replace(/\//g, ' / ');
 
 function upstreamHeaders(extra = {}) {
   const h = { 'user-agent': 'MovieHub/1.0', ...extra };
@@ -45,13 +50,20 @@ function upstreamHeaders(extra = {}) {
   return h;
 }
 
-/** Resolve a client-supplied relative path against the library root; refuse anything outside it. */
+/**
+ * Client paths look like "<server index>/<path under that server's root>".
+ * Resolve one against its server; refuse anything outside that server's library.
+ */
 function resolveUnderBase(rel) {
-  const base = baseUrl();
-  if (!base) throw httpError(400, 'Server URL is not configured');
-  const u = new URL(String(rel || '').replace(/^\/+/, ''), base);
+  const all = bases();
+  if (!all.length) throw httpError(400, 'Server URL is not configured');
+  const m = /^(\d+)\/(.*)$/s.exec(String(rel || '').replace(/^\/+/, ''));
+  const idx = m ? Number(m[1]) : -1;
+  const base = all[idx];
+  if (!base) throw httpError(400, 'Unknown server');
+  const u = new URL(m[2], base);
   if (u.origin !== base.origin || !u.pathname.startsWith(base.pathname)) throw httpError(400, 'Path outside library');
-  return { base, url: u };
+  return { base, idx, url: u };
 }
 
 function httpError(status, message) { return Object.assign(new Error(message), { status }); }
@@ -66,7 +78,14 @@ async function readBody(req) {
 }
 
 async function handleBrowse(url, res) {
-  const { base, url: dir } = resolveUnderBase(url.searchParams.get('path'));
+  const all = bases();
+  const servers = all.map(serverName);
+  let rel = url.searchParams.get('path') || '';
+  if (!rel && all.length > 1) {
+    return json(res, 200, { path: '', servers, items: servers.map((name, i) => ({ name, path: `${i}/`, isDir: true, kind: 'dir' })) });
+  }
+  if (!rel) rel = '0/';
+  const { base, idx, url: dir } = resolveUnderBase(rel);
   if (!dir.pathname.endsWith('/')) dir.pathname += '/';
   let up;
   try { up = await fetch(dir, { headers: upstreamHeaders(), signal: AbortSignal.timeout(15000) }); }
@@ -76,7 +95,8 @@ async function handleBrowse(url, res) {
   const html = await up.text();
   let items = parseListing(html, dir.href, base.href);
   if (!items.length && html.includes('_h5ai')) items = await h5aiListing(dir, base);
-  json(res, 200, { path: dir.pathname.slice(base.pathname.length), items });
+  for (const it of items) it.path = `${idx}/${it.path}`;
+  json(res, 200, { path: `${idx}/${dir.pathname.slice(base.pathname.length)}`, servers, items });
 }
 
 /** h5ai file browsers (common on BDIX servers) may build the listing in JS; ask their API instead. */
@@ -123,11 +143,12 @@ async function handleSubs(url, res) {
 async function handleConfig(req, res) {
   if (req.method === 'POST') {
     const b = JSON.parse((await readBody(req)) || '{}');
-    config = { serverUrl: String(b.serverUrl || '').trim(), username: String(b.username || ''), password: b.keepPassword ? config.password : String(b.password || '') };
-    if (config.serverUrl) { try { baseUrl(); } catch { throw httpError(400, 'Invalid server URL'); } }
+    const servers = splitServers(b.servers ?? b.serverUrl);
+    for (const s of servers) { try { toBase(s); } catch { throw httpError(400, `Invalid server address: ${s}`); } }
+    config = { servers, username: String(b.username || ''), password: b.keepPassword ? config.password : String(b.password || '') };
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
-  json(res, 200, { serverUrl: config.serverUrl, username: config.username, hasPassword: !!config.password });
+  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password });
 }
 
 function serveStatic(url, res) {

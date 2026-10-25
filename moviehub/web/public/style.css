@@ -4,7 +4,7 @@ body { margin:0; background:var(--bg); color:var(--text); font:15px/1.4 -apple-s
 header { display:flex; gap:12px; align-items:center; padding:14px 20px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:2; }
 h1 { margin:0; font-size:20px; color:var(--accent); flex:none; }
 #filter { flex:1; min-width:0; }
-input, button { font:inherit; color:inherit; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 12px; }
+input, textarea, button { font:inherit; color:inherit; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 12px; }
 button { cursor:pointer; } button:hover { border-color:var(--accent); }
 button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
 #crumbs { padding:12px 20px 0; color:var(--dim); display:flex; flex-wrap:wrap; gap:4px; }
@@ -22,5 +22,5 @@ video { flex:1; min-height:0; width:100%; background:#000; }
 #playerMsg { margin:0; padding:8px 16px; color:#ffb74d; } #playerMsg:empty { display:none; }
 dialog { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:12px; width:min(460px,92vw); }
 dialog::backdrop { background:#000a; }
-dialog label { display:block; margin:12px 0; color:var(--dim); } dialog input { display:block; width:100%; margin-top:4px; color:var(--text); }
+dialog label { display:block; margin:12px 0; color:var(--dim); } dialog input, dialog textarea { display:block; width:100%; margin-top:4px; color:var(--text); resize:vertical; }
 .row { display:flex; justify-content:flex-end; gap:8px; }

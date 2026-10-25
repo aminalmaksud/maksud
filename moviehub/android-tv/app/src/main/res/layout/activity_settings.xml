@@ -22,7 +22,10 @@
         <EditText
             android:id="@+id/server"
             style="@style/Field"
-            android:inputType="textUri" />
+            android:gravity="top"
+            android:inputType="textUri|textMultiLine"
+            android:minLines="3"
+            android:singleLine="false" />
 
         <TextView style="@style/Label" android:text="@string/user_label" />
         <EditText

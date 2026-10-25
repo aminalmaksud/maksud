@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
         onClick = { pos, e -> onEntry(pos, e) },
     )
 
-    private var library: Library? = null
+    private var libraries: List<Library> = emptyList()
     private var currentUrl = ""
     private var all: List<Entry> = emptyList()
     private val stack = ArrayDeque<Pair<String, Int>>() // (folder url, selected row) to return to
@@ -54,45 +54,57 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        val server = Prefs.serverUrl(this)
-        if (server.isBlank()) {
+        val servers = Prefs.servers(this)
+        if (servers.isEmpty()) {
             adapter.submit(emptyList())
             pathView.text = ""
             status.text = getString(R.string.no_server)
             startActivity(Intent(this, SettingsActivity::class.java))
             return
         }
-        val lib = Library(server, Prefs.username(this), Prefs.password(this))
-        if (library?.root != lib.root || library?.authHeader != lib.authHeader) {
-            library = lib
+        val libs = servers.map { Library(it, Prefs.username(this), Prefs.password(this)) }
+        if (libs.map { it.root to it.authHeader } != libraries.map { it.root to it.authHeader }) {
+            libraries = libs
             stack.clear()
-            load(lib.root, 0)
+            load(HOME, 0)
         } else {
             adapter.notifyDataSetChanged() // refresh "Resume at" labels
         }
     }
 
     private fun load(url: String, selectRow: Int) {
-        val lib = library ?: return
         loadJob?.cancel()
+        // Home lists the servers; with only one server, Home is that server's root.
+        val target = if (url == HOME && libraries.size == 1) libraries[0].root else url
+        if (target == HOME) {
+            currentUrl = HOME
+            all = libraries.map { Entry(it.name, it.root, Kind.DIR) }
+            show(all, "Home", selectRow)
+            return
+        }
+        val lib = libraries.firstOrNull { target.startsWith(it.root) } ?: return
         status.text = getString(R.string.loading)
         loadJob = lifecycleScope.launch {
             try {
-                val result = withContext(Dispatchers.IO) { lib.list(url) }
-                currentUrl = url
+                val result = withContext(Dispatchers.IO) { lib.list(target) }
+                currentUrl = target
                 all = result
-                val shown = result.filter { it.kind != Kind.SUB }
-                adapter.submit(shown)
-                pathView.text = "/" + decodePath(url.removePrefix(lib.root))
-                status.text = if (shown.isEmpty()) getString(R.string.empty_folder) else ""
-                recycler.post {
-                    val row = selectRow.coerceIn(0, maxOf(shown.size - 1, 0))
-                    recycler.scrollToPosition(row)
-                    recycler.post { recycler.findViewHolderForAdapterPosition(row)?.itemView?.requestFocus() }
-                }
+                val prefix = if (libraries.size > 1) lib.name else ""
+                show(result.filter { it.kind != Kind.SUB }, prefix + "/" + decodePath(target.removePrefix(lib.root)), selectRow)
             } catch (e: LibraryException) {
                 status.text = e.message
             }
+        }
+    }
+
+    private fun show(shown: List<Entry>, path: String, selectRow: Int) {
+        adapter.submit(shown)
+        pathView.text = path
+        status.text = if (shown.isEmpty()) getString(R.string.empty_folder) else ""
+        recycler.post {
+            val row = selectRow.coerceIn(0, maxOf(shown.size - 1, 0))
+            recycler.scrollToPosition(row)
+            recycler.post { recycler.findViewHolderForAdapterPosition(row)?.itemView?.requestFocus() }
         }
     }
 
@@ -109,11 +121,15 @@ class MainActivity : ComponentActivity() {
                 .putExtra(PlayerActivity.EXTRA_URL, e.url)
                 .putExtra(PlayerActivity.EXTRA_TITLE, stem)
                 .putExtra(PlayerActivity.EXTRA_SUB, sub?.url)
-                .putExtra(PlayerActivity.EXTRA_AUTH, library?.authHeader)
+                .putExtra(PlayerActivity.EXTRA_AUTH, libraries.firstOrNull { e.url.startsWith(it.root) }?.authHeader)
         )
     }
 
     private fun decodePath(p: String) = try { URLDecoder.decode(p.replace("+", "%2B"), "UTF-8") } catch (e: Exception) { p }
+
+    companion object {
+        private const val HOME = ""
+    }
 }
 
 private class EntryAdapter(

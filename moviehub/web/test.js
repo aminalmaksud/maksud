@@ -52,20 +52,27 @@ const get = (p, h) => fetch(base + p, { headers: h });
 
 let r = await (await get('/api/browse?path=')).json();
 assert.equal(r.items.length, 3);
-r = await (await get('/api/browse?path=Action/')).json();
-assert.equal(r.items[0].path, 'Action/Fast.mp4');
-assert.equal((await get('/api/browse?path=../../etc/')).status, 400);
-assert.equal((await get('/stream?path=..%2F..%2Fsecret')).status, 400);
-r = await get('/stream?path=Big%2520Film%2520(2020).mkv', { range: 'bytes=100-199' });
+assert.equal(r.items[0].path, '0/Action/');
+r = await (await get('/api/browse?path=0/Action/')).json();
+assert.equal(r.items[0].path, '0/Action/Fast.mp4');
+assert.equal((await get('/api/browse?path=0/../../etc/')).status, 400);
+assert.equal((await get('/stream?path=0%2F..%2F..%2Fsecret')).status, 400);
+r = await get('/stream?path=0%2FBig%2520Film%2520(2020).mkv', { range: 'bytes=100-199' });
 assert.equal(r.status, 206); assert.equal(r.headers.get('content-range'), 'bytes 100-199/1000');
 assert.equal(r.headers.get('content-type'), 'video/x-matroska'); assert.equal((await r.arrayBuffer()).byteLength, 100);
-assert.match(await (await get('/subs?path=Big%2520Film%2520(2020).srt')).text(), /^WEBVTT/);
+assert.match(await (await get('/subs?path=0%2FBig%2520Film%2520(2020).srt')).text(), /^WEBVTT/);
 assert.equal((await get('/')).status, 200);
 assert.equal((await get('/..%2Fserver.js')).status, 404);
 // h5ai: same proxy, different library root
 const h5 = `http://127.0.0.1:${isp.address().port}/h5/`;
-await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ serverUrl: h5 }) });
-r = await (await get('/api/browse?path=Films/')).json();
-assert.deepEqual(r.items.map((i) => i.path), ['Films/Dune%20(2021)/', 'Films/Up.mp4']);
+const movies = process.env.SERVER_URL;
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `${movies}\n${h5}` }) });
+r = await (await get('/api/browse?path=')).json();
+assert.deepEqual(r.items.map((i) => [i.path, i.isDir]), [['0/', true], ['1/', true]]);
+assert.equal(r.servers.length, 2);
+r = await (await get('/api/browse?path=1/Films/')).json();
+assert.deepEqual(r.items.map((i) => i.path), ['1/Films/Dune%20(2021)/', '1/Films/Up.mp4']);
+assert.equal((await get('/api/browse?path=2/')).status, 400);
+assert.equal((await get('/stream?path=1%2F..%2Fm%2Fx.mkv')).status, 400); // can't hop from one server's root into another path
 console.log('all tests passed');
 server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });

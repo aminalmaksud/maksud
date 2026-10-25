@@ -12,11 +12,12 @@ class SettingsActivity : ComponentActivity() {
         val server = findViewById<EditText>(R.id.server)
         val user = findViewById<EditText>(R.id.user)
         val pass = findViewById<EditText>(R.id.pass)
-        server.setText(Prefs.serverUrl(this))
+        server.setText(Prefs.servers(this).joinToString("\n"))
         user.setText(Prefs.username(this))
         pass.setText(Prefs.password(this))
         findViewById<Button>(R.id.save).setOnClickListener {
-            Prefs.saveServer(this, Library.normalize(server.text.toString()), user.text.toString().trim(), pass.text.toString())
+            val servers = server.text.toString().split('\n', ',').map { Library.normalize(it) }.filter { it.isNotEmpty() }
+            Prefs.saveServers(this, servers, user.text.toString().trim(), pass.text.toString())
             finish()
         }
     }
