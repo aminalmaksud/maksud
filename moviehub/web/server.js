@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
-import { parseListing, srtToVtt, extOf } from './listing.js';
+import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT } from './listing.js';
 import { hasFfmpeg, probe, remux, extractSubtitle, keyframeBefore } from './media.js';
 import { metaFor } from './meta.js';
 
@@ -89,57 +89,131 @@ async function readBody(req) {
 const listCache = new Map(); // dir rel -> { at, job }
 const LIST_TTL = 5 * 60000;
 
+function limiter(n) {
+  let active = 0; const queue = [];
+  const next = () => { if (active < n && queue.length) { active++; queue.shift()(); } };
+  return (fn) => new Promise((resolve, reject) => {
+    queue.push(() => fn().then(resolve, reject).finally(() => { active--; next(); }));
+    next();
+  });
+}
+const upstreamLimit = limiter(8); // be gentle with the ISP server when many posters load at once
+
+const relOf = (idx, base, u) => `${idx}/${canonPath(u.pathname).slice(canonPath(base.pathname).length)}`;
+const h5aiHosts = new Set(); // origins known to run h5ai
+
+/**
+ * h5ai file browsers (DhakaFlix and many BDIX servers) build their listing with JavaScript from a JSON
+ * API. The API answers on the folder's own URL; older installs only on /_h5ai/public/index.php.
+ */
+async function h5aiApi(dir, body) {
+  for (const target of [dir, new URL('/_h5ai/public/index.php', dir)]) {
+    try {
+      const up = await fetch(target, {
+        method: 'POST',
+        headers: upstreamHeaders({ 'content-type': 'application/json', accept: 'application/json' }),
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(20000),
+      });
+      if (!up.ok) continue;
+      const data = await up.json();
+      if (data && typeof data === 'object') return data;
+    } catch { /* try the next endpoint */ }
+  }
+  return null;
+}
+
+const linksHtml = (items) => (items || []).map((i) => `<a href="${String(i.href).replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">`).join('');
+
 /** Entries of a folder, with paths in client form ("<idx>/..."). Cached briefly; posters reuse it. */
 function listDir(rel) {
   const hit = listCache.get(rel);
   if (hit && Date.now() - hit.at < LIST_TTL) return hit.job;
-  const job = (async () => {
+  const job = upstreamLimit(async () => {
     const { base, idx, url: dir } = resolveUnderBase(rel);
     if (!dir.pathname.endsWith('/')) dir.pathname += '/';
     let up;
     try { up = await fetch(dir, { headers: upstreamHeaders(), signal: AbortSignal.timeout(15000) }); }
-    catch (e) { throw httpError(502, `Cannot reach ${dir.host}: ${e.cause?.code || e.message}`); }
+    catch (e) { throw httpError(502, `Cannot reach the server: ${e.cause?.code || e.message}`); }
     if (up.status === 401) throw httpError(401, 'Server requires a username and password');
     if (!up.ok) throw httpError(502, `Server answered ${up.status}`);
     const html = await up.text();
-    let items = parseListing(html, dir.href, base.href);
-    if (!items.length && html.includes('_h5ai')) items = await h5aiListing(dir, base);
+    let items = null;
+    if (html.includes('_h5ai')) {
+      h5aiHosts.add(dir.origin);
+      const data = await h5aiApi(dir, { action: 'get', items: { href: dir.pathname, what: 1 } });
+      if (data?.items) items = parseListing(linksHtml(data.items), dir.href, base.href);
+    }
+    items ??= parseListing(html, dir.href, base.href);
     for (const it of items) it.path = `${idx}/${it.path}`;
-    return { path: `${idx}/${dir.pathname.slice(base.pathname.length)}`, items };
-  })();
+    return { path: relOf(idx, base, dir), items };
+  });
   listCache.set(rel, { at: Date.now(), job });
   job.catch(() => listCache.delete(rel));
   return job;
 }
 
+const libRoots = new Map(); // library index -> path after skipping wrapper folders
+
+/**
+ * Library roots on BDIX servers are often a lone wrapper folder ("DHAKA-FLIX-7/"). Step through those so
+ * a library opens on its real categories.
+ */
+async function libraryRoot(idx) {
+  if (libRoots.has(idx)) return libRoots.get(idx);
+  let listing = await listDir(`${idx}/`);
+  for (let depth = 0; depth < 3; depth++) {
+    const dirs = listing.items.filter((i) => i.isDir), files = listing.items.filter((i) => i.kind === 'video');
+    if (dirs.length !== 1 || files.length) break;
+    listing = await listDir(dirs[0].path);
+  }
+  libRoots.set(idx, listing);
+  return listing;
+}
+
 async function handleBrowse(url, res) {
   const all = bases();
   const servers = serverNames();
+  if (!all.length) throw httpError(400, 'Server URL is not configured');
   let rel = url.searchParams.get('path') || '';
+  if (url.searchParams.get('refresh')) { listCache.delete(rel); libRoots.clear(); }
+  const roots = await Promise.all(all.map((_, i) => libraryRoot(i).then((l) => l.path, () => `${i}/`)));
   if (!rel && all.length > 1) {
-    return json(res, 200, { path: '', servers, items: servers.map((name, i) => ({ name, path: `${i}/`, isDir: true, kind: 'dir' })) });
+    return json(res, 200, { path: '', servers, roots, items: servers.map((name, i) => ({ name, path: roots[i], isDir: true, kind: 'dir' })) });
   }
   if (!rel) rel = '0/';
   if (!rel.endsWith('/')) rel += '/';
-  if (url.searchParams.get('refresh')) listCache.delete(rel);
-  json(res, 200, { ...(await listDir(rel)), servers });
+  const listing = /^\d+\/$/.test(rel) ? await libraryRoot(Number(rel.slice(0, -1))) : await listDir(rel);
+  json(res, 200, { ...listing, servers, roots });
 }
 
-/** h5ai file browsers (common on BDIX servers) may build the listing in JS; ask their API instead. */
-async function h5aiListing(dir, base) {
-  try {
-    const up = await fetch(new URL('/_h5ai/public/index.php', dir), {
-      method: 'POST',
-      headers: upstreamHeaders({ 'content-type': 'application/json' }),
-      body: JSON.stringify({ action: 'get', items: { href: dir.pathname, what: 1 } }),
-      signal: AbortSignal.timeout(15000),
-    });
-    const data = await up.json();
-    const links = (data.items || []).map((i) => `<a href="${String(i.href).replace(/"/g, '&quot;')}">`).join('');
-    return parseListing(links, dir.href, base.href);
-  } catch {
-    return [];
-  }
+/** Search every library. h5ai servers search themselves; others are skipped (their folders can still be filtered). */
+async function handleSearch(url, res) {
+  const q = (url.searchParams.get('q') || '').trim();
+  if (q.length < 2) return json(res, 200, { items: [] });
+  const pattern = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '.*');
+  const all = bases();
+  await Promise.all(all.map((_, i) => libraryRoot(i).catch(() => null)));
+  const results = await Promise.all(all.map(async (base, idx) => {
+    if (!h5aiHosts.has(base.origin)) return [];
+    const root = new URL(base);
+    const data = await h5aiApi(root, { action: 'get', search: { href: root.pathname, pattern, ignorecase: true } });
+    const found = [];
+    for (const it of data?.search || []) {
+      let u;
+      try { u = new URL(String(it.href), root); } catch { continue; }
+      const path = canonPath(u.pathname);
+      if (u.origin !== base.origin || !path.startsWith(canonPath(base.pathname))) continue;
+      const isDir = path.endsWith('/');
+      const name = decodeURIComponent(path.replace(/\/$/, '').split('/').pop());
+      const kind = isDir ? 'dir' : VIDEO_EXT.has(extOf(name)) ? 'video' : null;
+      if (kind) found.push({ name, path: relOf(idx, base, u), isDir, kind, library: serverNames()[idx] });
+    }
+    return found;
+  }));
+  // Folders first (each movie usually lives in its own folder), then loose videos.
+  const items = results.flat().sort((a, b) => Number(b.isDir) - Number(a.isDir)).slice(0, 120);
+  json(res, 200, { items, searchable: all.some((b) => h5aiHosts.has(b.origin)) });
 }
 
 async function proxy(req, res, target, { cache } = {}) {
@@ -243,7 +317,7 @@ async function handleConfig(req, res) {
       password: b.keepPassword ? config.password : String(b.password || ''),
       tmdbKey: b.tmdbKey === undefined ? config.tmdbKey : String(b.tmdbKey).trim(),
     };
-    listCache.clear();
+    listCache.clear(); libRoots.clear();
     fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
@@ -265,6 +339,7 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     const p = url.pathname;
     if (p === '/api/browse') return await handleBrowse(url, res);
+    if (p === '/api/search') return await handleSearch(url, res);
     if (p === '/api/config') return await handleConfig(req, res);
     if (p === '/api/meta') return await handleMeta(url, res);
     if (p === '/api/probe') return await handleProbe(url, res);

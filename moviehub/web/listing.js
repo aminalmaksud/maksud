@@ -13,6 +13,14 @@ function decode(s) {
   try { return decodeURIComponent(s); } catch { return s; }
 }
 
+/**
+ * Servers spell the same path differently ("(" vs "%28", "&" vs "%26", raw spaces...), so every path
+ * is rewritten into one spelling before it is compared or handed out.
+ */
+export function canonPath(pathname) {
+  return pathname.split('/').map((seg) => encodeURIComponent(decode(seg))).join('/');
+}
+
 function unescapeHtml(s) {
   return s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'");
 }
@@ -26,6 +34,7 @@ function unescapeHtml(s) {
 export function parseListing(html, dirUrl, baseUrl) {
   const dir = new URL(dirUrl);
   const base = new URL(baseUrl);
+  const dirPath = canonPath(dir.pathname), basePath = canonPath(base.pathname);
   const seen = new Set();
   const out = [];
   const re = /<a\s+[^>]*?href\s*=\s*(?:"([^"]*)"|'([^']*)')[^>]*>/gi;
@@ -36,10 +45,11 @@ export function parseListing(html, dirUrl, baseUrl) {
     let u;
     try { u = new URL(href, dir); } catch { continue; }
     if (u.origin !== base.origin || u.search) continue;           // sort links, external links
-    if (!u.pathname.startsWith(dir.pathname) || u.pathname === dir.pathname) continue; // parent / self
-    if (!u.pathname.startsWith(base.pathname)) continue;
-    const isDir = u.pathname.endsWith('/');
-    const rel = u.pathname.slice(base.pathname.length);
+    const path = canonPath(u.pathname);
+    if (!path.startsWith(dirPath) || path === dirPath) continue; // parent / self
+    if (!path.startsWith(basePath)) continue;
+    const isDir = path.endsWith('/');
+    const rel = path.slice(basePath.length);
     const name = decode(rel.replace(/\/$/, '').split('/').pop());
     if (!name || name.startsWith('.') || seen.has(rel)) continue;
     const ext = extOf(name);

@@ -86,11 +86,14 @@ class MainActivity : ComponentActivity() {
         status.text = getString(R.string.loading)
         loadJob = lifecycleScope.launch {
             try {
-                val result = withContext(Dispatchers.IO) { lib.list(target) }
-                currentUrl = target
+                val (shownUrl, result) = withContext(Dispatchers.IO) {
+                    val u = if (target == lib.root) lib.realRoot() else target
+                    u to lib.list(u)
+                }
+                currentUrl = shownUrl
                 all = result
                 val prefix = if (libraries.size > 1) lib.name else ""
-                show(result.filter { it.kind != Kind.SUB }, prefix + "/" + decodePath(target.removePrefix(lib.root)), selectRow)
+                show(result.filter { it.kind != Kind.SUB }, prefix + "/" + decodePath(shownUrl.removePrefix(lib.root)), selectRow)
             } catch (e: LibraryException) {
                 status.text = e.message
             }

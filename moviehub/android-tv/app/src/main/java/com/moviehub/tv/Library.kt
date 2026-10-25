@@ -14,9 +14,11 @@ data class Entry(val name: String, val url: String, val kind: Kind)
 class LibraryException(message: String) : Exception(message)
 
 /** Reads an HTTP "Index of /" directory listing (nginx, Apache, lighttpd, caddy...). */
-class Library(rootUrl: String, user: String, pass: String) {
-    val root: String = normalize(rootUrl)
-    val name: String = URL(root).let { decode(it.authority + it.path) }.trimEnd('/').replace("/", " / ")
+/** [line] is "http://host/path/" or "Label | http://host/path/". */
+class Library(line: String, user: String, pass: String) {
+    private val label = LABELLED.matchEntire(line.trim())?.groupValues?.get(1).orEmpty()
+    val root: String = normalize(LABELLED.matchEntire(line.trim())?.groupValues?.get(2) ?: line)
+    val name: String = label.ifEmpty { URL(root).let { decode(it.authority + it.path) }.trimEnd('/').replace("/", " / ") }
     val authHeader: String? =
         if (user.isNotEmpty()) "Basic " + Base64.encodeToString("$user:$pass".toByteArray(), Base64.NO_WRAP) else null
 
@@ -37,31 +39,49 @@ class Library(rootUrl: String, user: String, pass: String) {
         } finally {
             conn.disconnect()
         }
-        val items = parse(html, dirUrl)
-        return if (items.isEmpty() && html.contains("_h5ai")) h5ai(dirUrl) else items
+        // h5ai pages (DhakaFlix and many BDIX servers) build their list in JavaScript: use their API.
+        if (html.contains("_h5ai")) h5ai(dirUrl, dirUrl)?.let { return it }
+        if (html.contains("_h5ai")) h5ai(dirUrl, URL(URL(dirUrl), "/_h5ai/public/index.php").toString())?.let { return it }
+        return parse(html, dirUrl)
     }
 
-    /** h5ai file browsers (common on BDIX servers) may build the listing in JS; ask their API instead. */
-    private fun h5ai(dirUrl: String): List<Entry> = try {
-        val conn = URL(URL(dirUrl), "/_h5ai/public/index.php").openConnection() as HttpURLConnection
+    /**
+     * Library roots are often a lone wrapper folder ("DHAKA-FLIX-7/"); step through it so the library
+     * opens on its real categories. Returns the folder URL to show.
+     */
+    fun realRoot(): String {
+        var url = root
+        repeat(3) {
+            val items = try { list(url) } catch (e: LibraryException) { return url }
+            val dirs = items.filter { it.kind == Kind.DIR }
+            if (dirs.size != 1 || items.any { it.kind == Kind.VIDEO }) return url
+            url = dirs[0].url
+        }
+        return url
+    }
+
+    /** The h5ai API answers on the folder's own URL (older installs: /_h5ai/public/index.php). Null if it didn't. */
+    private fun h5ai(dirUrl: String, endpoint: String): List<Entry>? = try {
+        val conn = URL(endpoint).openConnection() as HttpURLConnection
         conn.connectTimeout = 10_000
         conn.readTimeout = 15_000
         conn.requestMethod = "POST"
         conn.doOutput = true
         conn.setRequestProperty("Content-Type", "application/json")
+        conn.setRequestProperty("Accept", "application/json")
         authHeader?.let { conn.setRequestProperty("Authorization", it) }
         val body = JSONObject().put("action", "get")
             .put("items", JSONObject().put("href", URL(dirUrl).path).put("what", 1))
         conn.outputStream.use { it.write(body.toString().toByteArray()) }
         val json = try { conn.inputStream.bufferedReader().use { it.readText() } } finally { conn.disconnect() }
-        val arr = JSONObject(json).optJSONArray("items")
+        val arr = JSONObject(json).optJSONArray("items") ?: throw IllegalStateException("not h5ai")
         val links = StringBuilder()
-        for (i in 0 until (arr?.length() ?: 0)) {
-            links.append("<a href=\"").append(arr!!.getJSONObject(i).optString("href").replace("\"", "&quot;")).append("\">")
+        for (i in 0 until arr.length()) {
+            links.append("<a href=\"").append(arr.getJSONObject(i).optString("href").replace("&", "&amp;").replace("\"", "&quot;")).append("\">")
         }
         parse(links.toString(), dirUrl)
     } catch (e: Exception) {
-        emptyList()
+        null
     }
 
     private fun parse(html: String, dirUrl: String): List<Entry> {
@@ -96,6 +116,14 @@ class Library(rootUrl: String, user: String, pass: String) {
     }
 
     companion object {
+        private val LABELLED = Regex("""^(.*?)\s*\|\s*(\S+)$""")
+
+        /** Tidies the address part of a settings line, keeping its label. */
+        fun normalizeLine(line: String): String {
+            val m = LABELLED.matchEntire(line.trim()) ?: return normalize(line)
+            return "${m.groupValues[1]} | ${normalize(m.groupValues[2])}"
+        }
+
         private val HREF = Regex("""<a\s+[^>]*?href\s*=\s*(?:"([^"]*)"|'([^']*)')""", RegexOption.IGNORE_CASE)
         val VIDEO_EXT = setOf("mkv", "mp4", "m4v", "avi", "mov", "webm", "ts", "wmv", "flv", "mpg", "mpeg")
         val SUB_EXT = setOf("srt", "vtt")

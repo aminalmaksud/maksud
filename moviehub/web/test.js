@@ -74,5 +74,44 @@ r = await (await get('/api/browse?path=1/Films/')).json();
 assert.deepEqual(r.items.map((i) => i.path), ['1/Films/Dune%20(2021)/', '1/Films/Up.mp4']);
 assert.equal((await get('/api/browse?path=2/')).status, 400);
 assert.equal((await get('/stream?path=1%2F..%2Fm%2Fx.mkv')).status, 400); // can't hop from one server's root into another path
+// --- DhakaFlix-style server: plain landing page, then h5ai folders whose API spells "(" as %28 and "&" as %26
+const enc = (p) => p.split('/').map((x) => encodeURIComponent(x).replace(/[()']/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase())).join('/');
+const tree = {
+  '/DHAKA-FLIX-7/': ['English Movies (1080p)/', 'TV & WEB Series/'],
+  '/DHAKA-FLIX-7/English Movies (1080p)/': ['(2024) 1080p/'],
+  '/DHAKA-FLIX-7/English Movies (1080p)/(2024) 1080p/': ['Dune Part Two (2024) 1080p/'],
+  '/DHAKA-FLIX-7/English Movies (1080p)/(2024) 1080p/Dune Part Two (2024) 1080p/': ['Dune.Part.Two.2024.1080p.mkv', 'poster.jpg'],
+  '/DHAKA-FLIX-7/TV & WEB Series/': [],
+};
+const df = http.createServer((req, res) => {
+  const path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+  if (req.method === 'GET' && path === '/') return res.end('<a href="/DHAKA-FLIX-7/">DHAKA-FLIX-7</a><a href="http://172.16.50.12/">other server</a>');
+  if (req.method === 'GET') return res.end('<html><head><script src="/_h5ai/public/js/scripts.js"></script></head><body></body></html>');
+  if (path.startsWith('/_h5ai/')) { res.writeHead(403); return res.end(); } // DhakaFlix-style: API only on folder URLs
+  let b = ''; req.on('data', (c) => (b += c));
+  req.on('end', () => {
+    const body = JSON.parse(b);
+    if (body.search) {
+      const hits = Object.entries(tree).flatMap(([dir, kids]) => kids.map((k) => dir + k)).filter((h) => new RegExp(body.search.pattern, 'i').test(h.split('/').filter(Boolean).pop()));
+      return res.end(JSON.stringify({ search: hits.map((h) => ({ href: enc(h) })) }));
+    }
+    const href = decodeURIComponent(body.items.href);
+    const kids = tree[href] || [];
+    res.end(JSON.stringify({ items: [{ href: '/DHAKA-FLIX-7/' }, { href: enc(href) }, ...kids.map((k) => ({ href: enc(href + k) }))] }));
+  });
+});
+await new Promise((r) => df.listen(0, '127.0.0.1', r));
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Movies | http://127.0.0.1:${df.address().port}/` }) });
+r = await (await get('/api/browse?path=')).json();
+assert.deepEqual(r.items.map((i) => i.name), ['English Movies (1080p)', 'TV & WEB Series'], 'library opens past the DHAKA-FLIX-7 wrapper');
+assert.equal(r.roots[0], '0/DHAKA-FLIX-7/');
+r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
+assert.deepEqual(r.items.map((i) => i.name), ['(2024) 1080p'], 'folder from the h5ai API is not empty');
+r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
+r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
+assert.deepEqual(r.items.map((i) => i.kind), ['video', 'image']);
+r = await (await get('/api/search?q=dune part')).json();
+assert.deepEqual(r.items.map((i) => i.name), ['Dune Part Two (2024) 1080p', 'Dune.Part.Two.2024.1080p.mkv']);
+df.close();
 console.log('all tests passed');
 server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });
