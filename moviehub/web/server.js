@@ -9,7 +9,7 @@ import { parseListing, srtToVtt, extOf } from './listing.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(here, 'public');
-const CONFIG_FILE = path.join(here, 'config.json');
+const CONFIG_FILE = process.env.CONFIG_FILE || path.join(here, 'config.json');
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || '127.0.0.1'; // set HOST=0.0.0.0 to open it to your home network
 
@@ -73,8 +73,27 @@ async function handleBrowse(url, res) {
   catch (e) { throw httpError(502, `Cannot reach server: ${e.cause?.code || e.message}`); }
   if (up.status === 401) throw httpError(401, 'Server requires a username and password');
   if (!up.ok) throw httpError(502, `Server answered ${up.status}`);
-  const items = parseListing(await up.text(), dir.href, base.href);
+  const html = await up.text();
+  let items = parseListing(html, dir.href, base.href);
+  if (!items.length && html.includes('_h5ai')) items = await h5aiListing(dir, base);
   json(res, 200, { path: dir.pathname.slice(base.pathname.length), items });
+}
+
+/** h5ai file browsers (common on BDIX servers) may build the listing in JS; ask their API instead. */
+async function h5aiListing(dir, base) {
+  try {
+    const up = await fetch(new URL('/_h5ai/public/index.php', dir), {
+      method: 'POST',
+      headers: upstreamHeaders({ 'content-type': 'application/json' }),
+      body: JSON.stringify({ action: 'get', items: { href: dir.pathname, what: 1 } }),
+      signal: AbortSignal.timeout(15000),
+    });
+    const data = await up.json();
+    const links = (data.items || []).map((i) => `<a href="${String(i.href).replace(/"/g, '&quot;')}">`).join('');
+    return parseListing(links, dir.href, base.href);
+  } catch {
+    return [];
+  }
 }
 
 async function handleStream(req, url, res) {

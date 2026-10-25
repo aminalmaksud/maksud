@@ -1,6 +1,9 @@
 // Spins up a fake ISP server (nginx-style listing + Range support) and exercises the proxy.
 import http from 'node:http';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { parseListing, srtToVtt } from './listing.js';
 
 const nginx = `<html><head><title>Index of /movies/</title></head><body><h1>Index of /movies/</h1><hr><pre><a href="../">../</a>
@@ -20,6 +23,14 @@ const FILE = Buffer.alloc(1000, 7);
 const isp = http.createServer((req, res) => {
   const u = decodeURIComponent(req.url);
   if (u === '/movies/' || u === '/movies/Action/') { res.setHeader('content-type', 'text/html'); return res.end(u === '/movies/' ? nginx : apache); }
+  if (u === '/h5/Films/') return res.end('<html><script src="/_h5ai/public/js/scripts.js"></script></html>');
+  if (u === '/_h5ai/public/index.php') {
+    let b = ''; req.on('data', (c) => (b += c));
+    return req.on('end', () => {
+      const href = JSON.parse(b).items.href;
+      res.end(JSON.stringify({ items: [{ href: '/h5/' }, { href }, { href: href + 'Dune%20(2021)/' }, { href: href + 'Up.mp4' }] }));
+    });
+  }
   if (u.endsWith('.mkv')) {
     const m = /bytes=(\d+)-(\d*)/.exec(req.headers.range || '');
     if (!m) { res.writeHead(200, { 'content-length': 1000 }); return res.end(FILE); }
@@ -33,6 +44,7 @@ const isp = http.createServer((req, res) => {
 await new Promise((r) => isp.listen(0, '127.0.0.1', r));
 process.env.SERVER_URL = `http://127.0.0.1:${isp.address().port}/movies/`;
 process.env.PORT = '0';
+process.env.CONFIG_FILE = path.join(os.tmpdir(), `moviehub-test-${process.pid}.json`);
 const { server } = await import('./server.js');
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${server.address().port}`;
@@ -50,5 +62,10 @@ assert.equal(r.headers.get('content-type'), 'video/x-matroska'); assert.equal((a
 assert.match(await (await get('/subs?path=Big%2520Film%2520(2020).srt')).text(), /^WEBVTT/);
 assert.equal((await get('/')).status, 200);
 assert.equal((await get('/..%2Fserver.js')).status, 404);
+// h5ai: same proxy, different library root
+const h5 = `http://127.0.0.1:${isp.address().port}/h5/`;
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ serverUrl: h5 }) });
+r = await (await get('/api/browse?path=Films/')).json();
+assert.deepEqual(r.items.map((i) => i.path), ['Films/Dune%20(2021)/', 'Films/Up.mp4']);
 console.log('all tests passed');
-server.close(); isp.close();
+server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });

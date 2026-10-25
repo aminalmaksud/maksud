@@ -5,6 +5,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLDecoder
+import org.json.JSONObject
 
 enum class Kind { DIR, VIDEO, SUB }
 
@@ -35,7 +36,31 @@ class Library(rootUrl: String, user: String, pass: String) {
         } finally {
             conn.disconnect()
         }
-        return parse(html, dirUrl)
+        val items = parse(html, dirUrl)
+        return if (items.isEmpty() && html.contains("_h5ai")) h5ai(dirUrl) else items
+    }
+
+    /** h5ai file browsers (common on BDIX servers) may build the listing in JS; ask their API instead. */
+    private fun h5ai(dirUrl: String): List<Entry> = try {
+        val conn = URL(URL(dirUrl), "/_h5ai/public/index.php").openConnection() as HttpURLConnection
+        conn.connectTimeout = 10_000
+        conn.readTimeout = 15_000
+        conn.requestMethod = "POST"
+        conn.doOutput = true
+        conn.setRequestProperty("Content-Type", "application/json")
+        authHeader?.let { conn.setRequestProperty("Authorization", it) }
+        val body = JSONObject().put("action", "get")
+            .put("items", JSONObject().put("href", URL(dirUrl).path).put("what", 1))
+        conn.outputStream.use { it.write(body.toString().toByteArray()) }
+        val json = try { conn.inputStream.bufferedReader().use { it.readText() } } finally { conn.disconnect() }
+        val arr = JSONObject(json).optJSONArray("items")
+        val links = StringBuilder()
+        for (i in 0 until (arr?.length() ?: 0)) {
+            links.append("<a href=\"").append(arr!!.getJSONObject(i).optString("href").replace("\"", "&quot;")).append("\">")
+        }
+        parse(links.toString(), dirUrl)
+    } catch (e: Exception) {
+        emptyList()
     }
 
     private fun parse(html: String, dirUrl: String): List<Entry> {
@@ -46,13 +71,14 @@ class Library(rootUrl: String, user: String, pass: String) {
         for (m in HREF.findAll(html)) {
             val href = unescape(m.groupValues[1].ifEmpty { m.groupValues[2] }).trim()
             if (href.isEmpty() || href.startsWith("#") || href.startsWith("javascript:") || href.startsWith("mailto:")) continue
-            val u = try { URL(dir, href) } catch (e: Exception) { continue }
+            val u = try { URL(dir, href.replace(" ", "%20")) } catch (e: Exception) { continue }
             if (u.protocol != base.protocol || u.host != base.host || port(u) != port(base)) continue
             if (u.query != null) continue // column-sort links
-            val path = u.path
-            if (!path.startsWith(dir.path) || path == dir.path || !path.startsWith(base.path)) continue // parent / self
+            val path = decode(u.path)
+            val dirPath = decode(dir.path)
+            if (!path.startsWith(dirPath) || path == dirPath || !path.startsWith(decode(base.path))) continue // parent / self
             val isDir = path.endsWith("/")
-            val name = decode(path.trimEnd('/').substringAfterLast('/'))
+            val name = path.trimEnd('/').substringAfterLast('/')
             if (name.isEmpty() || name.startsWith(".") || !seen.add(path)) continue
             val ext = name.substringAfterLast('.', "").lowercase()
             val kind = when {
@@ -61,7 +87,7 @@ class Library(rootUrl: String, user: String, pass: String) {
                 ext in SUB_EXT -> Kind.SUB
                 else -> continue
             }
-            out.add(Entry(name, u.toExternalForm().replace(" ", "%20"), kind))
+            out.add(Entry(name, u.toExternalForm(), kind))
         }
         return out.sortedWith(
             compareBy<Entry> { it.kind != Kind.DIR }.then(Comparator { a, b -> naturalCompare(a.name, b.name) })
