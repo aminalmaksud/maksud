@@ -1,5 +1,7 @@
 # MusingsofMaksudTV
 
+<img src="web/public/logo.svg" width="96" alt="MusingsofMaksudTV logo">
+
 Watch the movies, TV series and anime on your ISP's media servers (BDIX / FTP-style "Index of /"
 or h5ai servers) on:
 
@@ -59,12 +61,24 @@ poster images it finds on the server (`poster.jpg`, `folder.jpg`, …) and draws
 Many movies use AC3/DTS audio and MKV files, which normal web players can't decode. The app converts the
 sound on the fly with the bundled ffmpeg and leaves the picture untouched, so it uses very little CPU.
 
-- **Audio sync** (🎵 menu): move the sound earlier or later in 0.1 s steps. It's remembered per video.
-- **Subtitle sync** (CC → Sync): 0.1 s / 1 s steps, or the `[` `]` keys. Hold Shift for 1 s steps. Remembered per video.
-- **Subtitle style** (CC → Style): font (including Bangla), colour, outline/shadow/glow, background, position and size.
-- **Built-in subtitles** load in a few seconds. The app reads only the next few minutes of the file and keeps
-  reading ahead as you watch. Image-based subtitles (PGS/VobSub) can't be shown on the Mac. The TV app shows them.
+**How sync is kept:** the converted stream is Matroska with the movie's own timestamps, so picture and sound
+stay exactly as aligned as in the original file, after any seek or resume. The browser engine ignores the
+timing tricks MP4 streams rely on, which is why an earlier version drifted by up to ~10 s after seeking. This
+is checked with test films that flash and beep at irregular moments, measured on screen and at the speakers
+inside the app's own engine. Covered cases: AC3/E-AC3 MKV, audio starting late, gaps in the audio, MP4 sources,
+seeks, and the sync controls.
+
+- **Audio sync** (🎵 menu): move the sound earlier or later in 0.1 s / 0.5 s steps (up to ±20 s), saved per video.
+- **Subtitle sync** (CC → Sync): 0.1 s / 1 s steps, or `[` `]` keys (Shift for 1 s), saved per video.
+- **Subtitle style** (CC → Style): font (including Bangla), colour, outline/shadow/glow, background, position, size.
+- **Built-in subtitles** load in a few seconds: only the next few minutes of the file are read, then it keeps
+  reading ahead as you watch. Image subtitles (PGS/VobSub) can't be shown on the Mac; the TV app shows them.
 - **Themes:** Parchment (default) or Night, in Settings.
+
+### Downloads (Mac app only)
+Press **⬇** in the player, or **Download** on a movie's page. Movies (with their subtitle files) are saved to
+`Downloads/MusingsofMaksudTV` and appear under **⬇ Downloads** in the top bar, where you can watch them without
+the internet, delete them, or open the folder in Finder. Interrupted downloads continue where they stopped.
 
 ### Running from source (developers)
 `cd mac && npm install && npm start`. The Mac app is a small Electron wrapper around `web/`.

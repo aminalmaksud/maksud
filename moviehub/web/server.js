@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT } from './listing.js';
 import { hasFfmpeg, probe, remux, extractSubtitle, keyframeBefore } from './media.js';
 import { metaFor } from './meta.js';
+import { downloadsEnabled, startDownload, cancelDownload, deleteDownloaded, listDownloads, localEntries, localFile } from './downloads.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(here, 'public');
@@ -75,6 +76,28 @@ function resolveUnderBase(rel) {
   return { base, idx, url: u };
 }
 
+/** A playable item: a URL on a library server, or a downloaded file ("local/<name>"). */
+function media(rel) {
+  if (String(rel || '').startsWith('local/')) {
+    const file = localFile(rel);
+    if (!file) throw httpError(404, 'Downloaded file not found');
+    return { src: file, auth: '', local: true, ext: extOf(file) };
+  }
+  const { url } = resolveUnderBase(rel);
+  return { src: url.href, auth: authValue(), local: false, ext: extOf(url.pathname), url };
+}
+
+/** Serves a downloaded file with byte ranges (seeking). */
+function serveFile(req, res, file) {
+  const size = fs.statSync(file).size;
+  const m = /bytes=(\d+)-(\d*)/.exec(req.headers.range || '');
+  const type = MIME[extOf(file)] || 'application/octet-stream';
+  if (!m) { res.writeHead(200, { 'content-length': size, 'accept-ranges': 'bytes', 'content-type': type }); return fs.createReadStream(file).pipe(res); }
+  const a = Number(m[1]), b = m[2] ? Math.min(Number(m[2]), size - 1) : size - 1;
+  res.writeHead(206, { 'content-range': `bytes ${a}-${b}/${size}`, 'content-length': b - a + 1, 'accept-ranges': 'bytes', 'content-type': type });
+  fs.createReadStream(file, { start: a, end: b }).pipe(res);
+}
+
 function httpError(status, message) { return Object.assign(new Error(message), { status }); }
 function json(res, status, body) {
   res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' });
@@ -127,6 +150,7 @@ const linksHtml = (items) => (items || []).map((i) => `<a href="${String(i.href)
 
 /** Entries of a folder, with paths in client form ("<idx>/..."). Cached briefly; posters reuse it. */
 function listDir(rel) {
+  if (rel === 'local/') return Promise.resolve({ path: 'local/', items: localEntries() });
   const hit = listCache.get(rel);
   if (hit && Date.now() - hit.at < LIST_TTL) return hit.job;
   const job = upstreamLimit(async () => {
@@ -176,6 +200,7 @@ async function handleBrowse(url, res) {
   const servers = serverNames();
   if (!all.length) throw httpError(400, 'Server URL is not configured');
   let rel = url.searchParams.get('path') || '';
+  if (rel === 'local/') return json(res, 200, { path: 'local/', items: localEntries(), servers, roots: [] });
   if (url.searchParams.get('refresh')) { listCache.delete(rel); libRoots.clear(); }
   const roots = await Promise.all(all.map((_, i) => libraryRoot(i).then((l) => l.path, () => `${i}/`)));
   if (!rel && all.length > 1) {
@@ -236,62 +261,67 @@ async function proxy(req, res, target, { cache } = {}) {
 }
 
 async function handleSubs(url, res) {
-  const { url: target } = resolveUnderBase(url.searchParams.get('path'));
-  const up = await fetch(target, { headers: upstreamHeaders(), signal: AbortSignal.timeout(15000) });
-  if (!up.ok) throw httpError(404, 'Subtitle not found');
-  const buf = Buffer.from(await up.arrayBuffer());
+  const m = media(url.searchParams.get('path'));
+  let buf;
+  if (m.local) buf = fs.readFileSync(m.src);
+  else {
+    const up = await fetch(m.src, { headers: upstreamHeaders(), signal: AbortSignal.timeout(15000) });
+    if (!up.ok) throw httpError(404, 'Subtitle not found');
+    buf = Buffer.from(await up.arrayBuffer());
+  }
   let text = buf.toString('utf8');
   if (text.includes('�')) text = buf.toString('latin1'); // old SRTs are often Windows-1252
   res.writeHead(200, { 'content-type': 'text/vtt; charset=utf-8' });
-  res.end(extOf(target.pathname) === 'srt' ? srtToVtt(text) : text);
+  res.end(m.ext === 'srt' ? srtToVtt(text) : text);
 }
 
 async function handleProbe(url, res) {
-  const { url: target } = resolveUnderBase(url.searchParams.get('path'));
+  const m = media(url.searchParams.get('path'));
   if (!hasFfmpeg) return json(res, 200, { ffmpeg: false, direct: true, audio: [], subs: [], duration: 0 });
   try {
-    json(res, 200, { ffmpeg: true, ...(await probe(target.href, authValue())) });
+    json(res, 200, { ffmpeg: true, ...(await probe(m.src, m.auth)) });
   } catch (e) {
     throw httpError(502, `Could not read this file: ${e.message}`);
   }
 }
 
 async function handleRemux(url, res) {
-  const { url: target } = resolveUnderBase(url.searchParams.get('path'));
+  const m = media(url.searchParams.get('path'));
   if (!hasFfmpeg) throw httpError(501, 'ffmpeg is not installed');
-  const info = await probe(target.href, authValue());
-  const p = remux(target.href, authValue(), {
+  const info = await probe(m.src, m.auth);
+  const p = remux(m.src, m.auth, {
     start: Number(url.searchParams.get('t')) || 0,
     audio: Number(url.searchParams.get('audio')) || 0,
     audioDelay: clampDelay(url.searchParams.get('adelay')),
+    format: url.searchParams.get('fmt') === 'mp4' ? 'mp4' : 'mkv',
     info,
   });
   let err = '';
   p.stderr.on('data', (d) => { err = (err + d).slice(-2000); });
   res.on('close', () => p.kill('SIGKILL'));
   p.on('close', (code) => { if (code && !res.writableEnded) console.error('ffmpeg:', err.trim()); });
-  res.writeHead(200, { 'content-type': 'video/mp4', 'cache-control': 'no-store' });
+  res.writeHead(200, { 'content-type': url.searchParams.get('fmt') === 'mp4' ? 'video/mp4' : 'video/webm', 'cache-control': 'no-store' });
   p.stdout.pipe(res);
 }
 
 /** Where a converted stream asked to start at ?t= will really start (see keyframeBefore). */
-const clampDelay = (v) => Math.max(-10, Math.min(10, Number(v) || 0));
+const clampDelay = (v) => Math.max(-20, Math.min(20, Number(v) || 0));
 
 async function handleSeekPoint(url, res) {
-  const { url: target } = resolveUnderBase(url.searchParams.get('path'));
+  const m = media(url.searchParams.get('path'));
   const t = Math.max(0, Number(url.searchParams.get('t')) || 0);
   if (!hasFfmpeg) return json(res, 200, { start: t });
-  const info = await probe(target.href, authValue());
-  json(res, 200, { start: info.video && !info.video.transcode ? await keyframeBefore(target.href, authValue(), t) : t });
+  const info = await probe(m.src, m.auth);
+  json(res, 200, { start: info.video && !info.video.transcode ? await keyframeBefore(m.src, m.auth, t) : t });
 }
 
 async function handleEmbeddedSub(url, res) {
-  const { url: target } = resolveUnderBase(url.searchParams.get('path'));
+  const m = media(url.searchParams.get('path'));
   if (!hasFfmpeg) throw httpError(501, 'ffmpeg is not installed');
   try {
     const from = Math.max(0, Number(url.searchParams.get('from')) || 0);
     const dur = Math.max(0, Math.min(3600, Number(url.searchParams.get('dur')) || 0));
-    const vtt = await extractSubtitle(target.href, authValue(), Number(url.searchParams.get('index')) || 0, from, dur);
+    const vtt = await extractSubtitle(m.src, m.auth, Number(url.searchParams.get('index')) || 0, from, dur);
     res.writeHead(200, { 'content-type': 'text/vtt; charset=utf-8' });
     res.end(vtt);
   } catch (e) {
@@ -301,9 +331,33 @@ async function handleEmbeddedSub(url, res) {
 
 async function handleMeta(url, res) {
   const rel = url.searchParams.get('path') || '';
-  resolveUnderBase(rel);
+  if (!rel.startsWith('local/')) resolveUnderBase(rel);
   const m = await metaFor(rel, async (dir) => (await listDir(dir)).items, config.tmdbKey);
   json(res, 200, m);
+}
+
+/** Mac app downloads: POST {path} starts one, GET lists, DELETE ?id= cancels, DELETE ?name= removes a file. */
+async function handleDownloads(req, url, res) {
+  if (!downloadsEnabled()) throw httpError(404, 'Downloads are available in the Mac app');
+  if (req.method === 'POST') {
+    const { path: rel } = JSON.parse((await readBody(req)) || '{}');
+    const { url: target } = resolveUnderBase(rel);
+    const name = decodeURIComponent(String(rel).split('/').pop());
+    const stem = name.replace(/\.[^.]+$/, '').toLowerCase();
+    let extras = [];
+    try {
+      const parent = String(rel).replace(/[^/]+$/, '');
+      extras = (await listDir(parent)).items.filter((i) => i.kind === 'sub' && i.name.toLowerCase().startsWith(stem))
+        .map((i) => ({ url: resolveUnderBase(i.path).url.href, name: i.name }));
+    } catch { /* subtitles are a bonus */ }
+    const job = startDownload({ id: rel, url: target.href, name, headers: upstreamHeaders(), extras });
+    return json(res, 200, { ok: true, name: job.name });
+  }
+  if (req.method === 'DELETE') {
+    if (url.searchParams.get('id')) cancelDownload(url.searchParams.get('id'));
+    if (url.searchParams.get('name')) deleteDownloaded(url.searchParams.get('name'));
+  }
+  json(res, 200, listDownloads());
 }
 
 async function handleTmdbImage(req, url, res) {
@@ -330,7 +384,7 @@ async function handleConfig(req, res) {
     fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
-  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg });
+  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled() });
 }
 
 function serveStatic(url, res) {
@@ -354,7 +408,12 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/probe') return await handleProbe(url, res);
     if (p === '/api/seek-point') return await handleSeekPoint(url, res);
     if (p === '/api/embedded-sub') return await handleEmbeddedSub(url, res);
-    if (p === '/stream') return await proxy(req, res, resolveUnderBase(url.searchParams.get('path')).url.href);
+    if (p === '/api/downloads') return await handleDownloads(req, url, res);
+    if (p === '/api/reveal') { globalThis.__revealInFinder?.(listDownloads().dir); return json(res, 200, { ok: true }); }
+    if (p === '/stream') {
+      const m = media(url.searchParams.get('path'));
+      return m.local ? serveFile(req, res, m.src) : await proxy(req, res, m.src);
+    }
     if (p === '/img') return await proxy(req, res, resolveUnderBase(url.searchParams.get('path')).url.href, { cache: true });
     if (p === '/remux') return await handleRemux(url, res);
     if (p === '/subs') return await handleSubs(url, res);

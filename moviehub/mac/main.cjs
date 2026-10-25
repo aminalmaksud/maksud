@@ -1,6 +1,7 @@
 // MusingsofMaksudTV for Mac: runs the MusingsofMaksudTV server inside the app and shows it in a native window,
 // with ffmpeg bundled so every file plays with sound.
 const { app, BrowserWindow, shell, nativeTheme } = require('electron');
+const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
@@ -46,6 +47,9 @@ app.whenReady().then(async () => {
   process.env.FFMPEG_PATH = unpacked(require('ffmpeg-static'));
   process.env.FFPROBE_PATH = unpacked(require('ffprobe-static').path);
   process.env.CONFIG_FILE = path.join(app.getPath('userData'), 'config.json');
+  // Downloads are a Mac-app feature: movies go to ~/Downloads/MusingsofMaksudTV and play offline.
+  process.env.DOWNLOAD_DIR = path.join(app.getPath('downloads'), 'MusingsofMaksudTV');
+  globalThis.__revealInFinder = (dir) => { fs.mkdirSync(dir, { recursive: true }); shell.openPath(dir); };
   const webDir = app.isPackaged ? path.join(process.resourcesPath, 'web') : path.join(__dirname, '..', 'web');
   const { server } = await import(pathToFileURL(path.join(webDir, 'server.js')).href);
   const port = await listen(server);

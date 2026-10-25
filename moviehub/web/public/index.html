@@ -7,13 +7,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Cinzel:wght@600;700&display=swap">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
 <script>try { document.documentElement.dataset.theme = (JSON.parse(localStorage.getItem('mh.prefs')) || {}).theme || 'parchment'; } catch { document.documentElement.dataset.theme = 'parchment'; }</script>
 </head>
 <body>
 <header id="top">
   <button id="backBtn" class="icon-btn" title="Back (⌘[)" hidden></button>
-  <a id="logo" href="#/"><span class="logo-mark">M</span><span class="logo-text"><b>Musings of Maksud</b><small>মুসিংস অব মাকসুদ • টিভি</small></span><span class="logo-tv">TV</span></a>
+  <a id="logo" href="#/"><img class="logo-mark" src="logo.svg" alt=""><span class="logo-text"><b>Musings of Maksud</b><small>মুসিংস অব মাকসুদ • টিভি</small></span><span class="logo-tv">TV</span></a>
   <nav id="nav"></nav>
   <div class="search">
     <span class="search-ico"></span>
@@ -67,6 +68,7 @@
           <button class="btn primary" id="dPlay"></button>
           <button class="btn" id="dRestart" hidden>Start over</button>
           <button class="btn" id="dFolder" hidden>All files</button>
+          <button class="btn" id="dDownload" hidden></button>
         </div>
         <p class="d-file" id="dFile"></p>
       </div>
@@ -104,6 +106,7 @@
         <button class="pill-btn" id="pAudio" title="Audio track (A)"></button>
         <button class="pill-btn" id="pSubs" title="Subtitles (C)"></button>
         <button class="pill-btn" id="pSpeed" title="Playback speed"></button>
+        <button class="icon-btn" id="pDownload" title="Download to this Mac" hidden></button>
         <button class="icon-btn" id="pPip" title="Picture in picture"></button>
         <button class="icon-btn" id="pFull" title="Full screen (F)"></button>
       </div>

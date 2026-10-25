@@ -82,12 +82,7 @@ body.scrolled header { border-bottom-color: var(--line); box-shadow: 0 6px 24px 
 html.electron header { padding-left: 92px; -webkit-app-region: drag; }
 html.electron header :is(button, input, a) { -webkit-app-region: no-drag; }
 #logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); margin-right: 6px; flex: none; }
-.logo-mark {
-  width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; flex: none;
-  font: 700 24px/1 var(--display); color: var(--gold-2);
-  background: radial-gradient(circle at 30% 25%, #b2323e, var(--maroon) 55%, #3d0a0f);
-  box-shadow: 0 0 0 2px var(--gold), 0 6px 16px rgba(122, 24, 32, .35);
-}
+.logo-mark { width: 50px; height: 50px; margin: -4px -2px; flex: none; filter: drop-shadow(0 6px 10px rgba(122, 24, 32, .3)); }
 .logo-text { display: flex; flex-direction: column; line-height: 1.05; }
 .logo-text b { font: 700 21px/1 var(--display); text-transform: uppercase; letter-spacing: .02em; color: var(--maroon); }
 .logo-text small { font: 500 11px/1.4 var(--bangla); color: var(--faint); margin-top: 3px; }
@@ -414,3 +409,20 @@ dialog code { background: var(--raised); padding: 1px 6px; border-radius: 6px; b
   .d-info { padding-top: 0; }
   .p-time, .vol { display: none; }
 }
+
+/* ---------- downloads ---------- */
+.btn.mini { padding: 5px 12px; font-size: 12.5px; }
+#folderSub code { background: rgba(255, 255, 255, .15); padding: 1px 6px; border-radius: 6px; color: #fff; }
+#folderSub .btn.mini { margin-left: 8px; background: rgba(255, 255, 255, .14); color: #fff; border-color: rgba(255, 255, 255, .3); }
+.dl-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.dl { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 4px 12px rgba(92, 45, 20, .06); }
+.dl-main { flex: 1; min-width: 0; }
+.dl-main b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-main small { color: var(--faint); font-weight: 600; }
+.dl-bar { height: 7px; border-radius: 7px; background: var(--line); overflow: hidden; margin-top: 8px; }
+.dl-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--maroon-2), var(--pink), var(--gold-2)); transition: width .4s; }
+.dl-pct { font: 700 22px var(--display); color: var(--maroon); min-width: 54px; text-align: right; }
+.dl-del { position: absolute; top: 8px; right: 8px; z-index: 2; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: rgba(42, 7, 11, .7); opacity: 0; transition: opacity .2s; }
+.dl-del svg { width: 16px; height: 16px; }
+.card:hover .dl-del { opacity: 1; }
+.dl-ring { font: 700 12px var(--body); color: var(--gold-2); }

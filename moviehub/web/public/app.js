@@ -22,6 +22,8 @@ const I = {
   cc: P('<rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 10.5a2.5 2.5 0 1 0 0 3M17 10.5a2.5 2.5 0 1 0 0 3"/>'),
   audio: P('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'),
   speed: P('<path d="M12 12l4-4"/><path d="M3.3 16a9 9 0 1 1 17.4 0"/>'),
+  download: P('<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>'),
+  trash: P('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
   pip: P('<rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1"/>'),
   full: P('<path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>'),
   unfull: P('<path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/>'),
@@ -397,7 +399,8 @@ function renderNav() {
   const roots = state.roots;
   const cur = state.view === 'home' ? -1 : state.view === 'folder' ? libraryOf(state.path) : -2;
   $('nav').innerHTML = `<a href="#/" class="${cur === -1 ? 'on' : ''}">Home</a>` +
-    state.servers.map((name, i) => `<a data-go="${esc(roots[i] || `${i}/`)}" class="${cur === i ? 'on' : ''}">${esc(name)}</a>`).join('');
+    state.servers.map((name, i) => `<a data-go="${esc(roots[i] || `${i}/`)}" class="${cur === i ? 'on' : ''}">${esc(name)}</a>`).join('') +
+    (state.config?.downloads ? `<a href="#/downloads" class="${state.view === 'downloads' ? 'on' : ''}">⬇ Downloads</a>` : '');
 }
 
 function renderHead() {
@@ -423,6 +426,7 @@ function route({ refresh = false } = {}) {
   $('backBtn').hidden = !h;
   if (h.startsWith('f/')) return showFolder(decodeURIComponent(h.slice(2)), { refresh });
   if (h.startsWith('search/')) return showSearch(decodeURIComponent(h.slice(7)));
+  if (h === 'downloads') return showDownloads();
   return showHome();
 }
 window.addEventListener('hashchange', () => route());
@@ -474,6 +478,58 @@ document.addEventListener('click', (e) => {
   activate(item);
 });
 
+/* ---------------- downloads (Mac app) ---------------- */
+const fmtBytes = (n) => (n >= 1e9 ? (n / 1e9).toFixed(2) + ' GB' : n >= 1e6 ? (n / 1e6).toFixed(0) + ' MB' : Math.round(n / 1e3) + ' KB');
+let dlTimer = 0;
+async function downloadItem(item) {
+  try {
+    const r = await api('/api/downloads', { method: 'POST', body: JSON.stringify({ path: item.path }) });
+    return r;
+  } catch (e) { alert(e.message); return null; }
+}
+
+async function showDownloads() {
+  resetView('downloads');
+  renderNav();
+  $('crumbs').innerHTML = '<a href="#/">Home</a>';
+  $('folderTitle').textContent = 'Downloads';
+  $('folderHead').style.setProperty('--panel', PANELS[1]);
+  $('backBtn').hidden = false;
+  const tick = async () => {
+    if (state.view !== 'downloads') return;
+    let d;
+    try { d = await api('/api/downloads'); } catch (e) { $('status').textContent = e.message; return; }
+    $('folderSub').innerHTML = `Saved in <code>${esc(d.dir.replace(/^\/Users\/[^/]+/, '~'))}</code> · watch them without the internet <button class="btn mini" id="revealBtn">Show in Finder</button>`;
+    $('revealBtn').onclick = () => api('/api/reveal').catch(() => {});
+    $('rows').innerHTML = d.active.length ? `<div class="dl-list">${d.active.map((j) => {
+      const pct = j.total ? Math.floor((j.received / j.total) * 100) : 0;
+      return `<div class="dl"><div class="dl-main"><b>${esc(stem(j.name))}</b>
+        <small>${j.status === 'error' ? `Failed: ${esc(j.error)} — press Retry` : `${fmtBytes(j.received)}${j.total ? ' of ' + fmtBytes(j.total) : ''}${j.speed ? ' · ' + fmtBytes(j.speed) + '/s' : ''}`}</small>
+        <div class="dl-bar"><i style="width:${pct}%"></i></div></div>
+        <span class="dl-pct">${j.status === 'error' ? '!' : pct + '%'}</span>
+        ${j.status === 'error' ? `<button class="btn mini" data-retry="${esc(j.id)}">Retry</button>` : ''}
+        <button class="btn mini" data-cancel="${esc(j.id)}">Cancel</button></div>`;
+    }).join('')}</div>` : '';
+    gridItems = d.done.map((f) => ({ name: f.name, path: f.path, isDir: false, kind: 'video', size: f.size }));
+    $('grid').innerHTML = gridItems.map((it) => cardHtml(it, { sub: fmtBytes(it.size) }).replace('<div class="hover-play">',
+      `<span class="dl-del" data-del="${esc(it.name)}" title="Delete download">${I.trash}</span><div class="hover-play">`)).join('');
+    $('grid').querySelectorAll('.card').forEach((c) => lazy.observe(c));
+    $('status').textContent = !d.active.length && !d.done.length ? 'Nothing downloaded yet. Press ⬇ in the player or on a movie to save it to this Mac.' : '';
+    clearTimeout(dlTimer);
+    if (d.active.some((j) => j.status === 'downloading')) dlTimer = setTimeout(tick, 1500);
+  };
+  tick();
+}
+document.addEventListener('click', async (e) => {
+  const c = e.target.closest('[data-cancel],[data-retry],[data-del]');
+  if (!c) return;
+  e.stopPropagation(); e.preventDefault();
+  if (c.dataset.cancel) await api(`/api/downloads?id=${enc(c.dataset.cancel)}`, { method: 'DELETE' });
+  if (c.dataset.retry) await api('/api/downloads', { method: 'POST', body: JSON.stringify({ path: c.dataset.retry }) });
+  if (c.dataset.del && confirm('Delete this download from your Mac?')) await api(`/api/downloads?name=${enc(c.dataset.del)}`, { method: 'DELETE' });
+  if (state.view === 'downloads') showDownloads();
+}, true);
+
 /* ---------------- details sheet ---------------- */
 let detailsItem = null, detailsFolder = null;
 async function showDetails(item, { metaPath = item.path, folder = null } = {}) {
@@ -489,6 +545,8 @@ async function showDetails(item, { metaPath = item.path, folder = null } = {}) {
   $('dPlay').innerHTML = `${I.play}${resume ? `Resume from ${fmt(p.pos)}` : 'Play'}`;
   $('dRestart').hidden = !resume;
   $('dFolder').hidden = !folder;
+  $('dDownload').hidden = !state.config?.downloads || item.path.startsWith('local/');
+  $('dDownload').innerHTML = `${I.download}Download`;
   $('details').hidden = false;
   $('dPlay').focus();
   const m = await meta(metaPath);
@@ -507,6 +565,10 @@ $('details').addEventListener('click', (e) => { if (e.target.closest('[data-clos
 $('dPlay').onclick = () => { const it = detailsItem; closeDetails(); startPlayback(it); };
 $('dRestart').onclick = () => { const it = detailsItem; closeDetails(); startPlayback(it, { from: 0 }); };
 $('dFolder').onclick = () => { const f = detailsFolder; closeDetails(); if (f) go(f.path); };
+$('dDownload').onclick = async () => {
+  const r = await downloadItem(detailsItem);
+  if (r) { $('dDownload').innerHTML = `${I.check}Downloading — see Downloads`; }
+};
 
 /* ---------------- settings ---------------- */
 const DHAKAFLIX = [
@@ -575,11 +637,11 @@ function saveSync() {
 }
 
 const S = {
-  item: null, list: [], probe: null, mode: 'direct', offset: 0, duration: 0, audio: 0, adelay: 0, adelayTimer: 0,
+  item: null, list: [], probe: null, mode: 'direct', fmt: 'mkv', offset: 0, duration: 0, audio: 0, adelay: 0, adelayTimer: 0,
   subs: { id: 'off', label: 'Off', cues: [], delay: 0 }, subOptions: [], subTab: 'tracks', pendingSeek: null, seekTimer: 0, saveTick: 0,
 };
 
-['pClose:back', 'pPlay:play', 'pBack:rew', 'pFwd:fwd', 'pNext:next', 'pMute:vol', 'pPip:pip', 'pFull:full'].forEach((p) => { const [id, ic] = p.split(':'); setIcon($(id), ic); });
+['pClose:back', 'pPlay:play', 'pBack:rew', 'pFwd:fwd', 'pNext:next', 'pMute:vol', 'pPip:pip', 'pFull:full', 'pDownload:download'].forEach((p) => { const [id, ic] = p.split(':'); setIcon($(id), ic); });
 
 const now = () => (S.pendingSeek ?? (S.mode === 'remux' ? S.offset + video.currentTime : video.currentTime));
 const duration = () => S.duration || (Number.isFinite(video.duration) ? video.duration : 0);
@@ -625,6 +687,8 @@ async function startPlayback(item, { from } = {}) {
   const byLang = prefs.audioLang && audio.find((a) => a.lang === prefs.audioLang);
   S.audio = (byLang || audio.find((a) => a.default) || audio[0] || { index: 0 }).index;
   S.mode = !pr?.ffmpeg || (pr.direct && S.audio === 0 && !S.adelay) ? 'direct' : 'remux';
+  // Converted streams are Matroska (exact sync, true timestamps); MP4 only where Matroska can't play.
+  S.fmt = video.canPlayType('video/webm') ? 'mkv' : 'mp4';
   if (pr && !pr.ffmpeg) banner('Some files may play without sound. Install ffmpeg (<code>brew install ffmpeg</code>) or use the MusingsofMaksudTV Mac app, which includes it.');
 
   buildSubOptions();
@@ -636,7 +700,7 @@ async function startPlayback(item, { from } = {}) {
 }
 
 function sourceUrl(t) {
-  return S.mode === 'direct' ? `/stream?path=${enc(S.item.path)}` : `/remux?path=${enc(S.item.path)}&t=${t}&audio=${S.audio}&adelay=${S.adelay}`;
+  return S.mode === 'direct' ? `/stream?path=${enc(S.item.path)}` : `/remux?path=${enc(S.item.path)}&t=${t}&audio=${S.audio}&adelay=${S.adelay}&fmt=${S.fmt}`;
 }
 
 async function load(t) {
@@ -650,13 +714,26 @@ async function load(t) {
       await new Promise((r) => video.addEventListener('loadedmetadata', r, { once: true }));
     }
     video.currentTime = t;
+  } else if (S.fmt === 'mkv') {
+    // Matroska streams carry the movie's own timestamps: the player clock is the true position.
+    S.offset = 0;
+    S.pendingSeek = t; // until the new stream starts playing
+    video.src = sourceUrl(t);
+    // Safety net: if the engine ever restarts its clock at 0 instead of the movie's time, re-base on `t`.
+    if (t > 5) {
+      video.addEventListener('playing', () => {
+        if (S.item === item && video.currentTime < t - 5) { S.offset = t - video.currentTime; S.pendingSeek = null; }
+      }, { once: true });
+    }
+    video.playbackRate = prefs.speed;
+    video.play().catch(() => {});
+    return;
   } else {
     let start = t;
     try { start = (await api(`/api/seek-point?path=${enc(item.path)}&t=${t}`)).start; } catch { /* use t */ }
     if (S.item !== item) return;
-    // The stream begins on the keyframe at `start`; sound moved earlier than the picture pushes the picture
-    // back by the difference (the server aims 0.2 s past the keyframe when seeking).
-    S.offset = start - Math.max(0, -S.adelay - (start > 0 ? 0.2 : 0));
+    // MP4 fallback: each track restarts at zero, so the clock is offset by where the stream began.
+    S.offset = start;
     video.src = sourceUrl(start);
   }
   S.pendingSeek = null;
@@ -705,6 +782,10 @@ function nextItem() {
 /* ----- events ----- */
 video.addEventListener('waiting', () => player.classList.add('loading'));
 video.addEventListener('playing', () => { player.classList.remove('loading'); updateButtons(); });
+// A Matroska stream has started once its clock is near the position it was asked for.
+video.addEventListener('timeupdate', () => {
+  if (S.pendingSeek != null && S.mode === 'remux' && S.fmt === 'mkv' && video.currentTime > 0 && Math.abs(S.offset + video.currentTime - S.pendingSeek) < 30) S.pendingSeek = null;
+});
 video.addEventListener('canplay', () => player.classList.remove('loading'));
 video.addEventListener('pause', updateButtons);
 video.addEventListener('play', updateButtons);
@@ -720,6 +801,7 @@ video.addEventListener('timeupdate', () => {
 video.addEventListener('error', () => {
   if (!S.item || !video.getAttribute('src')) return;
   if (S.mode === 'direct' && S.probe?.ffmpeg) { S.mode = 'remux'; toast('Switching to compatibility mode…'); load(now()); return; }
+  if (S.mode === 'remux' && S.fmt === 'mkv') { S.fmt = 'mp4'; load(S.pendingSeek ?? now()); return; } // e.g. HEVC the engine can't take in Matroska
   player.classList.remove('loading');
   banner('This file could not be played. ' + (S.probe?.ffmpeg ? 'The file may be damaged or the server stopped sending it.' : 'Install ffmpeg to play more formats.'));
 });
@@ -756,6 +838,7 @@ function updateButtons() {
   $('pSubs').classList.toggle('on', S.subs.id !== 'off');
   $('pSpeed').innerHTML = `${I.speed}<span>${prefs.speed === 1 ? '1×' : prefs.speed + '×'}</span>`;
   $('pPip').hidden = !document.pictureInPictureEnabled;
+  $('pDownload').hidden = !state.config?.downloads || !S.item || S.item.path.startsWith('local/');
 }
 
 function updateTime() {
@@ -800,6 +883,26 @@ $('pMute').onclick = () => { video.muted = !video.muted; prefs.muted = video.mut
 $('pVol').oninput = (e) => { video.volume = Number(e.target.value); video.muted = false; prefs.volume = video.volume; prefs.muted = false; savePrefs(); updateButtons(); };
 video.volume = prefs.volume; video.muted = prefs.muted; $('pVol').value = prefs.volume;
 $('pFull').onclick = toggleFull;
+// Download the movie that's playing (Mac app), showing progress on the button.
+$('pDownload').onclick = async () => {
+  const item = S.item;
+  if (!item) return;
+  const r = await downloadItem(item);
+  if (!r) return;
+  toast('Downloading to your Mac — find it in Downloads', 2500);
+  const btn = $('pDownload');
+  const poll = async () => {
+    if (S.item !== item) return;
+    const d = await api('/api/downloads').catch(() => null);
+    const j = d?.active.find((x) => x.id === item.path);
+    if (j && j.status === 'downloading') {
+      btn.innerHTML = `<span class="dl-ring">${j.total ? Math.floor((j.received / j.total) * 100) : 0}%</span>`;
+      setTimeout(poll, 2000);
+    } else if (j?.status === 'error') { btn.innerHTML = I.download; toast('Download failed — retry from Downloads', 3000); }
+    else if (d?.done.some((f) => f.name === r.name)) { btn.innerHTML = I.check; toast('Downloaded ✓', 2000); }
+  };
+  poll();
+};
 $('pPip').onclick = () => (document.pictureInPictureElement ? document.exitPictureInPicture() : video.requestPictureInPicture()).catch(() => {});
 function toggleFull() { document.fullscreenElement ? document.exitFullscreen() : player.requestFullscreen(); }
 document.addEventListener('fullscreenchange', () => { player.classList.toggle('fs', !!document.fullscreenElement); updateButtons(); });
@@ -845,7 +948,7 @@ $('pAudio').onclick = () => openMenu('audio', audioMenuHtml());
 /** Audio sync: restart the converted stream with the sound shifted (debounced while clicking). */
 function setAudioDelay(v) {
   if (!S.probe?.ffmpeg) return toast('Audio sync needs ffmpeg (built into the Mac app)', 2500);
-  S.adelay = Math.max(-10, Math.min(10, +v.toFixed(1)));
+  S.adelay = Math.max(-20, Math.min(20, +v.toFixed(1)));
   saveSync();
   toast(`Audio ${signed(S.adelay)}`, 900);
   clearTimeout(S.adelayTimer);
@@ -1124,7 +1227,11 @@ document.addEventListener('keydown', (e) => {
   else if (/^[0-9]$/.test(k) && duration()) seekTo(duration() * Number(k) / 10, { immediate: true });
 });
 
+/* ----- test hook (read-only): lets automated A/V sync tests read the player's clock ----- */
+window.__mh = { now: () => now(), state: () => ({ mode: S.mode, offset: S.offset, adelay: S.adelay, sdelay: S.subs.delay, src: video.src }) };
+
 /* ----- boot ----- */
 if (!location.hash) history.replaceState(null, '', '#/');
+api('/api/config').then((c) => { state.config = c; renderNav(); }).catch(() => {});
 route();
 window.addEventListener('scroll', () => document.body.classList.toggle('scrolled', window.scrollY > 30), { passive: true });

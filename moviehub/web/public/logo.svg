@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Musings of Maksud TV">
+  <defs>
+    <radialGradient id="crimson" cx="34%" cy="26%" r="85%">
+      <stop offset="0" stop-color="#b8323f"/>
+      <stop offset=".45" stop-color="#7a1820"/>
+      <stop offset="1" stop-color="#2a070b"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbe08a"/>
+      <stop offset=".5" stop-color="#e9b949"/>
+      <stop offset="1" stop-color="#b07f27"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="40%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#fff3c4"/>
+      <stop offset=".55" stop-color="#f5cf5b"/>
+      <stop offset="1" stop-color="#d4a33f"/>
+    </radialGradient>
+    <linearGradient id="page" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffaf0"/>
+      <stop offset="1" stop-color="#f1dfc0"/>
+    </linearGradient>
+    <pattern id="dots" width="34" height="34" patternUnits="userSpaceOnUse">
+      <circle cx="17" cy="17" r="2.2" fill="#f5cf5b" opacity=".13"/>
+    </pattern>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <clipPath id="tile"><rect x="100" y="100" width="824" height="824" rx="186"/></clipPath>
+  </defs>
+
+  <!-- emblem -->
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#crimson)"/>
+  <g clip-path="url(#tile)">
+    <rect x="100" y="100" width="824" height="824" fill="url(#dots)"/>
+    <circle cx="512" cy="430" r="250" fill="#f5cf5b" opacity=".22" filter="url(#soft)"/>
+  </g>
+  <rect x="128" y="128" width="768" height="768" rx="160" fill="none" stroke="url(#gold)" stroke-width="10" opacity=".9"/>
+
+  <!-- rays of the rising sun -->
+  <g stroke="url(#gold)" stroke-width="14" stroke-linecap="round" opacity=".85">
+    <line x1="512" y1="196" x2="512" y2="236"/>
+    <line x1="350" y1="262" x2="374" y2="292"/>
+    <line x1="674" y1="262" x2="650" y2="292"/>
+    <line x1="286" y1="420" x2="324" y2="424"/>
+    <line x1="738" y1="420" x2="700" y2="424"/>
+  </g>
+
+  <!-- sun with play button -->
+  <circle cx="512" cy="440" r="158" fill="url(#sun)"/>
+  <circle cx="512" cy="440" r="158" fill="none" stroke="#fff3c4" stroke-width="5" opacity=".7"/>
+  <path d="M470 372 Q462 367 462 377 V503 Q462 513 470 508 L582 446 Q590 440 582 434 Z" fill="#7a1820"/>
+
+  <!-- open book -->
+  <path d="M512 640 C440 596 330 590 214 622 V772 C330 742 440 748 512 792 Z" fill="url(#page)" stroke="url(#gold)" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M512 640 C584 596 694 590 810 622 V772 C694 742 584 748 512 792 Z" fill="url(#page)" stroke="url(#gold)" stroke-width="10" stroke-linejoin="round"/>
+  <g stroke="#d4a33f" stroke-width="6" stroke-linecap="round" opacity=".55" fill="none">
+    <path d="M262 664 C340 646 420 650 480 676"/>
+    <path d="M262 704 C340 686 420 690 480 716"/>
+    <path d="M762 664 C684 646 604 650 544 676"/>
+    <path d="M762 704 C684 686 604 690 544 716"/>
+  </g>
+  <line x1="512" y1="640" x2="512" y2="792" stroke="#b07f27" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- gold sparkles -->
+  <g fill="#f5cf5b">
+    <path d="M232 250 l10 26 26 10 -26 10 -10 26 -10 -26 -26 -10 26 -10z"/>
+    <path d="M796 236 l8 20 20 8 -20 8 -8 20 -8 -20 -20 -8 20 -8z"/>
+    <path d="M806 520 l6 15 15 6 -15 6 -6 15 -6 -15 -15 -6 15 -6z" opacity=".85"/>
+    <path d="M218 520 l6 15 15 6 -15 6 -6 15 -6 -15 -15 -6 15 -6z" opacity=".85"/>
+  </g>
+</svg>
