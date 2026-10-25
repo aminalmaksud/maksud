@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp" android:height="180dp" android:viewportWidth="320" android:viewportHeight="180">
+    <path android:fillColor="#0E1015" android:pathData="M0,0h320v180h-320z" />
+    <path android:fillColor="#FF5A4D" android:pathData="M60,56L116,90L60,124Z" />
+    <!-- "MH" monogram -->
+    <path android:fillColor="#E9ECF2" android:pathData="M140,60h12l14,24l14,-24h12v60h-12v-40l-14,24l-14,-24v40h-12z" />
+    <path android:fillColor="#E9ECF2" android:pathData="M204,60h12v24h24v-24h12v60h-12v-24h-24v24h-12z" />
+</vector>

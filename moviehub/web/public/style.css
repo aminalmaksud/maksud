@@ -1,0 +1,26 @@
+:root { --bg:#0e1015; --panel:#171a22; --line:#262b37; --text:#e9ecf2; --dim:#8c93a5; --accent:#ff5a4d; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+header { display:flex; gap:12px; align-items:center; padding:14px 20px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:2; }
+h1 { margin:0; font-size:20px; color:var(--accent); flex:none; }
+#filter { flex:1; min-width:0; }
+input, button { font:inherit; color:inherit; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 12px; }
+button { cursor:pointer; } button:hover { border-color:var(--accent); }
+button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+#crumbs { padding:12px 20px 0; color:var(--dim); display:flex; flex-wrap:wrap; gap:4px; }
+#crumbs a { color:var(--text); cursor:pointer; } #crumbs a:hover { color:var(--accent); }
+#status { padding:0 20px; color:var(--dim); min-height:1.4em; } #status.error { color:#ff8a80; }
+#grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; padding:12px 20px 40px; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; cursor:pointer; display:flex; gap:10px; align-items:flex-start; min-height:76px; word-break:break-word; }
+.card:hover, .card:focus-visible { border-color:var(--accent); outline:none; }
+.card .ico { font-size:22px; flex:none; } .card small { display:block; color:var(--dim); margin-top:2px; }
+#player { position:fixed; inset:0; background:#000; z-index:10; display:flex; flex-direction:column; }
+#player[hidden] { display:none; }
+#player .bar { display:flex; gap:12px; align-items:center; padding:10px 16px; background:#0009; }
+#title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+video { flex:1; min-height:0; width:100%; background:#000; }
+#playerMsg { margin:0; padding:8px 16px; color:#ffb74d; } #playerMsg:empty { display:none; }
+dialog { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:12px; width:min(460px,92vw); }
+dialog::backdrop { background:#000a; }
+dialog label { display:block; margin:12px 0; color:var(--dim); } dialog input { display:block; width:100%; margin-top:4px; color:var(--text); }
+.row { display:flex; justify-content:flex-end; gap:8px; }

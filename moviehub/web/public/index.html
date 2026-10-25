@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MovieHub</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>MovieHub</h1>
+  <input id="filter" type="search" placeholder="Filter this folder…" autocomplete="off">
+  <button id="settingsBtn" title="Server settings">⚙ Settings</button>
+</header>
+<nav id="crumbs"></nav>
+<p id="status" role="status"></p>
+<main id="grid"></main>
+
+<div id="player" hidden>
+  <div class="bar"><button id="closeBtn">✕ Close</button><span id="title"></span></div>
+  <video id="video" controls autoplay playsinline></video>
+  <p id="playerMsg"></p>
+</div>
+
+<dialog id="settings">
+  <form method="dialog" id="settingsForm">
+    <h2>Server settings</h2>
+    <label>Server address <input name="serverUrl" placeholder="http://10.10.10.10/movies/" required></label>
+    <label>Username (optional) <input name="username" autocomplete="off"></label>
+    <label>Password (optional) <input name="password" type="password" autocomplete="off" placeholder="leave blank to keep current"></label>
+    <div class="row"><button type="button" id="cancelBtn">Cancel</button><button type="submit" class="primary">Save</button></div>
+  </form>
+</dialog>
+<script src="app.js" type="module"></script>
+</body>
+</html>

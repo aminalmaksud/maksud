@@ -1,0 +1,9 @@
+{
+  "name": "moviehub-web",
+  "version": "1.0.0",
+  "description": "Browse and play movies from an ISP HTTP media server in the browser",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node server.js", "test": "node test.js" },
+  "engines": { "node": ">=18" }
+}
