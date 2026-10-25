@@ -26,6 +26,11 @@ const I = {
   full: P('<path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>'),
   unfull: P('<path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/>'),
   close: P('<path d="M18 6L6 18M6 6l12 12"/>'),
+  tv: P('<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M17 2l-5 5-5-5"/>'),
+  spark: P('<path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/>'),
+  calendar: P('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
+  globe: P('<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>'),
+  star: P('<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>'),
   check: P('<path d="M20 6L9 17l-5-5"/>'),
   file: P('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>'),
 };
@@ -173,9 +178,26 @@ const rowObserver = new IntersectionObserver((entries) => {
   }
 }, { rootMargin: '600px' });
 
+// Coloured icon tiles, like the category chips on musingsofmaksud.com.
+const TILE_COLORS = ['#f08a1c', '#b3262d', '#1f8a5b', '#2f6fd1', '#8b3fd1', '#d4a33f', '#e23d6d', '#138a9e'];
+function rowIcon(title) {
+  const t = title.toLowerCase();
+  const icon = isYearFolder(title) ? I.calendar : /anime|cartoon|animation/.test(t) ? I.spark : /series|tv|show|season|drama/.test(t) ? I.tv
+    : /foreign|korean|hindi|bangla|tamil|telugu|english|chinese|japanese|dubbed/.test(t) ? I.globe : /top|imdb|best|award/.test(t) ? I.star : I.film;
+  return `<span class="row-ico" style="--c:${TILE_COLORS[hue(title) % TILE_COLORS.length]}">${icon}</span>`;
+}
+// Each library's header panel gets its own colour, like the series pages on the website.
+const PANELS = [
+  'linear-gradient(118deg, #2a070b 0%, #561017 38%, #8a1b26 72%, #a52734 100%)',
+  'linear-gradient(118deg, #1d0f08 0%, #4a2a17 35%, #a2732a 72%, #f0c94e 100%)',
+  'linear-gradient(118deg, #06231a 0%, #0f4a35 40%, #1f8a5b 78%, #5cc489 100%)',
+  'linear-gradient(118deg, #0d1330 0%, #1f2f6b 40%, #3d5fc4 78%, #7ea2ff 100%)',
+  'linear-gradient(118deg, #1c0a2c 0%, #43166b 40%, #8b3fd1 78%, #c08bff 100%)',
+];
+
 function rowShell({ title, sub = '', path = '' }) {
   return `<section class="row" data-row="${esc(path)}">
-    <div class="row-head">${path ? `<a class="row-title" data-go="${esc(path)}">${esc(title)}<span class="see-all">See all ›</span></a>` : `<h2 class="row-title">${esc(title)}</h2>`}${sub ? `<small>${esc(sub)}</small>` : ''}</div>
+    <div class="row-head">${rowIcon(title)}${path ? `<a class="row-title" data-go="${esc(path)}">${esc(title)}<span class="see-all">See all ›</span></a>` : `<h2 class="row-title">${esc(title)}</h2>`}${sub ? `<small>${esc(sub)}</small>` : ''}</div>
     <div class="row-wrap"><button class="row-arrow left" aria-label="Scroll left">${I.back}</button>
       <div class="row-scroll"><div class="row-skel"></div><div class="row-skel"></div><div class="row-skel"></div><div class="row-skel"></div><div class="row-skel"></div><div class="row-skel"></div></div>
       <button class="row-arrow right" aria-label="Scroll right">${I.back}</button></div>
@@ -204,16 +226,25 @@ document.addEventListener('click', (e) => {
 });
 
 /* ----- hero ----- */
-let heroItem = null, heroPending = false;
+// Featured title: rows finish loading in any order, so gather candidates from all of them and prefer one
+// with a backdrop, then a poster; failing both, the crimson panel still features the first title.
+let heroItem = null, heroPending = false, heroFallback = null;
+const heroQueue = [];
 async function pickHero(items) {
-  if (heroItem || heroPending || state.view !== 'home') return;
+  if (state.view !== 'home' || heroItem) return;
+  heroQueue.push(...items.slice(0, 8));
+  if (heroPending) return;
   heroPending = true;
   try {
-    for (const it of items.slice(0, 12)) {
+    while (heroQueue.length && !heroItem && state.view === 'home') {
+      const it = heroQueue.shift();
       const m = await meta(it.path);
-      if (state.view !== 'home') return;
-      if (m?.backdrop || m?.poster) { showHero(it, m); return; }
+      if (state.view !== 'home' || heroItem) return;
+      if (m?.backdrop) { showHero(it, m); return; }
+      if (m?.poster && !heroFallback?.m?.poster) heroFallback = { it, m };
+      else if (m && !heroFallback) heroFallback = { it, m };
     }
+    if (!heroItem && heroFallback && state.view === 'home') showHero(heroFallback.it, heroFallback.m);
   } finally { heroPending = false; }
 }
 function showHero(it, m) {
@@ -221,13 +252,14 @@ function showHero(it, m) {
   $('heroTitle').textContent = m.matched || m.title || it.name;
   $('heroMeta').innerHTML = [m.year, m.rating && `<span class="star">★</span> ${m.rating}`, esc(libraryName(it.path))].filter(Boolean).join('  ·  ');
   $('heroOverview').textContent = m.overview || '';
-  $('heroArt').style.backgroundImage = `url("${m.backdrop || m.poster}")`;
+  const art = m.backdrop || m.poster;
+  $('heroArt').style.backgroundImage = art ? `url("${art}")` : '';
   $('heroArt').classList.toggle('soft', !m.backdrop);
   $('heroPlay').innerHTML = `${I.play}Play`;
   $('hero').hidden = false;
   document.body.classList.add('has-hero');
 }
-function hideHero() { heroItem = null; $('hero').hidden = true; document.body.classList.remove('has-hero'); }
+function hideHero() { heroItem = null; heroFallback = null; heroQueue.length = 0; $('hero').hidden = true; document.body.classList.remove('has-hero'); }
 $('heroPlay').onclick = () => heroItem && activate(heroItem, { play: true });
 $('heroInfo').onclick = () => heroItem && activate(heroItem);
 
@@ -246,7 +278,7 @@ function resetView(view) {
 function continueRowHtml() {
   const list = Object.values(history_).filter((h) => !h.done && h.pos > 30).sort((a, b) => b.at - a.at).slice(0, 15);
   if (!list.length) return '';
-  return `<section class="row continue"><div class="row-head"><h2 class="row-title">Continue watching</h2></div>
+  return `<section class="row continue"><div class="row-head"><span class="row-ico" style="--c:#d4a33f">${I.play}</span><h2 class="row-title">Continue watching</h2></div>
     <div class="row-wrap"><div class="row-scroll wide">${list.map((h) => cardHtml({ name: h.name, path: h.path, isDir: false, kind: 'video' }, { wideArt: true, sub: `${fmt(h.dur - h.pos)} left` })).join('')}</div></div></section>`;
 }
 
@@ -378,6 +410,7 @@ function renderHead() {
   }
   $('crumbs').innerHTML = crumbs.slice(0, -1).map(([l, p]) => (p ? `<a data-go="${esc(p)}">${esc(l)}</a>` : `<a href="#/">${esc(l)}</a>`)).join('<span>›</span>');
   $('folderTitle').textContent = crumbs[crumbs.length - 1][0];
+  $('folderHead').style.setProperty('--panel', PANELS[idx % PANELS.length]);
   const dirs = state.items.filter((i) => i.isDir).length, vids = state.items.filter((i) => i.kind === 'video').length;
   $('folderSub').textContent = [dirs && `${dirs} folder${dirs > 1 ? 's' : ''}`, vids && `${vids} video${vids > 1 ? 's' : ''}`].filter(Boolean).join(' · ');
   $('backBtn').hidden = false;
@@ -489,6 +522,7 @@ async function openSettings() {
   const f = $('settingsForm');
   f.servers.value = c.servers.join('\n'); f.username.value = c.username; f.password.value = ''; f.tmdbKey.value = c.tmdbKey || '';
   f.password.placeholder = c.hasPassword ? '•••••• (saved)' : '';
+  markTheme();
   $('ffmpegNote').innerHTML = c.ffmpeg
     ? '✓ Sound &amp; format fix is on — every file plays with sound, and you can switch audio tracks and built-in subtitles.'
     : '⚠ ffmpeg was not found, so some files may play without sound and audio-track switching is off. Install it with <code>brew install ffmpeg</code> (the Mac app includes it).';
@@ -500,6 +534,12 @@ async function saveConfig(body) {
   state.servers = []; state.roots = [];
   if (location.hash.replace(/^#\/?/, '')) location.hash = '#/'; else route();
 }
+function markTheme() {
+  document.querySelectorAll('[data-theme-pick]').forEach((b) => b.classList.toggle('on', b.dataset.themePick === document.documentElement.dataset.theme));
+}
+document.querySelectorAll('[data-theme-pick]').forEach((b) => {
+  b.onclick = () => { document.documentElement.dataset.theme = b.dataset.themePick; prefs.theme = b.dataset.themePick; savePrefs(); markTheme(); };
+});
 $('settingsBtn').onclick = openSettings;
 $('cancelBtn').onclick = () => $('settings').close();
 $('dhakaflixBtn').onclick = () => { $('settingsForm').servers.value = DHAKAFLIX; };
@@ -520,12 +560,23 @@ $('settingsForm').onsubmit = async (e) => {
    ===================================================================== */
 const video = $('video');
 const player = $('player');
-const prefs = Object.assign({ volume: 1, muted: false, subSize: 1, subBg: 0, subLang: '', audioLang: '', speed: 1 }, store.get('prefs', {}));
+const prefs = Object.assign({
+  volume: 1, muted: false, subLang: '', audioLang: '', speed: 1,
+  subSize: 1, subBg: 0, subFont: 'sans', subColor: '#ffffff', subEdge: 'shadow', subPos: 'low',
+}, store.get('prefs', {}));
 const savePrefs = () => store.set('prefs', prefs);
+// Audio / subtitle sync are properties of a particular file, so they're remembered per video.
+const syncs = store.get('sync', {});
+const syncOf = (path) => syncs[path] || { a: 0, s: 0 };
+function saveSync() {
+  if (!S.item) return;
+  if (S.adelay || S.subs.delay) syncs[S.item.path] = { a: S.adelay, s: S.subs.delay }; else delete syncs[S.item.path];
+  store.set('sync', syncs);
+}
 
 const S = {
-  item: null, list: [], probe: null, mode: 'direct', offset: 0, duration: 0, audio: 0,
-  subs: { id: 'off', label: 'Off', cues: [], delay: 0 }, subOptions: [], pendingSeek: null, seekTimer: 0, saveTick: 0,
+  item: null, list: [], probe: null, mode: 'direct', offset: 0, duration: 0, audio: 0, adelay: 0, adelayTimer: 0,
+  subs: { id: 'off', label: 'Off', cues: [], delay: 0 }, subOptions: [], subTab: 'tracks', pendingSeek: null, seekTimer: 0, saveTick: 0,
 };
 
 ['pClose:back', 'pPlay:play', 'pBack:rew', 'pFwd:fwd', 'pNext:next', 'pMute:vol', 'pPip:pip', 'pFull:full'].forEach((p) => { const [id, ic] = p.split(':'); setIcon($(id), ic); });
@@ -545,13 +596,20 @@ async function startPlayback(item, { from } = {}) {
   S.item = item;
   S.folder = []; S.list = [];
   S.probe = null; S.duration = 0; S.offset = 0; S.pendingSeek = null;
-  S.subs = { id: 'off', label: 'Off', cues: [], delay: 0 };
+  const sync = syncOf(item.path);
+  S.adelay = sync.a;
+  S.subs = { id: 'off', label: 'Off', cues: [], delay: sync.s };
   $('pTitle').textContent = stem(item.name); $('pSub').textContent = '';
   banner(''); $('upNext').hidden = true;
   player.hidden = false; player.classList.add('loading');
   document.body.style.overflow = 'hidden';
   poke();
-  meta(item.path).then((m) => { if (m && S.item === item) $('pSub').textContent = [m.show || m.matched, m.season != null && m.episode != null ? `S${m.season} · E${m.episode}` : m.year].filter(Boolean).join(' · '); });
+  meta(item.path).then((m) => {
+    if (!m || S.item !== item) return;
+    if (m.show && m.episode != null) $('pTitle').textContent = m.show;
+    else if (m.matched || m.title) $('pTitle').textContent = m.matched || m.title;
+    $('pSub').textContent = [m.show || m.matched, m.season != null && m.episode != null ? `S${m.season} · E${m.episode}` : m.year].filter(Boolean).join(' · ');
+  });
 
   // The video's own folder gives its subtitle files and the next episode, wherever it was opened from.
   const [probe, folder] = await Promise.all([
@@ -566,7 +624,7 @@ async function startPlayback(item, { from } = {}) {
   const audio = pr?.audio || [];
   const byLang = prefs.audioLang && audio.find((a) => a.lang === prefs.audioLang);
   S.audio = (byLang || audio.find((a) => a.default) || audio[0] || { index: 0 }).index;
-  S.mode = !pr?.ffmpeg || (pr.direct && S.audio === 0) ? 'direct' : 'remux';
+  S.mode = !pr?.ffmpeg || (pr.direct && S.audio === 0 && !S.adelay) ? 'direct' : 'remux';
   if (pr && !pr.ffmpeg) banner('Some files may play without sound. Install ffmpeg (<code>brew install ffmpeg</code>) or use the MusingsofMaksudTV Mac app, which includes it.');
 
   buildSubOptions();
@@ -578,7 +636,7 @@ async function startPlayback(item, { from } = {}) {
 }
 
 function sourceUrl(t) {
-  return S.mode === 'direct' ? `/stream?path=${enc(S.item.path)}` : `/remux?path=${enc(S.item.path)}&t=${t}&audio=${S.audio}`;
+  return S.mode === 'direct' ? `/stream?path=${enc(S.item.path)}` : `/remux?path=${enc(S.item.path)}&t=${t}&audio=${S.audio}&adelay=${S.adelay}`;
 }
 
 async function load(t) {
@@ -596,7 +654,9 @@ async function load(t) {
     let start = t;
     try { start = (await api(`/api/seek-point?path=${enc(item.path)}&t=${t}`)).start; } catch { /* use t */ }
     if (S.item !== item) return;
-    S.offset = start;
+    // The stream begins on the keyframe at `start`; sound moved earlier than the picture pushes the picture
+    // back by the difference (the server aims 0.2 s past the keyframe when seeking).
+    S.offset = start - Math.max(0, -S.adelay - (start > 0 ? 0.2 : 0));
     video.src = sourceUrl(start);
   }
   S.pendingSeek = null;
@@ -651,6 +711,7 @@ video.addEventListener('play', updateButtons);
 video.addEventListener('timeupdate', () => {
   updateTime();
   if (S.item && ++S.saveTick % 20 === 0) saveProgress(S.item, now(), duration());
+  pumpEmbeddedSubs();
   // A direct stream that decodes no audio: the file's sound format isn't supported natively, convert it.
   if (S.mode === 'direct' && S.probe?.ffmpeg && S.probe.audio?.length && video.currentTime > 3 && video.webkitAudioDecodedByteCount === 0) {
     S.mode = 'remux'; toast('Fixing sound…'); load(video.currentTime);
@@ -771,10 +832,25 @@ const opt = (id, label, sub, on, disabled) =>
 const codecName = (c) => ({ ac3: 'Dolby Digital', eac3: 'Dolby Digital+', dts: 'DTS', truehd: 'Dolby TrueHD', aac: 'AAC', mp3: 'MP3', opus: 'Opus', flac: 'FLAC', vorbis: 'Vorbis' }[c] || (c || '').toUpperCase());
 const channelsName = (n) => (n >= 8 ? '7.1' : n >= 6 ? '5.1' : n === 2 ? 'Stereo' : n === 1 ? 'Mono' : n ? `${n} ch` : '');
 
-$('pAudio').onclick = () => {
+const signed = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v).toFixed(1)} s`;
+function audioMenuHtml() {
   const a = S.probe?.audio || [];
-  openMenu('audio', `<h4>Audio track</h4>${a.map((x) => opt(x.index, x.label, [codecName(x.codec), channelsName(x.channels)].filter(Boolean).join(' · '), x.index === S.audio)).join('')}`);
-};
+  return `<h4>Audio track</h4>${a.map((x) => opt(x.index, x.label, [codecName(x.codec), channelsName(x.channels)].filter(Boolean).join(' · '), x.index === S.audio)).join('')}
+    <h4>Audio sync</h4>
+    <div class="sync"><button data-act="a-0.5">−0.5</button><button data-act="a-0.1">−0.1</button><output>${signed(S.adelay)}</output><button data-act="a+0.1">+0.1</button><button data-act="a+0.5">+0.5</button></div>
+    <p class="hint">Voices before lips move? Press <b>+</b>. After? Press <b>−</b>.${S.adelay ? ' <a data-act="a0">Reset</a>' : ''}</p>`;
+}
+$('pAudio').onclick = () => openMenu('audio', audioMenuHtml());
+
+/** Audio sync: restart the converted stream with the sound shifted (debounced while clicking). */
+function setAudioDelay(v) {
+  if (!S.probe?.ffmpeg) return toast('Audio sync needs ffmpeg (built into the Mac app)', 2500);
+  S.adelay = Math.max(-10, Math.min(10, +v.toFixed(1)));
+  saveSync();
+  toast(`Audio ${signed(S.adelay)}`, 900);
+  clearTimeout(S.adelayTimer);
+  S.adelayTimer = setTimeout(() => { S.mode = 'remux'; load(now()); }, 600);
+}
 
 $('pSpeed').onclick = () => {
   openMenu('speed', `<h4>Playback speed</h4>${[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => opt(s, s === 1 ? 'Normal' : s + '×', '', prefs.speed === s)).join('')}`);
@@ -782,28 +858,60 @@ $('pSpeed').onclick = () => {
 
 $('pSubs').onclick = () => openMenu('subs', subsMenuHtml());
 
+const SUB_FONTS = { sans: ['Clean', '"Plus Jakarta Sans", -apple-system, sans-serif'], serif: ['Classic', '"Fraunces", Georgia, serif'],
+  rounded: ['Rounded', 'ui-rounded, "SF Pro Rounded", "Nunito", sans-serif'], fantasy: ['Epic', '"Cinzel", "Trajan Pro", serif'],
+  bangla: ['বাংলা', '"Hind Siliguri", "Noto Sans Bengali", sans-serif'], mono: ['Typewriter', 'ui-monospace, "SF Mono", Menlo, monospace'] };
+const SUB_COLORS = ['#ffffff', '#ffe066', '#7ef0ff', '#a8ff8a', '#ffb3d1', '#ffc58a'];
+const SUB_EDGES = { shadow: 'Shadow', outline: 'Outline', glow: 'Glow', none: 'None' };
+const SUB_BGS = [[0, 'None'], [0.4, 'Soft'], [0.8, 'Box']];
+const SUB_POS = { low: ['Low', '7%'], mid: ['Middle', '14%'], high: ['High', '24%'] };
+const chip = (act, label, on, style = '') => `<button class="chip${on ? ' on' : ''}" data-act="${act}"${style ? ` style="${style}"` : ''}>${label}</button>`;
+
 function subsMenuHtml() {
+  const tabs = `<div class="tabs">${[['tracks', 'Tracks'], ['style', 'Style'], ['sync', 'Sync']].map(([k, l]) => `<button class="${S.subTab === k ? 'on' : ''}" data-act="tab:${k}">${l}</button>`).join('')}</div>`;
+  if (S.subTab === 'style') {
+    return `${tabs}<div class="sub-preview" style="${subStyleCss()}"><span>The stars are bright tonight</span></div>
+      <h4>Font</h4><div class="chips">${Object.entries(SUB_FONTS).map(([k, [l, f]]) => chip(`font:${k}`, l, prefs.subFont === k, `font-family:${f.replace(/"/g, "'")}`)).join('')}</div>
+      <h4>Color</h4><div class="chips">${SUB_COLORS.map((c) => `<button class="swatch${prefs.subColor === c ? ' on' : ''}" data-act="color:${c}" style="--c:${c}" aria-label="${c}"></button>`).join('')}</div>
+      <h4>Edge</h4><div class="chips">${Object.entries(SUB_EDGES).map(([k, l]) => chip(`edge:${k}`, l, prefs.subEdge === k)).join('')}</div>
+      <h4>Background</h4><div class="chips">${SUB_BGS.map(([v, l]) => chip(`bg:${v}`, l, prefs.subBg === v)).join('')}</div>
+      <h4>Position</h4><div class="chips">${Object.entries(SUB_POS).map(([k, [l]]) => chip(`pos:${k}`, l, prefs.subPos === k)).join('')}</div>
+      <div class="stepper"><span>Size</span><div><button data-act="size-">A−</button><output>${Math.round(prefs.subSize * 100)}%</output><button data-act="size+">A+</button></div></div>`;
+  }
+  if (S.subTab === 'sync') {
+    return `${tabs}<h4>Subtitle sync</h4>
+      <div class="sync"><button data-act="s-1">−1</button><button data-act="s-0.1">−0.1</button><output>${signed(S.subs.delay)}</output><button data-act="s+0.1">+0.1</button><button data-act="s+1">+1</button></div>
+      <p class="hint">Words show up before they’re spoken? Press <b>+</b>. After? Press <b>−</b>. Keys: <b>[</b> <b>]</b> (hold Shift for 1 s).${S.subs.delay ? ' <a data-act="s0">Reset</a>' : ''}</p>
+      <p class="hint">Saved for this video.</p>`;
+  }
   const ext = S.subOptions.filter((o) => o.type === 'file');
   const emb = S.subOptions.filter((o) => o.type === 'embedded');
-  return `<h4>Subtitles</h4>${opt('off', 'Off', '', S.subs.id === 'off')}
+  return `${tabs}${opt('off', 'Off', '', S.subs.id === 'off')}
     ${ext.length ? `<h4>From the server</h4>${ext.map((o) => opt(o.id, o.label, o.sub, S.subs.id === o.id)).join('')}` : ''}
     ${emb.length ? `<h4>Built into the file</h4>${emb.map((o) => opt(o.id, o.label, o.text ? o.sub : 'Image subtitles — can’t be shown', S.subs.id === o.id, !o.text)).join('')}` : ''}
-    <h4>More</h4>${opt('load', 'Load a subtitle file…', '.srt or .vtt from your Mac', false)}
-    <div class="stepper"><span>Size</span><div><button data-act="size-">A−</button><output>${Math.round(prefs.subSize * 100)}%</output><button data-act="size+">A+</button></div></div>
-    <div class="stepper"><span>Timing</span><div><button data-act="delay-">−0.5s</button><output>${S.subs.delay > 0 ? '+' : ''}${S.subs.delay.toFixed(1)}s</output><button data-act="delay+">+0.5s</button></div></div>
-    <div class="stepper"><span>Background</span><div><button data-act="bg">${prefs.subBg ? 'On' : 'Off'}</button></div></div>`;
+    <h4>More</h4>${opt('load', 'Load a subtitle file…', '.srt or .vtt from your Mac', false)}`;
 }
 
 $('menu').addEventListener('click', (e) => {
   const act = e.target.closest('[data-act]')?.dataset.act;
   if (act) {
-    if (act === 'size-') prefs.subSize = Math.max(0.6, +(prefs.subSize - 0.1).toFixed(1));
-    if (act === 'size+') prefs.subSize = Math.min(2, +(prefs.subSize + 0.1).toFixed(1));
-    if (act === 'delay-') S.subs.delay = +(S.subs.delay - 0.5).toFixed(1);
-    if (act === 'delay+') S.subs.delay = +(S.subs.delay + 0.5).toFixed(1);
-    if (act === 'bg') prefs.subBg = prefs.subBg ? 0 : 0.55;
-    savePrefs(); applySubStyle();
-    $('menu').innerHTML = subsMenuHtml();
+    const [k, v] = act.includes(':') ? [act.slice(0, act.indexOf(':')), act.slice(act.indexOf(':') + 1)] : [act, ''];
+    if (/^a[+-]/.test(act)) setAudioDelay(S.adelay + Number(act.slice(1)));
+    else if (act === 'a0') setAudioDelay(0);
+    else if (/^s[+-]/.test(act)) setSubDelay(S.subs.delay + Number(act.slice(1)));
+    else if (act === 's0') setSubDelay(0);
+    else if (k === 'tab') S.subTab = v;
+    else {
+      if (act === 'size-') prefs.subSize = Math.max(0.6, +(prefs.subSize - 0.1).toFixed(1));
+      if (act === 'size+') prefs.subSize = Math.min(2.2, +(prefs.subSize + 0.1).toFixed(1));
+      if (k === 'font') prefs.subFont = v;
+      if (k === 'color') prefs.subColor = v;
+      if (k === 'edge') prefs.subEdge = v;
+      if (k === 'bg') prefs.subBg = Number(v);
+      if (k === 'pos') prefs.subPos = v;
+      savePrefs(); applySubStyle();
+    }
+    $('menu').innerHTML = menuFor === 'audio' ? audioMenuHtml() : subsMenuHtml();
     return;
   }
   const o = e.target.closest('.opt');
@@ -833,9 +941,16 @@ document.addEventListener('mousedown', (e) => {
 });
 
 /* ----- subtitles ----- */
-function applySubStyle() {
-  $('subLayer').style.setProperty('--sub', prefs.subSize);
-  $('subLayer').style.setProperty('--subbg', prefs.subBg);
+function subStyleCss() {
+  const edge = { shadow: '0 0 4px #000, 0 2px 6px rgba(0,0,0,.9)', outline: '-1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px #000',
+    glow: `0 0 8px ${prefs.subColor}88, 0 0 2px #000, 0 2px 6px #000`, none: 'none' }[prefs.subEdge] || 'none';
+  return `--sub:${prefs.subSize};--subbg:${prefs.subBg};--sub-color:${prefs.subColor};--sub-font:${(SUB_FONTS[prefs.subFont] || SUB_FONTS.sans)[1].replace(/"/g, "'")};--sub-shadow:${edge};--sub-bottom:${(SUB_POS[prefs.subPos] || SUB_POS.low)[1]}`;
+}
+function applySubStyle() { $('subLayer').setAttribute('style', subStyleCss()); }
+function setSubDelay(v) {
+  S.subs.delay = Math.max(-60, Math.min(60, +v.toFixed(1)));
+  saveSync();
+  toast(`Subtitles ${signed(S.subs.delay)}`, 900);
 }
 applySubStyle();
 
@@ -854,7 +969,7 @@ function buildSubOptions() {
     ...(S.probe?.subs || []).map((x) => ({
       id: 'e:' + x.index, type: 'embedded', index: x.index, text: x.text, lang: x.lang,
       label: (x.lang ? langName(x.lang) : '') + (x.label && x.label !== x.lang.toUpperCase() ? ` — ${x.label.replace(/ · [A-Z]{2,3}$/, '')}` : '') || x.label,
-      sub: x.forced ? 'Forced' : 'Takes a moment to load the first time',
+      sub: x.forced ? 'Forced' : 'Built into the video',
     })),
   ];
 }
@@ -877,7 +992,7 @@ function autoPickSubtitle() {
 async function selectSubtitle(id, { remember = true } = {}) {
   const item = S.item;
   if (id === 'off') {
-    S.subs = { ...S.subs, id: 'off', label: 'Off', cues: [] };
+    S.subs = { ...S.subs, id: 'off', label: 'Off', cues: [], type: 'off' };
     if (remember) { prefs.subLang = 'off'; savePrefs(); }
     updateButtons(); return;
   }
@@ -885,14 +1000,19 @@ async function selectSubtitle(id, { remember = true } = {}) {
   if (!o) return;
   try {
     let text;
-    if (o.type === 'file') text = await (await fetch(`/subs?path=${enc(o.path)}`)).text();
-    else {
-      toast('Loading subtitles from the file…', 60000);
-      text = await (await fetch(`/api/embedded-sub?path=${enc(item.path)}&index=${o.index}`)).text();
-      $('toast').hidden = true;
+    if (o.type === 'embedded') {
+      // Read in chunks around the playhead instead of the whole movie: shows up within seconds.
+      S.subs = { ...S.subs, id, label: o.label, cues: [], type: 'embedded', index: o.index, ranges: [], loading: false, fails: 0 };
+      if (remember) { prefs.subLang = o.lang || langCodeFromLabel(o.label); savePrefs(); }
+      updateButtons();
+      toast('Loading subtitles…', 4000);
+      await pumpEmbeddedSubs();
+      if (S.subs.id === id) $('toast').hidden = true;
+      return;
     }
+    text = await (await fetch(`/subs?path=${enc(o.path)}`)).text();
     if (S.item !== item) return;
-    S.subs = { ...S.subs, id, label: o.label, cues: parseCues(text) };
+    S.subs = { ...S.subs, id, label: o.label, cues: parseCues(text), type: 'file' };
     if (!S.subs.cues.length) toast('This subtitle file is empty', 2000);
     if (remember) { prefs.subLang = o.lang || langCodeFromLabel(o.label); savePrefs(); }
   } catch {
@@ -900,13 +1020,39 @@ async function selectSubtitle(id, { remember = true } = {}) {
   }
   updateButtons();
 }
+/** Keeps embedded subtitles loaded a little ahead of the playhead, a chunk at a time. */
+async function pumpEmbeddedSubs() {
+  const sb = S.subs;
+  if (sb.type !== 'embedded' || sb.loading || sb.fails > 3 || !S.item) return;
+  const t = Math.max(0, now() - sb.delay), d = duration();
+  const r = sb.ranges.find(([a, b]) => t >= a - 1 && t < b);
+  let from = null;
+  if (!r) from = Math.max(0, t - 3);
+  else if (r[1] - t < 90 && (!d || r[1] < d)) from = r[1];
+  if (from == null) return;
+  const dur = sb.ranges.length ? 300 : 120;
+  sb.loading = true;
+  try {
+    const res = await fetch(`/api/embedded-sub?path=${enc(S.item.path)}&index=${sb.index}&from=${from.toFixed(2)}&dur=${dur}`);
+    if (!res.ok) throw new Error();
+    const cues = parseCues(await res.text());
+    if (S.subs !== sb) return;
+    const seen = new Set(sb.cues.map((c) => c.start + '|' + c.html));
+    sb.cues = sb.cues.concat(cues.filter((c) => !seen.has(c.start + '|' + c.html))).sort((x, y) => x.start - y.start);
+    sb.ranges.push([from, from + dur]);
+  } catch {
+    sb.fails++;
+  } finally {
+    sb.loading = false;
+  }
+}
 const langCodeFromLabel = (l) => (/english/i.test(l) ? 'eng' : /bengali|bangla/i.test(l) ? 'ben' : /hindi/i.test(l) ? 'hin' : '');
 
 $('subFile').onchange = async (e) => {
   const f = e.target.files[0];
   if (!f) return;
   const cues = parseCues(await f.text());
-  S.subs = { ...S.subs, id: 'local', label: f.name.replace(/\.[^.]+$/, ''), cues };
+  S.subs = { ...S.subs, id: 'local', label: f.name.replace(/\.[^.]+$/, ''), cues, type: 'file' };
   toast(cues.length ? 'Subtitles loaded' : 'No subtitles found in that file', 1600);
   e.target.value = '';
   updateButtons();
@@ -973,7 +1119,7 @@ document.addEventListener('keydown', (e) => {
   else if (k === 'n') $('pNext').click();
   else if (k === 'c') { const on = S.subs.id !== 'off'; if (on) selectSubtitle('off'); else { const o = S.subOptions.find((x) => x.type === 'file' || x.text); if (o) selectSubtitle(o.id); else toast('No subtitles for this video', 1500); } }
   else if (k === 'a') { const a = S.probe?.audio || []; if (a.length > 1) $('pAudio').click(); }
-  else if (k === '[' || k === ']') { S.subs.delay = +(S.subs.delay + (k === ']' ? 0.5 : -0.5)).toFixed(1); toast(`Subtitle timing ${S.subs.delay > 0 ? '+' : ''}${S.subs.delay.toFixed(1)} s`, 900); }
+  else if (k === '[' || k === ']' || k === '{' || k === '}') setSubDelay(S.subs.delay + ((k === ']' || k === '}') ? 1 : -1) * (e.shiftKey ? 1 : 0.1));
   else if (k === 'escape') { if (!$('menu').hidden) closeMenu(); else if (!document.fullscreenElement) closePlayer(); }
   else if (/^[0-9]$/.test(k) && duration()) seekTo(duration() * Number(k) / 10, { immediate: true });
 });

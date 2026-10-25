@@ -263,6 +263,7 @@ async function handleRemux(url, res) {
   const p = remux(target.href, authValue(), {
     start: Number(url.searchParams.get('t')) || 0,
     audio: Number(url.searchParams.get('audio')) || 0,
+    audioDelay: clampDelay(url.searchParams.get('adelay')),
     info,
   });
   let err = '';
@@ -274,6 +275,8 @@ async function handleRemux(url, res) {
 }
 
 /** Where a converted stream asked to start at ?t= will really start (see keyframeBefore). */
+const clampDelay = (v) => Math.max(-10, Math.min(10, Number(v) || 0));
+
 async function handleSeekPoint(url, res) {
   const { url: target } = resolveUnderBase(url.searchParams.get('path'));
   const t = Math.max(0, Number(url.searchParams.get('t')) || 0);
@@ -286,7 +289,9 @@ async function handleEmbeddedSub(url, res) {
   const { url: target } = resolveUnderBase(url.searchParams.get('path'));
   if (!hasFfmpeg) throw httpError(501, 'ffmpeg is not installed');
   try {
-    const vtt = await extractSubtitle(target.href, authValue(), Number(url.searchParams.get('index')) || 0);
+    const from = Math.max(0, Number(url.searchParams.get('from')) || 0);
+    const dur = Math.max(0, Math.min(3600, Number(url.searchParams.get('dur')) || 0));
+    const vtt = await extractSubtitle(target.href, authValue(), Number(url.searchParams.get('index')) || 0, from, dur);
     res.writeHead(200, { 'content-type': 'text/vtt; charset=utf-8' });
     res.end(vtt);
   } catch (e) {

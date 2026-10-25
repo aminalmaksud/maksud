@@ -8,7 +8,7 @@ const { pathToFileURL } = require('node:url');
 const PORTS = [47913, 47914, 47915, 47916];
 
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
-nativeTheme.themeSource = 'dark';
+nativeTheme.themeSource = 'light';
 
 const unpacked = (p) => p.replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
 
@@ -28,7 +28,7 @@ let baseUrl = '';
 function createWindow() {
   win = new BrowserWindow({
     width: 1320, height: 840, minWidth: 760, minHeight: 500,
-    backgroundColor: '#0a0b0f',
+    backgroundColor: '#f6efe4',
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 18, y: 22 },
     show: false,

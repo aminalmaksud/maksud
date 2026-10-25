@@ -55,11 +55,16 @@ poster images it finds on the server (`poster.jpg`, `folder.jpg`, …) and draws
 - Keys: Space = pause · ← → = 10 s · Shift+← → = 30 s · ↑ ↓ = volume · F = full screen · M = mute ·
   C = subtitles on/off · A = audio tracks · [ ] = subtitle timing · N = next episode · 0–9 = jump to 0–90% · Esc = back
 
-### How sound is fixed
-Many movies use AC3/DTS audio and MKV files, which normal web players can't decode. The app converts
-the sound on the fly with the bundled ffmpeg and leaves the picture untouched, so it uses very little CPU.
-Built-in subtitles must be read from the whole file the first time, which can take a minute for a big
-movie. Image-based subtitles (PGS/VobSub) can't be shown on the Mac. The TV app shows them.
+### Sound, sync and subtitles
+Many movies use AC3/DTS audio and MKV files, which normal web players can't decode. The app converts the
+sound on the fly with the bundled ffmpeg and leaves the picture untouched, so it uses very little CPU.
+
+- **Audio sync** (🎵 menu): move the sound earlier or later in 0.1 s steps. It's remembered per video.
+- **Subtitle sync** (CC → Sync): 0.1 s / 1 s steps, or the `[` `]` keys. Hold Shift for 1 s steps. Remembered per video.
+- **Subtitle style** (CC → Style): font (including Bangla), colour, outline/shadow/glow, background, position and size.
+- **Built-in subtitles** load in a few seconds. The app reads only the next few minutes of the file and keeps
+  reading ahead as you watch. Image-based subtitles (PGS/VobSub) can't be shown on the Mac. The TV app shows them.
+- **Themes:** Parchment (default) or Night, in Settings.
 
 ### Running from source (developers)
 `cd mac && npm install && npm start`. The Mac app is a small Electron wrapper around `web/`.

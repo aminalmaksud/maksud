@@ -90,7 +90,7 @@ export async function keyframeBefore(url, auth, t) {
  * Starts ffmpeg writing fragmented MP4 to stdout, beginning at `start` seconds, with the chosen audio
  * track converted to stereo AAC. Video is copied unless the engine can't decode it.
  */
-export function remux(url, auth, { start = 0, audio = 0, info }) {
+export function remux(url, auth, { start = 0, audio = 0, audioDelay = 0, info }) {
   const v = info?.video;
   const a = info?.audio?.[audio];
   const videoArgs = !v ? [] : !v.transcode
@@ -98,10 +98,15 @@ export function remux(url, auth, { start = 0, audio = 0, info }) {
     : process.platform === 'darwin'
       ? ['-c:v', 'h264_videotoolbox', '-b:v', '8M', '-pix_fmt', 'yuv420p']
       : ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '22', '-pix_fmt', 'yuv420p'];
-  const audioArgs = !a ? ['-an'] : a.codec === 'aac' && a.channels <= 2 ? ['-c:a', 'copy'] : ['-c:a', 'aac', '-ac', '2', '-b:a', '192k'];
+  // Audio sync: shift the sound by `audioDelay` seconds (positive = later). Shifting needs re-encoding.
+  const shift = audioDelay ? ['-af', `asetpts=PTS+${audioDelay}/TB`] : [];
+  const audioArgs = !a ? ['-an'] : a.codec === 'aac' && a.channels <= 2 && !audioDelay
+    ? ['-c:a', 'copy'] : [...shift, '-c:a', 'aac', '-ac', '2', '-b:a', '192k'];
   const args = [
     '-hide_banner', '-loglevel', 'error', ...headerArgs(auth),
-    '-ss', String(start > 0 ? start + 0.01 : 0), '-i', url,
+    // ffmpeg seeks MKV ~0.13 s earlier than asked (3/23 s), which would land on the previous keyframe and
+    // throw audio out of sync by a whole GOP. Aim just past the keyframe so it lands exactly on it.
+    '-ss', String(start > 0 ? start + 0.2 : 0), '-i', url,
     '-map', '0:v:0?', ...(a ? ['-map', `0:a:${audio}`] : []),
     ...videoArgs, ...audioArgs, '-sn', '-dn',
     '-movflags', 'frag_keyframe+empty_moov+default_base_moof', '-f', 'mp4', 'pipe:1',
@@ -111,11 +116,17 @@ export function remux(url, auth, { start = 0, audio = 0, info }) {
 
 const subCache = new Map();
 
-/** Extracts embedded text subtitle track `index` as WebVTT. Has to read the whole file, so it's cached. */
-export function extractSubtitle(url, auth, index) {
-  const key = `${url}#${index}`;
+/**
+ * Extracts embedded text subtitle track `index` as WebVTT, only for [from, from + dur) seconds: subtitles
+ * are interleaved with the video, so reading a few minutes of the file is far quicker than reading it all.
+ * Cue times stay absolute (-copyts) so chunks can be merged by the player.
+ */
+export function extractSubtitle(url, auth, index, from = 0, dur = 0) {
+  const key = `${url}#${index}#${from}#${dur}`;
   if (!subCache.has(key)) {
-    const job = run(FFMPEG, ['-hide_banner', '-loglevel', 'error', ...headerArgs(auth), '-i', url, '-map', `0:s:${index}`, '-f', 'webvtt', 'pipe:1'], { timeoutMs: 15 * 60000 })
+    const job = run(FFMPEG, ['-hide_banner', '-loglevel', 'error', ...headerArgs(auth), ...(from > 0 ? ['-ss', String(from)] : []),
+      '-i', url, '-copyts', ...(dur > 0 ? ['-to', String(from + dur)] : []),
+      '-map', `0:s:${index}`, '-f', 'webvtt', 'pipe:1'], { timeoutMs: 15 * 60000 })
       .then((b) => b.toString('utf8'));
     job.catch(() => subCache.delete(key));
     subCache.set(key, job);

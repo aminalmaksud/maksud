@@ -4,12 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MusingsofMaksudTV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Cinzel:wght@600;700&display=swap">
 <link rel="stylesheet" href="style.css">
+<script>try { document.documentElement.dataset.theme = (JSON.parse(localStorage.getItem('mh.prefs')) || {}).theme || 'parchment'; } catch { document.documentElement.dataset.theme = 'parchment'; }</script>
 </head>
 <body>
 <header id="top">
   <button id="backBtn" class="icon-btn" title="Back (⌘[)" hidden></button>
-  <a id="logo" href="#/">MusingsofMaksud<span>TV</span></a>
+  <a id="logo" href="#/"><span class="logo-mark">M</span><span class="logo-text"><b>Musings of Maksud</b><small>মুসিংস অব মাকসুদ • টিভি</small></span><span class="logo-tv">TV</span></a>
   <nav id="nav"></nav>
   <div class="search">
     <span class="search-ico"></span>
@@ -22,6 +26,7 @@
 <section id="hero" hidden>
   <div class="hero-art" id="heroArt"></div>
   <div class="hero-text">
+    <span class="eyebrow">✦ আজকের বাছাই · Featured</span>
     <h1 id="heroTitle"></h1>
     <p class="hero-meta" id="heroMeta"></p>
     <p class="hero-overview" id="heroOverview"></p>
@@ -31,8 +36,9 @@
 
 <main id="main">
   <div id="welcome" hidden>
-    <h1>Welcome to MusingsofMaksud<span>TV</span></h1>
-    <p>Watch every movie, series and anime on your ISP’s BDIX servers — with posters, subtitles and sound that just works.</p>
+    <span class="eyebrow">✦ মুসিংস অব মাকসুদ • টিভি</span>
+    <h1>Musings of Maksud <span>TV</span></h1>
+    <p>Every movie, series and anime on your ISP’s BDIX servers — beautifully arranged, with subtitles and sound that just work.</p>
     <div class="d-actions"><button class="btn primary big" id="welcomeDhakaflix">Use DhakaFlix servers</button><button class="btn big" id="welcomeOwn">Add my own server</button></div>
   </div>
   <div id="folderHead" hidden>
@@ -126,6 +132,12 @@
     </div>
     <label>TMDB API key <small>recommended — adds posters, backdrops, ratings and plot summaries. Free at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a></small>
       <input name="tmdbKey" autocomplete="off" spellcheck="false" placeholder="paste API key or read access token"></label>
+    <div class="field"><span class="flabel">Theme</span>
+      <div class="themes">
+        <button type="button" class="theme-pick" data-theme-pick="parchment"><i></i>Parchment</button>
+        <button type="button" class="theme-pick" data-theme-pick="night"><i></i>Night</button>
+      </div>
+    </div>
     <p class="note" id="ffmpegNote"></p>
     <div class="actions"><button type="button" class="btn" id="cancelBtn">Cancel</button><button type="submit" class="btn primary">Save</button></div>
   </form>
