@@ -28,7 +28,8 @@
         <activity
             android:name=".PlayerActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:screenOrientation="sensorLandscape" />
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.MovieHub.Player" />
 
         <activity android:name=".SettingsActivity" />
     </application>

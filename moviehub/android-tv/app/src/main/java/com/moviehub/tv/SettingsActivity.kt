@@ -15,10 +15,14 @@ class SettingsActivity : ComponentActivity() {
         server.setText(Prefs.servers(this).joinToString("\n"))
         user.setText(Prefs.username(this))
         pass.setText(Prefs.password(this))
+        val tmdb = findViewById<EditText>(R.id.tmdb)
+        tmdb.setText(Prefs.tmdbKey(this))
+        findViewById<android.view.View>(R.id.root).background = ParchmentDrawable(this)
         findViewById<Button>(R.id.dhakaflix).setOnClickListener { server.setText(DHAKAFLIX) }
         findViewById<Button>(R.id.save).setOnClickListener {
             val servers = server.text.toString().split('\n').map { Library.normalizeLine(it) }.filter { it.isNotEmpty() }
             Prefs.saveServers(this, servers, user.text.toString().trim(), pass.text.toString())
+            if (tmdb.text.toString().trim() != Prefs.tmdbKey(this)) { Prefs.setTmdbKey(this, tmdb.text.toString()); Meta.clear() }
             finish()
         }
     }

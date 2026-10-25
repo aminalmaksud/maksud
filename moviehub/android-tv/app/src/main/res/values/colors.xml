@@ -1,8 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg">#0E1015</color>
-    <color name="panel">#171A22</color>
-    <color name="text">#E9ECF2</color>
-    <color name="dim">#8C93A5</color>
-    <color name="accent">#FF5A4D</color>
+    <!-- musingsofmaksud.com palette -->
+    <color name="bg">#F6EFE4</color>
+    <color name="surface">#FFFCF7</color>
+    <color name="raised">#FBF5EC</color>
+    <color name="line">#EADBC8</color>
+    <color name="text">#2B1A14</color>
+    <color name="dim">#6E5849</color>
+    <color name="faint">#9C8573</color>
+    <color name="maroon">#7A1820</color>
+    <color name="maroon2">#A3242F</color>
+    <color name="gold">#D4A33F</color>
+    <color name="gold2">#F5CF5B</color>
+    <color name="pink">#E23D6D</color>
+    <color name="crimson_dark">#2A070B</color>
+    <color name="panel_dark">#F21E0A0C</color>
+    <color name="white">#FFFFFF</color>
+    <!-- kept for older layouts -->
+    <color name="accent">#A3242F</color>
+    <color name="panel">#FFFCF7</color>
 </resources>

@@ -7,7 +7,7 @@ import java.net.URL
 import java.net.URLDecoder
 import org.json.JSONObject
 
-enum class Kind { DIR, VIDEO, SUB }
+enum class Kind { DIR, VIDEO, SUB, IMAGE }
 
 data class Entry(val name: String, val url: String, val kind: Kind)
 
@@ -106,6 +106,7 @@ class Library(line: String, user: String, pass: String) {
                 isDir -> Kind.DIR
                 ext in VIDEO_EXT -> Kind.VIDEO
                 ext in SUB_EXT -> Kind.SUB
+                ext in IMG_EXT -> Kind.IMAGE
                 else -> continue
             }
             out.add(Entry(name, u.toExternalForm(), kind))
@@ -127,6 +128,7 @@ class Library(line: String, user: String, pass: String) {
         private val HREF = Regex("""<a\s+[^>]*?href\s*=\s*(?:"([^"]*)"|'([^']*)')""", RegexOption.IGNORE_CASE)
         val VIDEO_EXT = setOf("mkv", "mp4", "m4v", "avi", "mov", "webm", "ts", "wmv", "flv", "mpg", "mpeg")
         val SUB_EXT = setOf("srt", "vtt")
+        val IMG_EXT = setOf("jpg", "jpeg", "png", "webp")
 
         fun normalize(url: String): String {
             var u = url.trim()

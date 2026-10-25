@@ -15,4 +15,13 @@
     <string name="subtitle_size">Subtitle size: %1$d%%</string>
     <string name="track_unnamed">Unnamed track</string>
     <string name="use_dhakaflix">Use DhakaFlix servers</string>
+    <string name="logo_name">Musings of Maksud</string>
+    <string name="logo_bangla">মুসিংস অব মাকসুদ • টিভি</string>
+    <string name="featured">✦ আজকের বাছাই · Featured</string>
+    <string name="play">▶  Play</string>
+    <string name="home">Home</string>
+    <string name="continue_watching">Continue watching</string>
+    <string name="tmdb_label">TMDB API key (optional, for posters). Free at themoviedb.org → Settings → API</string>
+    <string name="sync">Sync</string>
+    <string name="style">Style</string>
 </resources>

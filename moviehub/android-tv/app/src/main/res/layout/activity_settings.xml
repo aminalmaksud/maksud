@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -13,10 +14,10 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/bebas_neue"
             android:text="@string/settings"
-            android:textColor="@color/accent"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:textColor="@color/maroon"
+            android:textSize="44sp" />
 
         <TextView style="@style/Label" android:text="@string/server_label" />
         <EditText
@@ -32,12 +33,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:background="@drawable/item_bg"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
+            android:background="@drawable/btn_maroon"
+            android:paddingStart="22dp"
+            android:paddingEnd="22dp"
             android:text="@string/use_dhakaflix"
             android:textAllCaps="false"
-            android:textColor="@color/text" />
+            android:textColor="@color/white"
+            android:textStyle="bold" />
 
         <TextView style="@style/Label" android:text="@string/user_label" />
         <EditText
@@ -51,15 +53,24 @@
             style="@style/Field"
             android:inputType="textPassword" />
 
+        <TextView style="@style/Label" android:text="@string/tmdb_label" />
+        <EditText
+            android:id="@+id/tmdb"
+            style="@style/Field"
+            android:inputType="text" />
+
         <Button
             android:id="@+id/save"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:background="@drawable/item_bg"
-            android:paddingStart="28dp"
-            android:paddingEnd="28dp"
+            android:layout_marginBottom="40dp"
+            android:background="@drawable/btn_primary"
+            android:fontFamily="@font/bebas_neue"
+            android:paddingStart="34dp"
+            android:paddingEnd="34dp"
             android:text="@string/save"
-            android:textColor="@color/text" />
+            android:textColor="#3A0D10"
+            android:textSize="22sp" />
     </LinearLayout>
 </ScrollView>
