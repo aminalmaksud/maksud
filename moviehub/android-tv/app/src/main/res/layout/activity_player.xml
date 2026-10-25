@@ -1,10 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.media3.ui.PlayerView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/player"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black"
-    android:focusable="true"
-    app:show_buffering="always"
-    app:show_subtitle_button="true" />
+    android:background="@android:color/black">
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="true"
+        app:show_buffering="always"
+        app:show_subtitle_button="true" />
+
+    <!-- Shown with the playback controls. Remote: Up from the controls to reach these. -->
+    <LinearLayout
+        android:id="@+id/trackBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="@drawable/top_scrim"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="48dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="48dp"
+        android:paddingBottom="36dp">
+
+        <TextView
+            android:id="@+id/playerTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textColor="@color/text"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/audioBtn"
+            style="@style/PillButton"
+            android:text="@string/audio" />
+
+        <Button
+            android:id="@+id/subsBtn"
+            style="@style/PillButton"
+            android:layout_marginStart="12dp"
+            android:text="@string/subtitles" />
+    </LinearLayout>
+</FrameLayout>

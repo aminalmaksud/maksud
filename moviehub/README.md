@@ -1,51 +1,77 @@
 # MovieHub
 
-Watch the movies on your ISP's media server (FTP/BDIX-style "Index of /" HTTP server) on:
+Watch the movies, TV series and anime on your ISP's media servers (BDIX / FTP-style "Index of /"
+or h5ai servers) on:
 
-- **Android TV**, a native app (`android-tv/`) with ExoPlayer that plays MKV, MP4, AVI and more
-- **Mac**, a browser app (`web/`). It is a web page served by a tiny local helper. It is **not** an APK and needs no install beyond Node.js.
+- **Mac**: a real app (`mac/`). You don't need a browser or anything else installed, because ffmpeg is built in.
+- **Android TV**: a native app (`android-tv/`).
 
-Both apps let you browse folders, play movies, pick up where you stopped, and load
-`.srt`/`.vtt` subtitles automatically when they sit next to the movie with the same name.
+Both apps support:
+- **Multiple libraries.** Movies, TV series and anime are often on different servers. Add them all.
+- **Resume.** Each video continues where you stopped. The Mac app also has a *Continue watching* row.
+- **Audio track menu** for picking a language or dub, with sound for AC3 / DTS / E-AC3 files.
+- **Subtitles menu.** It lists `.srt`/`.vtt` files on the server and subtitles built into the file. You can also change the size.
+- **Next episode.** The Mac app plays the next episode automatically.
 
-## What the apps expect from the server
+## Settings (both apps)
 
-Open your ISP server in a browser. If you see a plain page titled **"Index of /…"** with
-clickable folders and files, it will work. Copy the address of the folder that holds the
-movies, for example `http://10.16.100.244/Movies/`. That address is the **server address**
-for both apps. If the server needs a login, enter it in Settings.
+**Libraries**: one server address per line. You can put a name before the address:
 
-## Mac (browser app)
+```
+Movies | http://172.16.50.7/
+TV Series | http://172.16.50.12/
+Anime | http://172.16.50.14/
+```
 
-1. Install Node.js (LTS) from https://nodejs.org.
-2. Double-click `web/start.command`. (On first run, right-click it, choose **Open**, and confirm.)
-   Or run it in Terminal: `cd moviehub/web && node server.js`
-3. Your browser opens at http://localhost:8080. Click **⚙ Settings** and paste the server address.
+To find the right addresses, open your ISP's media portal in a browser. Copy the address of each
+server or folder that holds videos.
 
-Keys while playing: Space = pause, ← / → = 10 s back/forward, F = fullscreen, Esc = close.
+**TMDB API key** (Mac app, optional): adds real posters, ratings and plot summaries. To get one for free,
+create an account at themoviedb.org, then go to Settings → API. Without a key the app still uses any
+poster images it finds on the server (`poster.jpg`, `folder.jpg`, …) and draws a colored card otherwise.
 
-**Formats:** Chrome plays most MKV/MP4 files with H.264 video and AAC audio. Safari won't play MKV.
-Files with AC3/DTS audio or HEVC video may not play in any browser. Play those on the TV app.
+## Mac app
 
-Why a local helper? Browsers block web pages from reading another server's folder
-listing (CORS). The helper fetches the listings and streams the video through, with
-seeking supported. By default it listens only on your Mac. To use it from other devices
-at home, start it with `HOST=0.0.0.0 node server.js`.
+### Install
+1. On GitHub, open **Actions → MovieHub Mac app**, then the latest green run. Download
+   **MovieHub-mac-apple-silicon** (M1/M2/M3/M4 Macs) or **MovieHub-mac-intel** (older Macs).
+   To check which one you need, open  → About This Mac. It says "Chip: Apple…" or "Processor: Intel…".
+2. Unzip, open the `.dmg`, and drag **MovieHub** into **Applications**.
+3. The first time, macOS blocks it because the app isn't from the App Store or a registered developer.
+   Open it once, then go to **System Settings → Privacy & Security** and click **Open Anyway**.
+   On older macOS versions, right-click the app and choose **Open** instead.
 
-Run the tests with `node test.js`.
+### Using it
+- Click a movie to see its details, then **Play** or **Resume**.
+- The player has an **audio** button (🎵) for tracks/dubs and a **CC** button for subtitles, timing,
+  size and loading your own `.srt`. There's also a speed button, picture-in-picture and full screen.
+- Keys: Space = pause · ← → = 10 s · Shift+← → = 30 s · ↑ ↓ = volume · F = full screen · M = mute ·
+  C = subtitles on/off · A = audio tracks · [ ] = subtitle timing · N = next episode · 0–9 = jump to 0–90% · Esc = back
+
+### How sound is fixed
+Many movies use AC3/DTS audio and MKV files, which normal web players can't decode. The app converts
+the sound on the fly with the bundled ffmpeg and leaves the picture untouched, so it uses very little CPU.
+Built-in subtitles must be read from the whole file the first time, which can take a minute for a big
+movie. Image-based subtitles (PGS/VobSub) can't be shown on the Mac. The TV app shows them.
+
+### Running from source (developers)
+`cd mac && npm install && npm start`. The Mac app is a small Electron wrapper around `web/`.
+You can also run `web/` alone with `node web/server.js` and open http://localhost:8080 in a browser.
+Install ffmpeg first (`brew install ffmpeg`) to get sound for every file. Tests: `node web/test.js`.
 
 ## Android TV
 
 ### Get the APK
-- **Easiest:** every push to GitHub builds it. Open the repo → **Actions** → **MovieHub TV APK** →
-  the latest run → download **MovieHub-TV-apk** (a zip holding `app-debug.apk`).
-- **Or** open `android-tv/` in Android Studio and click Run with your TV connected over ADB.
+- On GitHub, open **Actions → MovieHub TV APK**, then the latest green run, and download **MovieHub-TV-apk** (a zip
+  containing `app-debug.apk`).
+- Or open `android-tv/` in Android Studio and run it on the TV over ADB.
 
 ### Install it on the TV
-- Copy the APK to a USB stick and open it with a file manager on the TV (allow "Install unknown apps"), or
-- Use the **Send Files to TV** app, or
-- Run `adb connect <tv-ip>` and then `adb install app-debug.apk` (turn on Developer options → USB/Network debugging on the TV).
+- Copy the APK to a USB stick and open it with a file manager on the TV. You'll need to allow "Install unknown apps".
+- Or use the **Send Files to TV** app.
+- Or run `adb connect <tv-ip>` and then `adb install app-debug.apk`. Turn on Developer options → USB/Network debugging on the TV first.
 
-Open **MovieHub** from the TV home screen and enter the server address in Settings.
-
-Remote: OK = play/pause and show controls, ◀ / ▶ = skip 10 s, Back = up one folder / leave the player.
+### Remote
+OK = play/pause and show controls · ◀ ▶ = skip 10 s · Back = up one folder / leave the player.
+While the controls are showing, press **Up** to reach the **Audio** and **Subtitles** buttons.
+The remote's Menu, Audio and Captions keys open those menus directly. Your language choices are remembered.

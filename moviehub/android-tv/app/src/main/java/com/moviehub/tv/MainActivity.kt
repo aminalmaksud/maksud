@@ -115,12 +115,14 @@ class MainActivity : ComponentActivity() {
             return
         }
         val stem = e.name.substringBeforeLast('.')
-        val sub = all.firstOrNull { it.kind == Kind.SUB && it.name.startsWith(stem, ignoreCase = true) }
+        // Every subtitle file in the folder is offered; ones named like the video come first.
+        val subs = all.filter { it.kind == Kind.SUB }.sortedBy { !it.name.startsWith(stem, ignoreCase = true) }
         startActivity(
             Intent(this, PlayerActivity::class.java)
                 .putExtra(PlayerActivity.EXTRA_URL, e.url)
                 .putExtra(PlayerActivity.EXTRA_TITLE, stem)
-                .putExtra(PlayerActivity.EXTRA_SUB, sub?.url)
+                .putStringArrayListExtra(PlayerActivity.EXTRA_SUB_URLS, ArrayList(subs.map { it.url }))
+                .putStringArrayListExtra(PlayerActivity.EXTRA_SUB_NAMES, ArrayList(subs.map { it.name }))
                 .putExtra(PlayerActivity.EXTRA_AUTH, libraries.firstOrNull { e.url.startsWith(it.root) }?.authHeader)
         )
     }

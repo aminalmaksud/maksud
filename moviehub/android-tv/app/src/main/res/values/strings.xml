@@ -9,4 +9,9 @@
     <string name="user_label">Username (optional)</string>
     <string name="pass_label">Password (optional)</string>
     <string name="save">Save</string>
+    <string name="audio">Audio</string>
+    <string name="subtitles">Subtitles</string>
+    <string name="off">Off</string>
+    <string name="subtitle_size">Subtitle size: %1$d%%</string>
+    <string name="track_unnamed">Unnamed track</string>
 </resources>

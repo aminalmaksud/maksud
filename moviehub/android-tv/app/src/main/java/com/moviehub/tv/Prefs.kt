@@ -17,6 +17,14 @@ object Prefs {
             .putString("user", user).putString("pass", pass).apply()
     }
 
+    /** Last audio / subtitle language picked, reused for the next video ("off" = subtitles off). */
+    fun audioLang(ctx: Context): String = p(ctx).getString("audioLang", "") ?: ""
+    fun subLang(ctx: Context): String = p(ctx).getString("subLang", "") ?: ""
+    fun subScale(ctx: Context): Float = p(ctx).getFloat("subScale", 1f)
+    fun setAudioLang(ctx: Context, v: String) = p(ctx).edit().putString("audioLang", v).apply()
+    fun setSubLang(ctx: Context, v: String) = p(ctx).edit().putString("subLang", v).apply()
+    fun setSubScale(ctx: Context, v: Float) = p(ctx).edit().putFloat("subScale", v).apply()
+
     fun position(ctx: Context, url: String): Long = p(ctx).getLong("pos:$url", 0L)
 
     /** Remembers where playback stopped; forgets it once the movie is (nearly) finished. */

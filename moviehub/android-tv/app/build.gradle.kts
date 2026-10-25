@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.moviehub.tv"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.moviehub.tv"
@@ -34,6 +34,8 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.9.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
-    implementation("androidx.media3:media3-exoplayer:1.4.1")
-    implementation("androidx.media3:media3-ui:1.4.1")
+    implementation("androidx.media3:media3-exoplayer:1.5.0")
+    implementation("androidx.media3:media3-ui:1.5.0")
+    // Software decoders for AC3 / E-AC3 / DTS / TrueHD when the TV can't decode them itself.
+    implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.5.0+1")
 }

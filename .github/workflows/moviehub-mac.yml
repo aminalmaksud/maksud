@@ -1,0 +1,36 @@
+name: MovieHub Mac app
+
+on:
+  push:
+    paths: ['moviehub/web/**', 'moviehub/mac/**', '.github/workflows/moviehub-mac.yml']
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        arch: [arm64, x64]
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: moviehub/mac
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Web tests
+        run: node test.js
+        working-directory: moviehub/web
+      - name: Install (ffmpeg for ${{ matrix.arch }})
+        run: npm install --no-audit --no-fund
+        env:
+          npm_config_arch: ${{ matrix.arch }}
+      - name: Check bundled ffmpeg matches the target
+        run: file node_modules/ffmpeg-static/ffmpeg | tee /dev/stderr | grep -q "${{ matrix.arch == 'x64' && 'x86_64' || 'arm64' }}"
+      - name: Build DMG
+        run: npx electron-builder --mac dmg --${{ matrix.arch }} --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MovieHub-mac-${{ matrix.arch == 'arm64' && 'apple-silicon' || 'intel' }}
+          path: moviehub/mac/dist/*.dmg
