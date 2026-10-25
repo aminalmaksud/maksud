@@ -1,4 +1,4 @@
-// MovieHub: serves the UI and proxies the ISP media server. Used by the Mac app (mac/) and runnable on
+// MusingsofMaksudTV: serves the UI and proxies the ISP media server. Used by the Mac app (mac/) and runnable on
 // its own: `node server.js`, then open http://localhost:8080
 import http from 'node:http';
 import fs from 'node:fs';
@@ -211,8 +211,12 @@ async function handleSearch(url, res) {
     }
     return found;
   }));
-  // Folders first (each movie usually lives in its own folder), then loose videos.
-  const items = results.flat().sort((a, b) => Number(b.isDir) - Number(a.isDir)).slice(0, 120);
+  // Folders first (each movie usually lives in its own folder), then loose videos. A video whose folder
+  // is already listed would just be the same movie twice.
+  const flat = results.flat();
+  const dirs = new Set(flat.filter((i) => i.isDir).map((i) => i.path));
+  const items = flat.filter((i) => i.isDir || !dirs.has(i.path.replace(/[^/]+$/, '')))
+    .sort((a, b) => Number(b.isDir) - Number(a.isDir)).slice(0, 120);
   json(res, 200, { items, searchable: all.some((b) => h5aiHosts.has(b.origin)) });
 }
 
@@ -358,6 +362,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  server.listen(PORT, HOST, () => console.log(`MovieHub running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`));
+  server.listen(PORT, HOST, () => console.log(`MusingsofMaksudTV running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`));
 }
 export { server };

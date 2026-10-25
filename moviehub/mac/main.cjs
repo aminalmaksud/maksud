@@ -1,4 +1,4 @@
-// MovieHub for Mac: runs the MovieHub server inside the app and shows it in a native window,
+// MusingsofMaksudTV for Mac: runs the MusingsofMaksudTV server inside the app and shows it in a native window,
 // with ffmpeg bundled so every file plays with sound.
 const { app, BrowserWindow, shell, nativeTheme } = require('electron');
 const path = require('node:path');

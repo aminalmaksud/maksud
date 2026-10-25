@@ -111,7 +111,7 @@ r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`))
 r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
 assert.deepEqual(r.items.map((i) => i.kind), ['video', 'image']);
 r = await (await get('/api/search?q=dune part')).json();
-assert.deepEqual(r.items.map((i) => i.name), ['Dune Part Two (2024) 1080p', 'Dune.Part.Two.2024.1080p.mkv']);
+assert.deepEqual(r.items.map((i) => i.name), ['Dune Part Two (2024) 1080p'], 'the movie, not also its file');
 df.close();
 console.log('all tests passed');
 server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });

@@ -1,10 +1,14 @@
-# MovieHub
+# MusingsofMaksudTV
 
 Watch the movies, TV series and anime on your ISP's media servers (BDIX / FTP-style "Index of /"
 or h5ai servers) on:
 
 - **Mac**: a real app (`mac/`). You don't need a browser or anything else installed, because ffmpeg is built in.
 - **Android TV**: a native app (`android-tv/`).
+
+The Mac app looks like Netflix: a featured title at the top, then a row of posters for every category on
+every server (English Movies, Hindi Movies, TV & Web Series, Anime…). Movie folders open straight to the
+movie, seasons open as episode lists, and the search box searches every server at once.
 
 Both apps support:
 - **Multiple libraries.** Movies, TV series and anime are often on different servers. Add them all.
@@ -15,7 +19,10 @@ Both apps support:
 
 ## Settings (both apps)
 
-**Libraries**: one server address per line. You can put a name before the address:
+**DhakaFlix users:** click **Use DhakaFlix servers** on the welcome screen (Mac) or in Settings (TV).
+That sets up Movies, Movies 1080p, TV & Web Series and Anime & Cartoons in one go.
+
+**Libraries**: one server address per line, each with a name before it:
 
 ```
 Movies | http://172.16.50.7/
@@ -26,17 +33,17 @@ Anime | http://172.16.50.14/
 To find the right addresses, open your ISP's media portal in a browser. Copy the address of each
 server or folder that holds videos.
 
-**TMDB API key** (Mac app, optional): adds real posters, ratings and plot summaries. To get one for free,
+**TMDB API key** (Mac app, recommended): adds real posters, backdrops, ratings and plot summaries. To get one for free,
 create an account at themoviedb.org, then go to Settings → API. Without a key the app still uses any
 poster images it finds on the server (`poster.jpg`, `folder.jpg`, …) and draws a colored card otherwise.
 
 ## Mac app
 
 ### Install
-1. On GitHub, open **Actions → MovieHub Mac app**, then the latest green run. Download
-   **MovieHub-mac-apple-silicon** (M1/M2/M3/M4 Macs) or **MovieHub-mac-intel** (older Macs).
+1. On GitHub, open **Actions → MusingsofMaksudTV Mac app**, then the latest green run. Download
+   **MusingsofMaksudTV-mac-apple-silicon** (M1/M2/M3/M4 Macs) or **MusingsofMaksudTV-mac-intel** (older Macs).
    To check which one you need, open  → About This Mac. It says "Chip: Apple…" or "Processor: Intel…".
-2. Unzip, open the `.dmg`, and drag **MovieHub** into **Applications**.
+2. Unzip, open the `.dmg`, and drag **MusingsofMaksudTV** into **Applications**.
 3. The first time, macOS blocks it because the app isn't from the App Store or a registered developer.
    Open it once, then go to **System Settings → Privacy & Security** and click **Open Anyway**.
    On older macOS versions, right-click the app and choose **Open** instead.
@@ -62,7 +69,7 @@ Install ffmpeg first (`brew install ffmpeg`) to get sound for every file. Tests:
 ## Android TV
 
 ### Get the APK
-- On GitHub, open **Actions → MovieHub TV APK**, then the latest green run, and download **MovieHub-TV-apk** (a zip
+- On GitHub, open **Actions → MusingsofMaksudTV Android TV APK**, then the latest green run, and download **MusingsofMaksudTV-AndroidTV-apk** (a zip
   containing `app-debug.apk`).
 - Or open `android-tv/` in Android Studio and run it on the TV over ADB.
 

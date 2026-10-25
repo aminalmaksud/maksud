@@ -1,4 +1,4 @@
-name: MovieHub Mac app
+name: MusingsofMaksudTV Mac app
 
 on:
   push:
@@ -32,5 +32,5 @@ jobs:
         run: npx electron-builder --mac dmg --${{ matrix.arch }} --publish never
       - uses: actions/upload-artifact@v4
         with:
-          name: MovieHub-mac-${{ matrix.arch == 'arm64' && 'apple-silicon' || 'intel' }}
+          name: MusingsofMaksudTV-mac-${{ matrix.arch == 'arm64' && 'apple-silicon' || 'intel' }}
           path: moviehub/mac/dist/*.dmg

@@ -1,8 +1,8 @@
 {
   "name": "moviehub",
-  "productName": "MovieHub",
+  "productName": "MusingsofMaksudTV",
   "version": "1.0.0",
-  "description": "Watch the movies and shows on your ISP media server",
+  "description": "MusingsofMaksudTV: movies, series and anime from your ISP media servers",
   "main": "main.cjs",
   "private": true,
   "scripts": {
@@ -18,8 +18,8 @@
     "electron-builder": "25.1.8"
   },
   "build": {
-    "appId": "com.moviehub.mac",
-    "productName": "MovieHub",
+    "appId": "com.musingsofmaksud.tv",
+    "productName": "MusingsofMaksudTV",
     "directories": { "output": "dist" },
     "files": ["main.cjs", "package.json", "node_modules/**/*"],
     "extraResources": [
@@ -33,6 +33,7 @@
       "identity": null,
       "target": ["dmg"]
     },
-    "dmg": { "title": "MovieHub" }
+    "dmg": { "title": "MusingsofMaksudTV" },
+    "artifactName": "MusingsofMaksudTV-${version}-${arch}.${ext}"
   }
 }
