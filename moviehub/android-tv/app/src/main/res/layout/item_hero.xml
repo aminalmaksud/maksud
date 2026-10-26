@@ -1,25 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Featured slideshow: cross-fading art, title block on the left, poster card on the right, dots and a timer line. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/hero"
     android:layout_width="match_parent"
-    android:layout_height="300dp"
+    android:layout_height="330dp"
     android:layout_margin="12dp">
 
     <ImageView
-        android:id="@+id/heroArt"
-        android:layout_width="260dp"
+        android:id="@+id/heroBackA"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="end"
+        android:layout_marginStart="300dp"
+        android:alpha="0"
         android:importantForAccessibility="no"
         android:scaleType="centerCrop" />
 
+    <ImageView
+        android:id="@+id/heroBackB"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="300dp"
+        android:alpha="0"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop" />
+
+    <!-- fades the picture into the crimson panel behind the text -->
+    <View
+        android:id="@+id/heroScrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginEnd="120dp" />
+
+    <FrameLayout
+        android:id="@+id/heroPoster"
+        android:layout_width="176dp"
+        android:layout_height="262dp"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="110dp"
+        android:elevation="16dp"
+        android:padding="4dp"
+        android:rotation="3"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/heroPosterImg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
+    </FrameLayout>
+
     <LinearLayout
+        android:id="@+id/heroText"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:orientation="vertical"
         android:paddingStart="44dp"
-        android:paddingEnd="300dp">
+        android:paddingEnd="340dp"
+        android:paddingBottom="16dp">
 
         <TextView
             android:id="@+id/eyebrow"
@@ -42,8 +81,11 @@
             android:ellipsize="end"
             android:fontFamily="@font/bebas_neue"
             android:maxLines="2"
+            android:shadowColor="#66000000"
+            android:shadowDy="3"
+            android:shadowRadius="12"
             android:textColor="@color/white"
-            android:textSize="64sp" />
+            android:textSize="62sp" />
 
         <TextView
             android:id="@+id/heroMeta"
@@ -54,19 +96,90 @@
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/heroPlay"
+            android:id="@+id/heroOverview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="#F3DEDE"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:background="@drawable/btn_primary"
-            android:focusable="true"
-            android:fontFamily="@font/bebas_neue"
-            android:paddingStart="30dp"
-            android:paddingTop="10dp"
-            android:paddingEnd="30dp"
-            android:paddingBottom="8dp"
-            android:text="@string/play"
-            android:textColor="#3A0D10"
-            android:textSize="22sp" />
+            android:clipChildren="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/heroPlay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/btn_primary"
+                android:focusable="true"
+                android:fontFamily="@font/bebas_neue"
+                android:paddingStart="30dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="30dp"
+                android:paddingBottom="8dp"
+                android:text="@string/play"
+                android:textColor="#3A0D10"
+                android:textSize="22sp" />
+
+            <TextView
+                android:id="@+id/heroList"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:focusable="true"
+                android:fontFamily="@font/bebas_neue"
+                android:paddingStart="24dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="8dp"
+                android:text="+  My List"
+                android:textColor="@color/white"
+                android:textSize="22sp" />
+
+            <TextView
+                android:id="@+id/heroPrev"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_marginStart="22dp"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="‹"
+                android:textColor="@color/white"
+                android:textSize="28sp" />
+
+            <TextView
+                android:id="@+id/heroNext"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_marginStart="10dp"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="›"
+                android:textColor="@color/white"
+                android:textSize="28sp" />
+        </LinearLayout>
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/heroDots"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_marginStart="44dp"
+        android:layout_marginBottom="20dp"
+        android:orientation="horizontal" />
+
+    <View
+        android:id="@+id/heroTimer"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:layout_gravity="bottom" />
 </FrameLayout>

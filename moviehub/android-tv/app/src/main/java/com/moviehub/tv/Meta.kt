@@ -13,7 +13,7 @@ import org.json.JSONObject
 
 /** Poster for a folder or video: an image on the server wins, then TMDB (with a key), else null (coloured card). */
 object Meta {
-    data class Info(val poster: String?, val year: Int?, val title: String)
+    data class Info(val poster: String?, val year: Int?, val title: String, val backdrop: String? = null, val overview: String = "", val rating: String = "")
 
     private val cache = ConcurrentHashMap<String, CompletableDeferred<Info>>()
     private val listCache = ConcurrentHashMap<String, CompletableDeferred<List<Entry>>>()
@@ -55,10 +55,18 @@ object Meta {
                 poster = pickImage(list(lib, parent), Names.stem(e.name))?.url
             }
         } catch (_: Exception) { }
-        if (poster == null && tmdbKey.isNotBlank() && !p.generic) {
-            poster = tmdbLimit.withPermit { withContext(Dispatchers.IO) { tmdbPoster(p, p.season != null || p.episode != null) } }
+        var hit: JSONObject? = null
+        if (tmdbKey.isNotBlank() && !p.generic) {
+            hit = try { tmdbLimit.withPermit { withContext(Dispatchers.IO) { tmdbSearch(p, p.season != null || p.episode != null) } } } catch (_: Exception) { null }
         }
-        return Info(poster, p.year, Names.displayTitle(e))
+        fun img(key: String, size: String) = hit?.optString(key).orEmpty().takeIf { it.isNotEmpty() && it != "null" }?.let { "https://image.tmdb.org/t/p/$size$it" }
+        val vote = hit?.optDouble("vote_average", 0.0) ?: 0.0
+        return Info(
+            poster ?: img("poster_path", "w342"), p.year, Names.displayTitle(e),
+            backdrop = img("backdrop_path", "w1280"),
+            overview = hit?.optString("overview").orEmpty(),
+            rating = if (vote > 0) String.format(java.util.Locale.US, "%.1f", vote) else "",
+        )
     }
 
     private fun pickImage(items: List<Entry>, stem: String?): Entry? {
@@ -68,7 +76,7 @@ object Meta {
             ?: if (stem == null) imgs.firstOrNull { !Regex("backdrop|fanart|banner|logo|thumb", RegexOption.IGNORE_CASE).containsMatchIn(it.name) } else null
     }
 
-    private fun tmdbPoster(p: ParsedName, preferTv: Boolean): String? {
+    private fun tmdbSearch(p: ParsedName, preferTv: Boolean): JSONObject? {
         fun search(kind: String, yearParam: String): JSONObject? {
             val q = URLEncoder.encode(p.title, "UTF-8")
             var u = "https://api.themoviedb.org/3/search/$kind?query=$q" + (p.year?.let { "&$yearParam=$it" } ?: "")
@@ -86,8 +94,6 @@ object Meta {
                 else JSONObject(conn.inputStream.bufferedReader().use { it.readText() }).optJSONArray("results")?.optJSONObject(0)
             } finally { conn.disconnect() }
         }
-        val hit = if (preferTv) search("tv", "first_air_date_year") ?: search("movie", "year") else search("movie", "year") ?: search("tv", "first_air_date_year")
-        val path = hit?.optString("poster_path").orEmpty()
-        return if (path.isNotEmpty() && path != "null") "https://image.tmdb.org/t/p/w342$path" else null
+        return if (preferTv) search("tv", "first_air_date_year") ?: search("movie", "year") else search("movie", "year") ?: search("tv", "first_air_date_year")
     }
 }

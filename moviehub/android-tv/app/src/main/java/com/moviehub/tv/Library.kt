@@ -7,10 +7,6 @@ import java.net.URL
 import java.net.URLDecoder
 import org.json.JSONObject
 
-enum class Kind { DIR, VIDEO, SUB, IMAGE }
-
-data class Entry(val name: String, val url: String, val kind: Kind)
-
 class LibraryException(message: String) : Exception(message)
 
 /** Reads an HTTP "Index of /" directory listing (nginx, Apache, lighttpd, caddy...). */
@@ -43,21 +39,6 @@ class Library(line: String, user: String, pass: String) {
         if (html.contains("_h5ai")) h5ai(dirUrl, dirUrl)?.let { return it }
         if (html.contains("_h5ai")) h5ai(dirUrl, URL(URL(dirUrl), "/_h5ai/public/index.php").toString())?.let { return it }
         return parse(html, dirUrl)
-    }
-
-    /**
-     * Library roots are often a lone wrapper folder ("DHAKA-FLIX-7/"); step through it so the library
-     * opens on its real categories. Returns the folder URL to show.
-     */
-    fun realRoot(): String {
-        var url = root
-        repeat(3) {
-            val items = try { list(url) } catch (e: LibraryException) { return url }
-            val dirs = items.filter { it.kind == Kind.DIR }
-            if (dirs.size != 1 || items.any { it.kind == Kind.VIDEO }) return url
-            url = dirs[0].url
-        }
-        return url
     }
 
     /** The h5ai API answers on the folder's own URL (older installs: /_h5ai/public/index.php). Null if it didn't. */
@@ -126,9 +107,9 @@ class Library(line: String, user: String, pass: String) {
         }
 
         private val HREF = Regex("""<a\s+[^>]*?href\s*=\s*(?:"([^"]*)"|'([^']*)')""", RegexOption.IGNORE_CASE)
-        val VIDEO_EXT = setOf("mkv", "mp4", "m4v", "avi", "mov", "webm", "ts", "wmv", "flv", "mpg", "mpeg")
-        val SUB_EXT = setOf("srt", "vtt")
-        val IMG_EXT = setOf("jpg", "jpeg", "png", "webp")
+        val VIDEO_EXT = Ext.VIDEO
+        val SUB_EXT = Ext.SUB
+        val IMG_EXT = Ext.IMAGE
 
         fun normalize(url: String): String {
             var u = url.trim()

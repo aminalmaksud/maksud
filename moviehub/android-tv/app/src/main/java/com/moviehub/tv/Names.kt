@@ -15,7 +15,7 @@ object Names {
 
     fun stem(name: String): String {
         val ext = name.substringAfterLast('.', "").lowercase()
-        return if (ext in Library.VIDEO_EXT || ext in Library.SUB_EXT || ext in Library.IMG_EXT) name.substringBeforeLast('.') else name
+        return if (ext in Ext.VIDEO || ext in Ext.SUB || ext in Ext.IMAGE) name.substringBeforeLast('.') else name
     }
 
     fun parse(raw: String): ParsedName {
@@ -63,6 +63,21 @@ object Names {
         val m = Regex("""\bS\d{1,2} ?E(\d{1,3})\b|\b\d{1,2}x(\d{2})\b|\b(?:ep|episode|e)[ ._-]?(\d{1,3})\b|\s-\s(\d{1,4})\b|^(\d{1,3})\b""", RegexOption.IGNORE_CASE).find(name)
         return m?.groupValues?.drop(1)?.firstOrNull { it.isNotEmpty() }?.toInt() ?: (index + 1)
     }
+
+    private val QUAL = Regex("""\b(2160p|4k|1440p|1080p|720p|576p|480p)\b""", RegexOption.IGNORE_CASE)
+    private val ANY_YEAR = Regex("""\b(?:19|20)\d{2}\b""")
+
+    /** "Breaking Bad (TV Series 2008–2013) 1080p" -> "Breaking Bad"; "(2024)" stays as it is. Kept in step with niceName in app.js. */
+    fun cleanTitle(raw: String): String {
+        val s = stem(raw).replace(Regex("[._]+"), " ").trim()
+        val t = s.replace(Regex("""\s*[(\[][^)\]]*\b(?:19|20)\d{2}\b.*$"""), "")
+            .replace(Regex("""\s(?:19|20)\d{2}\b.*$"""), "")
+            .replace(QUAL, "").trim().trimEnd('-', '–', ':', '(', '[', ' ').trim()
+        return t.ifEmpty { s }
+    }
+
+    /** The year in a name, unless the name is only a year ("(2024)"). */
+    fun yearIn(raw: String): String? = if (isYearFolder(raw)) null else ANY_YEAR.find(raw)?.value
 
     fun displayTitle(e: Entry): String {
         if (e.kind == Kind.DIR) {

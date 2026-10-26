@@ -21,6 +21,7 @@
     <string name="play">▶  Play</string>
     <string name="home">Home</string>
     <string name="continue_watching">Continue watching</string>
+    <string name="my_list">My List</string>
     <string name="tmdb_label">TMDB API key (optional, for posters). Free at themoviedb.org → Settings → API</string>
     <string name="sync">Sync</string>
     <string name="style">Style</string>

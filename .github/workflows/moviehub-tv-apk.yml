@@ -18,7 +18,10 @@ jobs:
           distribution: temurin
           java-version: '17'
       - run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug
+      # Logic tests and the screens on a fake two-server DhakaFlix (Robolectric).
+      - run: ./gradlew --no-daemon testDebugUnitTest
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: MusingsofMaksudTV-AndroidTV-apk
           path: moviehub/android-tv/app/build/outputs/apk/debug/app-debug.apk

@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -16,15 +21,12 @@
         android:paddingEnd="48dp"
         android:paddingBottom="8dp">
 
-        <TextView
+        <ImageView
             android:id="@+id/logoMark"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:fontFamily="@font/bebas_neue"
-            android:gravity="center"
-            android:text="M"
-            android:textColor="@color/gold2"
-            android:textSize="28sp" />
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/logo" />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -115,3 +117,52 @@
         android:paddingEnd="36dp"
         android:paddingBottom="40dp" />
 </LinearLayout>
+
+<!-- Mini player: Back from the player keeps the video going here. "Now playing" in the top bar brings it back. -->
+<LinearLayout
+    android:id="@+id/mini"
+    android:layout_width="336dp"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom|end"
+    android:layout_margin="28dp"
+    android:elevation="20dp"
+    android:orientation="vertical"
+    android:padding="3dp"
+    android:visibility="gone">
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/miniPlayer"
+        android:layout_width="match_parent"
+        android:layout_height="186dp"
+        android:focusable="false"
+        app:resize_mode="fit"
+        app:show_buffering="when_playing"
+        app:surface_type="texture_view"
+        app:use_controller="false" />
+
+    <TextView
+        android:id="@+id/miniTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:fontFamily="@font/bebas_neue"
+        android:paddingStart="10dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="10dp"
+        android:singleLine="true"
+        android:textColor="@color/white"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/miniHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="6dp"
+        android:singleLine="true"
+        android:text="▶ Now playing (top bar) to watch · ⏯ pauses"
+        android:textColor="@color/gold2"
+        android:textSize="12sp" />
+</LinearLayout>
+</FrameLayout>

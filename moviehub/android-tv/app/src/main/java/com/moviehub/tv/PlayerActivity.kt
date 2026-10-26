@@ -19,17 +19,12 @@ import androidx.annotation.OptIn
 import androidx.core.content.res.ResourcesCompat
 import androidx.media3.common.C
 import androidx.media3.common.Format
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.SubtitleView
@@ -46,10 +41,8 @@ class PlayerActivity : ComponentActivity() {
     private var player: ExoPlayer? = null
     private lateinit var url: String
     private var fileName = ""
-
-    // Sync, in microseconds; read live by the renderers (positive = later).
-    @Volatile private var audioSyncUs = 0L
-    @Volatile private var subSyncUs = 0L
+    /** Back shrinks the video into the corner of the home screen instead of stopping it. */
+    private var minimizing = false
     private var panelTab = "audio"
 
     private class TrackOption(val group: Tracks.Group, val index: Int, val format: Format, val label: String, val selected: Boolean)
@@ -71,8 +64,6 @@ class PlayerActivity : ComponentActivity() {
                 if (p.season != null && p.episode != null) "S${p.season} · E${p.episode}" else p.year?.toString(),
             ).joinToString(" · ")
         }
-        audioSyncUs = (Prefs.audioSync(this, url) * 1_000_000).toLong()
-        subSyncUs = (Prefs.subSync(this, url) * 1_000_000).toLong()
 
         panel.background = Ui.rounded(this, 0xF21E0A0C.toInt(), 26f, 0x55F5CF5B, 1f)
         toastView.background = Ui.rounded(this, 0xD92A070B.toInt(), 16f, 0x59F5CF5B, 1f)
@@ -80,6 +71,13 @@ class PlayerActivity : ComponentActivity() {
         findViewById<Button>(R.id.subsBtn).setOnClickListener { openPanel("subs") }
         findViewById<Button>(R.id.styleBtn).setOnClickListener { openPanel("style") }
         findViewById<Button>(R.id.syncBtn).setOnClickListener { openPanel("sync") }
+        findViewById<Button>(R.id.listBtn).apply {
+            setOnClickListener {
+                val on = Prefs.toggleList(this@PlayerActivity, listEntry())
+                toast(if (on) "Added to My List" else "Removed from My List"); updateListButton()
+            }
+        }
+        updateListButton()
         // The buttons appear and hide together with the playback controls.
         playerView.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { visibility ->
             if (panel.visibility != View.VISIBLE) trackBar.visibility = visibility
@@ -89,69 +87,44 @@ class PlayerActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        val http = DefaultHttpDataSource.Factory()
-            .setAllowCrossProtocolRedirects(true)
-            .setUserAgent("MusingsofMaksudTV/1.0")
-        intent.getStringExtra(EXTRA_AUTH)?.let { http.setDefaultRequestProperties(mapOf("Authorization" to it)) }
-
-        val stem = Names.stem(fileName)
-        val subUrls = intent.getStringArrayListExtra(EXTRA_SUB_URLS).orEmpty()
-        val subNames = intent.getStringArrayListExtra(EXTRA_SUB_NAMES).orEmpty()
-        val sideloaded = subUrls.zip(subNames).mapIndexed { i, (subUrl, name) ->
-            val mime = if (name.lowercase().endsWith(".vtt")) MimeTypes.TEXT_VTT else MimeTypes.APPLICATION_SUBRIP
-            MediaItem.SubtitleConfiguration.Builder(Uri.parse(subUrl))
-                .setMimeType(mime)
-                .setLanguage(guessLanguage(name, stem))
-                .setLabel(name)
-                // A file named like the video is switched on by default.
-                .setSelectionFlags(if (i == 0 && name.startsWith(stem, ignoreCase = true)) C.SELECTION_FLAG_DEFAULT else 0)
-                .build()
-        }
-        val item = MediaItem.Builder().setUri(Uri.parse(url)).setSubtitleConfigurations(sideloaded).build()
-
-        val renderers = SyncRenderersFactory(this, { audioSyncUs }, { subSyncUs })
-            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
-            .setEnableDecoderFallback(true)
-        val p = ExoPlayer.Builder(this, renderers)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(http))
-            .setSeekBackIncrementMs(10_000)
-            .setSeekForwardIncrementMs(10_000)
-            .build()
-
-        // Reuse the languages picked last time.
-        val params = p.trackSelectionParameters.buildUpon()
-        Prefs.audioLang(this).takeIf { it.isNotEmpty() }?.let { params.setPreferredAudioLanguage(it) }
-        when (val sub = Prefs.subLang(this)) {
-            "off" -> params.setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true)
-            "" -> {}
-            else -> params.setPreferredTextLanguage(sub)
-        }
-        p.trackSelectionParameters = params.build()
-
-        p.addListener(object : Player.Listener {
-            override fun onPlayerError(error: PlaybackException) {
-                toast("Can't play this file (${error.errorCodeName}). The TV may not support its video format.", 5000)
-            }
-            override fun onTracksChanged(tracks: Tracks) { if (panel.visibility == View.VISIBLE) buildPanel() }
-        })
-        p.setMediaItem(item, Prefs.position(this, url).let { if (it > 30_000) it else 0L })
-        p.prepare()
-        p.playWhenReady = true
+        minimizing = false
+        val p = Playback.start(this, intent.extras ?: Bundle())
+        p.addListener(listener)
+        Playback.onStopped += finishWhenStopped
         playerView.player = p
         playerView.controllerShowTimeoutMs = 4000
         playerView.requestFocus()
         player = p
     }
 
+    private val listener = object : Player.Listener {
+        override fun onPlayerError(error: PlaybackException) {
+            toast("Can't play this file (${error.errorCodeName}). The TV may not support its video format.", 5000)
+        }
+        override fun onTracksChanged(tracks: Tracks) { if (panel.visibility == View.VISIBLE) buildPanel() }
+    }
+    private val finishWhenStopped: () -> Unit = { if (!isFinishing) finish() }
+
     override fun onStop() {
         super.onStop()
-        player?.let {
-            val dur = it.duration.coerceAtLeast(0)
-            Prefs.savePosition(this, url, it.currentPosition, dur)
-            Prefs.touchRecent(this, url, fileName, keep = it.currentPosition > 30_000 && (dur == 0L || it.currentPosition < dur - 60_000))
-            it.release()
-        }
+        player?.removeListener(listener)
+        Playback.onStopped -= finishWhenStopped
+        // The home screen may already show this player in its corner; only let go of our own view.
+        if (playerView.player === player) playerView.player = null
+        if (minimizing || isChangingConfigurations) Playback.save(this) else Playback.stop(this)
         player = null
+    }
+
+    /** What "My List" saves from the player: a series (the episode's folder), or the movie itself. */
+    private fun listEntry(): Entry {
+        if (!Names.EPISODE.containsMatchIn(fileName)) return Entry(fileName, url, Kind.VIDEO)
+        val dir = url.substringBeforeLast('/') + "/"
+        return Entry(Uri.decode(dir.trimEnd('/').substringAfterLast('/')), dir, Kind.DIR)
+    }
+
+    private fun updateListButton() {
+        val on = Prefs.inList(this, listEntry().url)
+        findViewById<Button>(R.id.listBtn).text = if (on) "✓  My List" else "+  My List"
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -162,6 +135,10 @@ class PlayerActivity : ComponentActivity() {
                 return true
             }
             return super.dispatchKeyEvent(event)
+        }
+        if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+            if (event.action == KeyEvent.ACTION_UP) { minimizing = true; finish() }
+            return true
         }
         if (p != null && event.action == KeyEvent.ACTION_DOWN) {
             when (event.keyCode) {
@@ -292,14 +269,14 @@ class PlayerActivity : ComponentActivity() {
     private fun setAudioSync(v: Float) {
         val s = (Math.round(v.coerceIn(-10f, 10f) * 10) / 10f)
         Prefs.setAudioSync(this, url, s)
-        audioSyncUs = (s * 1_000_000).toLong()
+        Playback.audioSyncUs = (s * 1_000_000).toLong()
         toast("Audio ${signed(s)}"); buildPanel()
     }
 
     private fun setSubSync(v: Float) {
         val s = (Math.round(v.coerceIn(-60f, 60f) * 10) / 10f)
         Prefs.setSubSync(this, url, s)
-        subSyncUs = (s * 1_000_000).toLong()
+        Playback.subSyncUs = (s * 1_000_000).toLong()
         toast("Subtitles ${signed(s)}"); buildPanel()
     }
 
@@ -485,16 +462,6 @@ class PlayerActivity : ComponentActivity() {
         MimeTypes.AUDIO_OPUS -> "Opus"
         MimeTypes.AUDIO_FLAC -> "FLAC"
         else -> null
-    }
-
-    /** "Movie.en.srt" next to "Movie.mkv" -> "en"; anything unrecognised -> null. */
-    private fun guessLanguage(subName: String, videoStem: String): String? {
-        val rest = subName.substringBeforeLast('.').let {
-            if (it.startsWith(videoStem, ignoreCase = true)) it.substring(videoStem.length) else it
-        }.trim('.', '_', '-', ' ')
-        val token = rest.split('.', '_', '-', ' ').firstOrNull { it.isNotEmpty() }?.lowercase() ?: return null
-        val byName = mapOf("english" to "en", "eng" to "en", "bangla" to "bn", "bengali" to "bn", "ben" to "bn", "hindi" to "hi", "hin" to "hi")
-        return byName[token] ?: token.takeIf { it.length == 2 && Locale(it).getDisplayLanguage(Locale.ENGLISH) != it }
     }
 
     companion object {

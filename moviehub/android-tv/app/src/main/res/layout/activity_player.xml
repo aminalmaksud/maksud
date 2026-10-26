@@ -53,6 +53,7 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
+        <Button android:id="@+id/listBtn" style="@style/PillButton" android:layout_marginEnd="10dp" android:text="+  My List" />
         <Button android:id="@+id/audioBtn" style="@style/PillButton" android:text="@string/audio" />
         <Button android:id="@+id/subsBtn" style="@style/PillButton" android:layout_marginStart="10dp" android:text="@string/subtitles" />
         <Button android:id="@+id/styleBtn" style="@style/PillButton" android:layout_marginStart="10dp" android:text="@string/style" />

@@ -27,6 +27,9 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -39,4 +42,18 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.5.0")
     // Software decoders for AC3 / E-AC3 / DTS / TrueHD when the TV can't decode them itself.
     implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.5.0+1")
+
+    // Unit tests: plain Kotlin logic, and the real screens under Robolectric (see ScreensTest).
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("androidx.test:core:1.6.1")
+}
+
+tasks.withType<Test>().configureEach {
+    maxHeapSize = "2g"
+    testLogging {
+        showStandardStreams = true
+        events("passed", "failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
