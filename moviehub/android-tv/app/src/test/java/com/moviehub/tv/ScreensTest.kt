@@ -74,6 +74,8 @@ class ScreensTest {
     }
 
     @Before fun setUp() {
+        // Animations off (as Android's own UI tests do): the test clock stands still, so long ones never end.
+        android.animation.ValueAnimator::class.java.getMethod("setDurationScale", java.lang.Float.TYPE).invoke(null, 0f)
         // If anything hangs, say where every thread is and stop, instead of holding up the build.
         thread(isDaemon = true, name = "watchdog") {
             Thread.sleep(240_000)
@@ -172,14 +174,16 @@ class ScreensTest {
         fun navLabels() = (0 until nav.childCount).map { (nav.getChildAt(it) as TextView).text.toString() }
 
         // ---- Home: one Movies section, Continue watching, My List, slideshow
-        pumpUntil("home rows") { rows().count { it.entries != null } >= 4 && rows().all { it.entries != null || it.failed } }
+        // Only rows on screen load (like on the TV); the top ones are enough to feed the slideshow.
+        pumpUntil("home rows") { rows().count { it.dir != null && it.entries != null } >= 2 }
         pumpUntil("slideshow", 8000) { adapter.items.firstOrNull() is Item.Hero && (adapter.items[0] as Item.Hero).slides.size >= 2 }
         pump(300)
         check("nav has one Movies section", navLabels() == listOf("Home", "Movies", "TV & Web Series", "My List"), navLabels())
         val titles = rows().map { it.title }
         check("home rows", titles.take(2) == listOf("Continue watching", "My List") && titles.count { it == "English Movies" } == 1 && "Hindi Movies" in titles && titles.none { "(1080p)" in it }, titles)
-        check("rows joined: English Movies shows both servers' 2024", rows().first { it.title == "English Movies" }.entries.orEmpty().map { Names.cleanTitle(it.name) }.toSet() == setOf("Dune Part Two", "Civil War", "Furiosa"),
-            rows().first { it.title == "English Movies" }.entries?.map { it.name })
+        val englishRow = kotlinx.coroutines.runBlocking { act.rowContent(rows().first { it.title == "English Movies" }) }
+        check("rows joined: English Movies shows both servers' 2024", englishRow.first.map { Names.cleanTitle(it.name) }.toSet() == setOf("Dune Part Two", "Civil War", "Furiosa") && englishRow.second == "2024",
+            englishRow.first.map { it.name } to englishRow.second)
         val hero = adapter.items.firstOrNull() as? Item.Hero
         check("slideshow has several titles", (hero?.slides?.size ?: 0) >= 2, hero?.slides?.map { it.entry.name })
         shot("home", act.window.decorView)
