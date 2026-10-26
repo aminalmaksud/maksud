@@ -108,7 +108,17 @@ Install ffmpeg first (`brew install ffmpeg`) to get sound for every file. Tests:
 - Or use the **Send Files to TV** app.
 - Or run `adb connect <tv-ip>` and then `adb install app-debug.apk`. Turn on Developer options → USB/Network debugging on the TV first.
 
+### Using it
+The TV app works like the Mac app: one *Movies* section for Movies + Movies 1080p, a featured slideshow,
+*Continue watching* and *My List* rows, and drawn covers for titles without posters.
+
+- **Hold OK** (or press **Menu**) on any title to: play a particular quality, **add to / remove from My List**,
+  or **remove it from Continue watching** / mark it unwatched. The same works on episodes.
+- A movie that's on two servers asks which quality to play (1080p, 720p…), starting with the one you were watching.
+- **Back** in the player shrinks the video into the corner of the home screen and it keeps playing.
+  **▶ Now playing** in the top bar makes it full screen again; **■ Stop** ends it. The remote's play/pause key works too.
+
 ### Remote
-OK = play/pause and show controls · ◀ ▶ = skip 10 s · Back = up one folder / leave the player.
+OK = play/pause and show controls · ◀ ▶ = skip 10 s · Back = up one folder / shrink the player to the corner.
 While the controls are showing, press **Up** to reach the **Audio** and **Subtitles** buttons.
 The remote's Menu, Audio and Captions keys open those menus directly. Your language choices are remembered.
