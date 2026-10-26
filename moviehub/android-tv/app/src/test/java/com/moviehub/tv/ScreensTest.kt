@@ -13,9 +13,11 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ApplicationProvider
-import com.sun.net.httpserver.HttpServer
 import java.io.ByteArrayOutputStream
-import java.net.InetSocketAddress
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.net.URLDecoder
+import kotlin.concurrent.thread
 import java.net.URLEncoder
 import java.time.Duration
 import org.junit.After
@@ -38,7 +40,7 @@ import org.robolectric.shadows.ShadowDialog
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], qualifiers = "w960dp-h540dp-land-xhdpi")
 class ScreensTest {
-    private lateinit var server: HttpServer
+    private lateinit var server: ServerSocket
     private val tree = mapOf(
         "/m7/" to listOf("English Movies (1080p)/", "Animation Movies/"),
         "/m7/English Movies (1080p)/" to listOf("(2024) 1080p/", "(2023) 1080p/"),
@@ -72,22 +74,35 @@ class ScreensTest {
     }
 
     @Before fun setUp() {
-        server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
-        server.createContext("/") { ex ->
-            val path = ex.requestURI.path
-            val kids = tree[path]
-            val body = if (kids != null) {
-                "<html><body><h1>Index of $path</h1><pre><a href=\"../\">../</a>\n" + kids.joinToString("\n") { k ->
-                    val enc = k.trimEnd('/').let { URLEncoder.encode(it, "UTF-8").replace("+", "%20") } + if (k.endsWith("/")) "/" else ""
-                    "<a href=\"$enc\">$k</a>"
-                } + "</pre></body></html>"
-            } else "x"
-            val bytes = body.toByteArray()
-            ex.sendResponseHeaders(if (kids != null || !path.endsWith("/")) 200 else 404, bytes.size.toLong())
-            ex.responseBody.use { it.write(bytes) }
+        // A tiny HTTP server: nginx-style "Index of" pages for folders, a few bytes for files.
+        server = ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"))
+        thread(isDaemon = true) {
+            while (!server.isClosed) {
+                val sock = try { server.accept() } catch (e: Exception) { break }
+                thread(isDaemon = true) {
+                    sock.use { so ->
+                        val reader = so.getInputStream().bufferedReader()
+                        val request = reader.readLine().orEmpty()
+                        while (reader.readLine().let { it != null && it.isNotEmpty() }) { /* headers */ }
+                        val raw = request.split(' ').getOrElse(1) { "/" }.substringBefore('?')
+                        val path = URLDecoder.decode(raw.replace("+", "%2B"), "UTF-8")
+                        val kids = tree[path]
+                        val body = if (kids != null) {
+                            "<html><body><h1>Index of $path</h1><pre><a href=\"../\">../</a>\n" + kids.joinToString("\n") { k ->
+                                val enc = k.trimEnd('/').let { URLEncoder.encode(it, "UTF-8").replace("+", "%20") } + if (k.endsWith("/")) "/" else ""
+                                "<a href=\"$enc\">$k</a>"
+                            } + "</pre></body></html>"
+                        } else "x"
+                        val bytes = body.toByteArray()
+                        val status = if (kids != null || !path.endsWith("/")) "200 OK" else "404 Not Found"
+                        val out = so.getOutputStream()
+                        out.write("HTTP/1.1 $status\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: ${bytes.size}\r\nConnection: close\r\n\r\n".toByteArray())
+                        out.write(bytes); out.flush()
+                    }
+                }
+            }
         }
-        server.start()
-        val base = "http://127.0.0.1:${server.address.port}"
+        val base = "http://127.0.0.1:${server.localPort}"
         val ctx = ApplicationProvider.getApplicationContext<Context>()
         Prefs.saveServers(ctx, listOf("Movies 1080p | $base/m7/", "Movies | $base/m14/", "TV & Web Series | $base/tv/"), "", "")
         // Half-watched Oppenheimer (Continue watching) and Inside Out 2 saved in My List.
@@ -97,7 +112,7 @@ class ScreensTest {
         Prefs.toggleList(ctx, Entry("Inside Out 2 (2024) 1080p", "$base/m7/Animation%20Movies/Inside%20Out%202%20(2024)%201080p/", Kind.DIR))
     }
 
-    @After fun tearDown() { server.stop(0) }
+    @After fun tearDown() { server.close() }
 
     private fun pump(ms: Long = 40) { shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ms)) }
     private fun pumpUntil(what: String, timeoutMs: Long = 20_000, cond: () -> Boolean): Boolean {
