@@ -35,6 +35,11 @@ const I = {
   star: P('<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>'),
   check: P('<path d="M20 6L9 17l-5-5"/>'),
   file: P('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>'),
+  plus: P('<path d="M12 5v14M5 12h14"/>'),
+  bookmark: P('<path d="M6 3h12v18l-6-4-6 4z"/>'),
+  down: P('<path d="M6 9l6 6 6-6"/>'),
+  expand: P('<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>'),
+  undo: P('<path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/>'),
 };
 const setIcon = (el, name) => { el.innerHTML = I[name]; };
 setIcon($('backBtn'), 'back'); setIcon($('settingsBtn'), 'gear'); setIcon($('refreshBtn'), 'refresh');
@@ -51,6 +56,33 @@ const fmt = (s) => {
   const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60;
   return (h ? `${h}:${String(m).padStart(2, '0')}` : m) + ':' + String(x).padStart(2, '0');
 };
+// "Dune.Part.Two.2024.1080p.mkv" -> { title: "Dune Part Two", year: "2024", quality: "1080p" }
+const QUAL_RE = /\b(2160p|4k|1440p|1080p|720p|576p|480p)\b/i;
+function niceName(raw) {
+  const s = String(raw).replace(/\.(mkv|mp4|m4v|avi|mov|webm|ts|wmv|flv|mpg|mpeg)$/i, '').replace(/[._]+/g, ' ').trim();
+  const year = (/\b(?:19|20)\d{2}\b/.exec(s) || [''])[0];
+  const q = (QUAL_RE.exec(s) || ['', ''])[1];
+  const title = s.replace(/\s*[([][^)\]]*\b(?:19|20)\d{2}\b.*$/, '').replace(/\s(?:19|20)\d{2}\b.*$/, '').replace(QUAL_RE, '').replace(/[\s\-–:([]+$/, '').trim();
+  return { title: title || s, year: title ? year : '', quality: q.toLowerCase() === '4k' ? '4K' : q.toLowerCase() };
+}
+
+/** Cover for a title without a poster: a palette from the website, a pattern, a big serif initial and a gold frame. */
+const PALETTES = [
+  ['#a3242f', '#2a070b', '#f5cf5b'], ['#127052', '#06231a', '#f5cf5b'], ['#2f4fb0', '#0d1330', '#f0c94e'],
+  ['#6d2bb0', '#1c0a2c', '#ffc9e0'], ['#c06a1c', '#3a1708', '#ffe2a8'], ['#0e7c8c', '#05262c', '#ffd27a'],
+  ['#b0285f', '#2c0716', '#ffd0e0'], ['#7a6a16', '#1c1806', '#f5e6a0'], ['#c23b22', '#350d06', '#ffd38a'],
+];
+function coverHtml(name, { icon = I.film, cls = '' } = {}) {
+  const n = niceName(name);
+  const h = hue(n.title);
+  const [a, b, c] = PALETTES[h % PALETTES.length];
+  const mono = (n.title.match(/[\p{L}\p{N}]/u) || ['✦'])[0].toUpperCase();
+  const tags = [n.year, n.quality].filter(Boolean).map((t) => `<i>${esc(t)}</i>`).join('');
+  return `<div class="ph ${cls}" data-pat="${h % 4}" style="--a:${a};--b:${b};--c:${c}">
+    <span class="ph-mono">${esc(mono)}</span><span class="ph-frame"></span><span class="ph-ico">${icon}</span>
+    <span class="ph-text">${tags ? `<span class="ph-tags">${tags}</span>` : ''}<b>${esc(n.title)}</b></span></div>`;
+}
+
 async function api(url, opts) {
   const r = await fetch(url, opts);
   const body = await r.json().catch(() => ({}));
@@ -65,6 +97,27 @@ const store = {
 /* ---------------- watch history ---------------- */
 const history_ = store.get('history', {});
 function progressOf(path) { return history_[path]; }
+/** Progress of an item, whichever of its versions (720p, 1080p…) was watched. */
+const progressFor = (it) => (it.versions || [it]).map((v) => history_[v.path]).filter(Boolean).sort((a, b) => b.at - a.at)[0];
+function forget(path) { delete history_[path]; store.set('history', history_); }
+
+/* ---------------- My List ---------------- */
+const myList = store.get('mylist', []);
+const inList = (path) => myList.some((x) => x.path === path);
+function toggleList(it) {
+  const i = myList.findIndex((x) => x.path === it.path);
+  if (i >= 0) myList.splice(i, 1);
+  else myList.unshift({ path: it.path, name: it.name, isDir: !!it.isDir, kind: it.kind || (it.isDir ? 'dir' : 'video'), ...(it.versions ? { versions: it.versions } : {}), at: Date.now() });
+  store.set('mylist', myList);
+  const on = i < 0;
+  document.querySelectorAll('[data-list]').forEach((b) => {
+    if (b.dataset.list !== it.path) return;
+    b.classList.toggle('on', on); b.innerHTML = on ? I.check : I.plus; b.title = on ? 'Remove from My List' : 'Add to My List';
+  });
+  if (state.view === 'home') refreshHomeRows();
+  if (state.view === 'list') showList();
+  return on;
+}
 function saveProgress(item, pos, dur) {
   if (!dur || pos < 5) return;
   const done = pos > dur - Math.min(120, dur * 0.05);
@@ -97,7 +150,6 @@ async function fillCard(card) {
   // Clean title ("Oppenheimer" instead of "Oppenheimer 2023 2160p"); keep the raw name as a tooltip.
   const title = m.show && m.episode != null ? null : m.matched || m.title;
   if (title && !card.classList.contains('tile')) {
-    card.title = card.querySelector('.t').textContent;
     card.querySelector('.t').textContent = title;
     card.querySelector('.ph b').textContent = title;
   }
@@ -111,14 +163,27 @@ async function fillCard(card) {
 }
 
 /* ---------------- browsing ---------------- */
-const state = { view: '', path: '', items: [], servers: [], roots: [], config: null };
+const state = { view: '', path: '', items: [], servers: [], roots: [], groups: [], config: null };
+
+// Every item seen while browsing, and the folder it was seen in (for breadcrumbs through joined folders).
+const known = new Map(), trail = new Map();
+function remember(l) {
+  for (const it of l.items) {
+    known.set(it.path, it);
+    if (it.isDir && l.path) trail.set(it.path, { name: it.name, parent: l.path });
+  }
+}
 
 const folderCache = new Map();
 function listFolder(path, { refresh = false } = {}) {
   if (refresh) folderCache.delete(path);
   if (!folderCache.has(path)) {
     const job = api(`/api/browse?path=${enc(path)}${refresh ? '&refresh=1' : ''}`);
-    job.then((d) => { state.servers = d.servers || state.servers; state.roots = d.roots || state.roots; }, () => folderCache.delete(path));
+    job.then((d) => {
+      state.servers = d.servers || state.servers; state.roots = d.roots || state.roots; state.groups = d.groups || state.groups;
+      for (const g of state.groups) trail.set(g.root, { name: g.name, parent: null });
+      remember(d);
+    }, () => folderCache.delete(path));
     folderCache.set(path, job);
   }
   return folderCache.get(path);
@@ -151,23 +216,36 @@ async function rowContent(dirPath) {
   return { items: items.slice(0, 40), note };
 }
 
-const libraryOf = (path) => Number(path.split('/')[0]);
-const libraryName = (path) => state.servers[libraryOf(path)] || 'Library';
+// Joined folders ("v:…") list the real folders they stand for; the first one tells the section.
+const decodeV = (p) => { try { return JSON.parse(atob(p.slice(2).replace(/-/g, '+').replace(/_/g, '/'))); } catch { return null; } };
+const realPath = (p) => (String(p).startsWith('v:') ? decodeV(p)?.[0] || '' : String(p));
+function groupIdxOf(path) {
+  const p = realPath(path);
+  if (!/^\d+\//.test(p)) return -1;
+  const lib = Number(p.split('/')[0]);
+  const g = state.groups.findIndex((x) => x.libs.includes(lib));
+  return g >= 0 ? g : lib;
+}
+const libraryName = (path) => state.groups[groupIdxOf(path)]?.name || state.servers[Number(realPath(path).split('/')[0])] || 'Library';
+const listButton = (it) => `<span class="card-act add${inList(it.path) ? ' on' : ''}" role="button" data-list="${esc(it.path)}" title="${inList(it.path) ? 'Remove from My List' : 'Add to My List'}">${inList(it.path) ? I.check : I.plus}</span>`;
 
-function cardHtml(it, { wideArt = false, sub = '' } = {}) {
+function cardHtml(it, { wideArt = false, sub = '', forgettable = false } = {}) {
   const isDir = it.isDir;
   const name = isDir ? it.name : stem(it.name);
-  const prog = !isDir && progressOf(it.path);
+  const prog = !isDir && progressFor(it);
   const pct = prog && !prog.done && prog.dur ? Math.min(100, (prog.pos / prog.dur) * 100) : 0;
-  return `<button class="card${wideArt ? ' wide-art' : ''}" data-path="${esc(it.path)}"${sub ? ' data-keep-sub="1"' : ''}>
+  const quals = (it.versions || []).map((v) => v.quality).filter(Boolean);
+  return `<button class="card${wideArt ? ' wide-art' : ''}" data-path="${esc(it.path)}" title="${esc(name)}"${sub ? ' data-keep-sub="1"' : ''}>
     <div class="poster">
-      <div class="ph" style="--h:${hue(name)}"><span class="ph-ico">${isDir && !isTitleFolder(name) ? I.folder : I.film}</span><b>${esc(name)}</b></div>
+      ${coverHtml(name, { icon: isDir && !isTitleFolder(name) ? I.folder : I.film })}
       <img alt="" loading="lazy">
+      ${quals.length > 1 ? `<span class="badge q">${esc(quals.join(' · '))}</span>` : ''}
       ${prog?.done ? `<span class="badge done">${I.check}Watched</span>` : ''}
       ${pct ? `<div class="progress"><i style="width:${pct}%"></i></div>` : ''}
       <div class="hover-play"><span>${I.play}</span></div>
+      ${forgettable ? `<span class="card-act x" role="button" data-forget="${esc(it.path)}" title="Remove from Continue watching">${I.close}</span>` : listButton(it)}
     </div>
-    <div class="cap"><div class="t">${esc(name)}</div><div class="s">${esc(sub)}</div></div>
+    <div class="cap"><div class="t">${esc(niceName(name).title)}</div><div class="s">${esc(sub || niceName(name).year)}</div></div>
   </button>`;
 }
 
@@ -214,7 +292,7 @@ async function fillRow(section) {
     if (note) section.querySelector('.row-head').insertAdjacentHTML('beforeend', `<small>Newest · ${esc(note)}</small>`);
     scroller.innerHTML = items.map((it) => cardHtml(it)).join('');
     scroller.querySelectorAll('.card').forEach((c) => lazy.observe(c));
-    pickHero(items);
+    heroOffer(items);
   } catch {
     section.remove();
   }
@@ -227,43 +305,88 @@ document.addEventListener('click', (e) => {
   sc.scrollBy({ left: (arrow.classList.contains('left') ? -1 : 1) * sc.clientWidth * 0.85, behavior: 'smooth' });
 });
 
-/* ----- hero ----- */
-// Featured title: rows finish loading in any order, so gather candidates from all of them and prefer one
-// with a backdrop, then a poster; failing both, the crimson panel still features the first title.
-let heroItem = null, heroPending = false, heroFallback = null;
-const heroQueue = [];
-async function pickHero(items) {
-  if (state.view !== 'home' || heroItem) return;
-  heroQueue.push(...items.slice(0, 8));
-  if (heroPending) return;
-  heroPending = true;
+/* ----- hero: a slideshow of featured titles ----- */
+// Rows finish loading in any order; each offers a few random titles. Titles with a backdrop make the best
+// slides, then ones with a poster; plain covers fill in only when nothing else has art.
+const HERO_MAX = 8;
+const hero = { slides: [], i: -1, queue: [], busy: false, plain: [], epoch: 0 };
+let heroItem = null;
+const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+async function heroOffer(items) {
+  if (state.view !== 'home') return;
+  hero.queue.push(...shuffle(items.filter((i) => i.isDir || i.kind === 'video').slice(0, 12)).slice(0, 3));
+  if (hero.busy) return;
+  hero.busy = true;
+  const epoch = hero.epoch;
   try {
-    while (heroQueue.length && !heroItem && state.view === 'home') {
-      const it = heroQueue.shift();
+    while (hero.queue.length && hero.slides.length < HERO_MAX) {
+      const it = hero.queue.shift();
+      if (hero.slides.some((x) => x.it.path === it.path)) continue;
       const m = await meta(it.path);
-      if (state.view !== 'home' || heroItem) return;
-      if (m?.backdrop) { showHero(it, m); return; }
-      if (m?.poster && !heroFallback?.m?.poster) heroFallback = { it, m };
-      else if (m && !heroFallback) heroFallback = { it, m };
+      if (epoch !== hero.epoch || state.view !== 'home') return;
+      if (m?.backdrop || m?.poster) addSlide(it, m);
+      else hero.plain.push({ it, m: m || {} });
     }
-    if (!heroItem && heroFallback && state.view === 'home') showHero(heroFallback.it, heroFallback.m);
-  } finally { heroPending = false; }
+    // No art anywhere yet: show covers so the panel is never empty.
+    while (hero.slides.length < 3 && hero.plain.length) addSlide(...Object.values(hero.plain.shift()));
+  } finally { if (epoch === hero.epoch) hero.busy = false; }
 }
-function showHero(it, m) {
+
+function addSlide(it, m) {
+  const art = m.backdrop || '';
+  const el = document.createElement('div');
+  el.className = 'hero-slide' + (art ? '' : ' soft');
+  if (art || m.poster) el.style.backgroundImage = `url("${art || m.poster}")`;
+  $('heroArt').append(el);
+  hero.slides.push({ it, m, el });
+  $('heroDots').innerHTML = hero.slides.map((_, i) => `<button data-slide="${i}" aria-label="Slide ${i + 1}"${i === hero.i ? ' class="on"' : ''}></button>`).join('');
+  $('hero').classList.toggle('multi', hero.slides.length > 1);
+  if (hero.i < 0) showSlide(0);
+}
+
+function showSlide(i) {
+  if (!hero.slides.length) return;
+  i = (i + hero.slides.length) % hero.slides.length;
+  const first = hero.i < 0;
+  hero.i = i;
+  const { it, m, el } = hero.slides[i];
   heroItem = it;
-  $('heroTitle').textContent = m.matched || m.title || it.name;
-  $('heroMeta').innerHTML = [m.year, m.rating && `<span class="star">★</span> ${m.rating}`, esc(libraryName(it.path))].filter(Boolean).join('  ·  ');
-  $('heroOverview').textContent = m.overview || '';
-  const art = m.backdrop || m.poster;
-  $('heroArt').style.backgroundImage = art ? `url("${art}")` : '';
-  $('heroArt').classList.toggle('soft', !m.backdrop);
-  $('heroPlay').innerHTML = `${I.play}Play`;
+  hero.slides.forEach((s) => s.el.classList.toggle('on', s.el === el));
+  $('heroDots').querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+  const text = $('heroText');
+  const fill = () => {
+    $('heroTitle').textContent = m.matched || m.title || niceName(it.name).title;
+    $('heroMeta').innerHTML = [m.year || niceName(it.name).year, m.rating && `<span class="star">★</span> ${m.rating}`, esc(libraryName(it.path))].filter(Boolean).join('  ·  ');
+    $('heroOverview').textContent = m.overview || '';
+    $('heroPlay').innerHTML = `${I.play}Play`;
+    $('heroList').innerHTML = inList(it.path) ? `${I.check}My List` : `${I.plus}My List`;
+    $('heroList').dataset.list = it.path;
+    // Without a backdrop the poster (or a cover) stands on the right, like a book on a shelf.
+    $('heroPoster').innerHTML = m.backdrop ? '' : m.poster ? `<img src="${esc(m.poster)}" alt="">` : coverHtml(it.name);
+    $('heroPoster').hidden = !!m.backdrop;
+    text.classList.remove('out');
+  };
+  if (first) fill(); else { text.classList.add('out'); setTimeout(fill, 260); }
+  // Restart the progress line; when it finishes the next slide comes in (hovering pauses it).
+  const bar = $('heroTimer');
+  bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = '';
   $('hero').hidden = false;
   document.body.classList.add('has-hero');
 }
-function hideHero() { heroItem = null; heroFallback = null; heroQueue.length = 0; $('hero').hidden = true; document.body.classList.remove('has-hero'); }
+$('heroTimer').addEventListener('animationend', () => { if (hero.slides.length > 1 && state.view === 'home') showSlide(hero.i + 1); });
+$('heroPrev').onclick = () => showSlide(hero.i - 1);
+$('heroNext').onclick = () => showSlide(hero.i + 1);
+$('heroDots').addEventListener('click', (e) => { const b = e.target.closest('[data-slide]'); if (b) showSlide(Number(b.dataset.slide)); });
+function hideHero() {
+  hero.epoch++; hero.slides = []; hero.i = -1; hero.queue = []; hero.plain = []; hero.busy = false; heroItem = null;
+  $('heroArt').innerHTML = ''; $('heroDots').innerHTML = ''; $('hero').hidden = true; $('hero').classList.remove('multi');
+  document.body.classList.remove('has-hero');
+}
 $('heroPlay').onclick = () => heroItem && activate(heroItem, { play: true });
 $('heroInfo').onclick = () => heroItem && activate(heroItem);
+$('heroList').onclick = () => { if (heroItem) { const on = toggleList(heroItem); $('heroList').innerHTML = `${on ? I.check : I.plus}My List`; } };
+setIcon($('heroPrev'), 'back'); setIcon($('heroNext'), 'back');
 
 /* ----- views ----- */
 function resetView(view) {
@@ -273,15 +396,35 @@ function resetView(view) {
   $('folderHead').hidden = view === 'home';
   $('welcome').hidden = true;
   if (view !== 'search') $('filter').value = ''; // a search left in the box must not hide a folder's contents
-  if (view !== 'home') hideHero();
+  hideHero();
   window.scrollTo({ top: 0 });
 }
 
+const continueList = () => Object.values(history_).filter((h) => !h.done && h.pos > 30).sort((a, b) => b.at - a.at).slice(0, 15);
 function continueRowHtml() {
-  const list = Object.values(history_).filter((h) => !h.done && h.pos > 30).sort((a, b) => b.at - a.at).slice(0, 15);
+  const list = continueList();
   if (!list.length) return '';
-  return `<section class="row continue"><div class="row-head"><span class="row-ico" style="--c:#d4a33f">${I.play}</span><h2 class="row-title">Continue watching</h2></div>
-    <div class="row-wrap"><div class="row-scroll wide">${list.map((h) => cardHtml({ name: h.name, path: h.path, isDir: false, kind: 'video' }, { wideArt: true, sub: `${fmt(h.dur - h.pos)} left` })).join('')}</div></div></section>`;
+  return `<section class="row continue"><div class="row-head"><span class="row-ico" style="--c:#d4a33f">${I.play}</span><h2 class="row-title">Continue watching</h2><small class="hint-x">Hover a title and press × to remove it</small></div>
+    <div class="row-wrap"><div class="row-scroll wide">${list.map((h) => cardHtml({ name: h.name, path: h.path, isDir: false, kind: 'video' }, { wideArt: true, sub: `${fmt(h.dur - h.pos)} left`, forgettable: true })).join('')}</div></div></section>`;
+}
+function myListRowHtml() {
+  if (!myList.length) return '';
+  myList.forEach((x) => { if (!known.has(x.path)) known.set(x.path, x); });
+  return `<section class="row mylist"><div class="row-head"><span class="row-ico" style="--c:#e23d6d">${I.bookmark}</span><a class="row-title" href="#/list">My List<span class="see-all">See all ›</span></a><small>${myList.length}</small></div>
+    <div class="row-wrap"><button class="row-arrow left" aria-label="Scroll left">${I.back}</button><div class="row-scroll">${myList.slice(0, 30).map((x) => cardHtml(x)).join('')}</div><button class="row-arrow right" aria-label="Scroll right">${I.back}</button></div></section>`;
+}
+/** Re-draws "Continue watching" and "My List" on Home in place. */
+function refreshHomeRows() {
+  if (state.view !== 'home') return;
+  for (const [sel, html] of [['.continue', continueRowHtml()], ['.mylist', myListRowHtml()]]) {
+    const old = document.querySelector(`#rows ${sel}`);
+    if (old) { if (html) old.outerHTML = html; else old.remove(); }
+    else if (html) {
+      const after = sel === '.mylist' && document.querySelector('#rows .continue');
+      if (after) after.insertAdjacentHTML('afterend', html); else $('rows').insertAdjacentHTML('afterbegin', html);
+    }
+  }
+  $('rows').querySelectorAll('.continue .card, .mylist .card').forEach((c) => lazy.observe(c));
 }
 
 async function showHome() {
@@ -295,23 +438,40 @@ async function showHome() {
   try { libs = await listFolder(''); } catch (e) { $('status').textContent = e.message; $('status').className = 'error'; return; }
   if (state.view !== 'home') return;
   renderNav();
-  const roots = state.roots.length ? state.roots : [libs.path];
-  const listings = await Promise.all(roots.map((r) => listFolder(r).catch(() => null)));
+  // One block of rows per section; libraries that share a name ("Movies", "Movies 1080p") are one section.
+  const groups = state.groups.length ? state.groups : [{ name: 'Library', root: libs.path }];
+  const listings = await Promise.all(groups.map((g) => listFolder(g.root).catch(() => null)));
   if (state.view !== 'home') return;
   $('status').textContent = '';
-  let html = continueRowHtml();
+  let html = continueRowHtml() + myListRowHtml();
   listings.forEach((l, i) => {
-    if (!l) { html += `<p class="status error">Can’t reach “${esc(state.servers[i] || 'library')}” right now.</p>`; return; }
+    const g = groups[i];
+    if (!l) { html += `<p class="status error">Can’t reach “${esc(g.name)}” right now.</p>`; return; }
     if (isCategoryFolder(l.items)) {
-      for (const d of sortCategories(l.items.filter((x) => x.isDir))) html += rowShell({ title: d.name, sub: roots.length > 1 ? state.servers[i] : '', path: d.path });
+      for (const d of sortCategories(l.items.filter((x) => x.isDir))) html += rowShell({ title: d.name, sub: groups.length > 1 ? g.name : '', path: d.path });
     } else {
-      html += rowShell({ title: state.servers[i] || 'Library', path: l.path });
+      html += rowShell({ title: g.name, path: l.path });
     }
   });
   $('rows').innerHTML = html;
   $('rows').querySelectorAll('.row[data-row]').forEach((r) => rowObserver.observe(r));
-  $('rows').querySelectorAll('.continue .card').forEach((c2) => lazy.observe(c2));
-  pickHero([...Object.values(history_)].filter((h) => !h.done && h.pos > 30).map((h) => ({ name: h.name, path: h.path, isDir: false, kind: 'video' })));
+  $('rows').querySelectorAll('.continue .card, .mylist .card').forEach((c2) => lazy.observe(c2));
+  heroOffer(myList.slice(0, 6));
+}
+
+function showList() {
+  resetView('list');
+  renderNav();
+  $('crumbs').innerHTML = '<a href="#/">Home</a>';
+  $('folderTitle').textContent = 'My List';
+  $('folderSub').textContent = myList.length ? `${myList.length} saved for later` : '';
+  $('folderHead').style.setProperty('--panel', PANELS[4]);
+  $('backBtn').hidden = false;
+  myList.forEach((x) => { if (!known.has(x.path)) known.set(x.path, x); });
+  gridItems = myList.slice(); gridSub = (it) => (it.isDir ? libraryName(it.path) : '');
+  $('grid').innerHTML = gridItems.map((it) => cardHtml(it, { sub: gridSub(it) })).join('');
+  $('grid').querySelectorAll('.card').forEach((c) => lazy.observe(c));
+  $('status').textContent = myList.length ? '' : 'Nothing saved yet. Press + on any poster, or “My List” on a movie, to keep it here for later.';
 }
 
 async function showFolder(path, { refresh = false } = {}) {
@@ -349,6 +509,7 @@ async function showSearch(q) {
     }
     $('status').textContent = r.items.length ? '' : 'Nothing found. Try fewer words, or the original title.';
     $('folderSub').textContent = r.items.length ? `${r.items.length} result${r.items.length > 1 ? 's' : ''}` : '';
+    remember({ path: '', items: r.items });
     renderGrid(r.items, { sub: (it) => it.library || '' });
   } catch (e) { $('status').textContent = e.message; $('status').className = 'error'; }
 }
@@ -381,11 +542,11 @@ function renderGrid(items, { sub = null } = {}) {
   grid.className = episodes ? 'list' : '';
   if (episodes) {
     grid.innerHTML = videos.map((v, i) => {
-      const p = progressOf(v.path);
+      const p = progressFor(v);
       const pct = p && !p.done && p.dur ? (p.pos / p.dur) * 100 : 0;
       return `<button class="ep" data-path="${esc(v.path)}"><span class="num">${epNumber(v.name, i)}</span>
         <span><div class="t">${esc(epTitle(v.name, i))}</div><div class="s">${p?.done ? 'Watched' : pct ? `${fmt(p.dur - p.pos)} left` : esc(stem(v.name))}</div></span>
-        <span>${p?.done ? `<span class="check">${I.check}</span>` : pct ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}</span></button>`;
+        <span class="ep-end">${p?.done ? `<span class="check">${I.check}</span>` : pct ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}${p ? `<span class="ep-x" role="button" data-forget="${esc(p.path)}" title="${p.done ? 'Mark as unwatched' : 'Remove progress'}">${I.undo}</span>` : ''}</span></button>`;
     }).join('');
   } else {
     grid.innerHTML = visible.map((it) => cardHtml(it, { sub: sub ? sub(it) : '' })).join('');
@@ -396,24 +557,41 @@ function renderGrid(items, { sub = null } = {}) {
 const render = () => { if (state.view === 'folder' || state.view === 'search') renderGrid(gridItems, { sub: gridSub }); };
 
 function renderNav() {
-  const roots = state.roots;
-  const cur = state.view === 'home' ? -1 : state.view === 'folder' ? libraryOf(state.path) : -2;
+  const cur = state.view === 'home' ? -1 : state.view === 'folder' ? groupIdxOf(state.path) : -2;
   $('nav').innerHTML = `<a href="#/" class="${cur === -1 ? 'on' : ''}">Home</a>` +
-    state.servers.map((name, i) => `<a data-go="${esc(roots[i] || `${i}/`)}" class="${cur === i ? 'on' : ''}">${esc(name)}</a>`).join('') +
+    state.groups.map((g, i) => `<a data-go="${esc(g.root)}" class="${cur === i ? 'on' : ''}">${esc(g.name)}</a>`).join('') +
+    `<a href="#/list" class="${state.view === 'list' ? 'on' : ''}">My List</a>` +
     (state.config?.downloads ? `<a href="#/downloads" class="${state.view === 'downloads' ? 'on' : ''}">⬇ Downloads</a>` : '');
 }
 
 function renderHead() {
-  const idx = libraryOf(state.path);
-  const root = state.roots[idx] || `${idx}/`;
-  const crumbs = [['Home', null], [state.servers[idx] || 'Library', root]];
-  if (state.path.startsWith(root)) {
-    let acc = root;
-    for (const seg of state.path.slice(root.length).split('/').filter(Boolean)) { acc += seg + '/'; crumbs.push([decodeURIComponent(seg), acc]); }
+  const idx = groupIdxOf(state.path);
+  const g = state.groups[idx];
+  // Walk up through the folders this one was opened from; joined folders have no path of their own to split.
+  let crumbs = [];
+  for (let p = state.path, n = 0; p && n < 30; n++) {
+    const t = trail.get(p);
+    if (!t) { crumbs = null; break; }
+    crumbs.unshift([t.name, p]);
+    if (!t.parent) break;
+    p = t.parent;
   }
+  if (!crumbs || !crumbs.length || trail.get(crumbs[0][1])?.parent) {
+    // Opened directly (e.g. after a restart): rebuild from the real path under its library.
+    const lib = Number(realPath(state.path).split('/')[0]);
+    const root = state.roots[lib] || `${lib}/`;
+    const path = realPath(state.path);
+    crumbs = [[g?.name || state.servers[lib] || 'Library', g?.root || root]];
+    if (path.startsWith(root)) {
+      let acc = root;
+      for (const seg of path.slice(root.length).split('/').filter(Boolean)) { acc += seg + '/'; crumbs.push([decodeURIComponent(seg), acc]); }
+    }
+    if (state.path.startsWith('v:')) crumbs[crumbs.length - 1][1] = state.path;
+  }
+  crumbs.unshift(['Home', null]);
   $('crumbs').innerHTML = crumbs.slice(0, -1).map(([l, p]) => (p ? `<a data-go="${esc(p)}">${esc(l)}</a>` : `<a href="#/">${esc(l)}</a>`)).join('<span>›</span>');
   $('folderTitle').textContent = crumbs[crumbs.length - 1][0];
-  $('folderHead').style.setProperty('--panel', PANELS[idx % PANELS.length]);
+  $('folderHead').style.setProperty('--panel', PANELS[Math.max(0, idx) % PANELS.length]);
   const dirs = state.items.filter((i) => i.isDir).length, vids = state.items.filter((i) => i.kind === 'video').length;
   $('folderSub').textContent = [dirs && `${dirs} folder${dirs > 1 ? 's' : ''}`, vids && `${vids} video${vids > 1 ? 's' : ''}`].filter(Boolean).join(' · ');
   $('backBtn').hidden = false;
@@ -427,6 +605,7 @@ function route({ refresh = false } = {}) {
   if (h.startsWith('f/')) return showFolder(decodeURIComponent(h.slice(2)), { refresh });
   if (h.startsWith('search/')) return showSearch(decodeURIComponent(h.slice(7)));
   if (h === 'downloads') return showDownloads();
+  if (h === 'list') return showList();
   return showHome();
 }
 window.addEventListener('hashchange', () => route());
@@ -465,10 +644,13 @@ async function activate(item, { play = false } = {}) {
 
 function findItem(path) {
   for (const list of [gridItems, state.items]) { const it = list.find((i) => i.path === path); if (it) return it; }
+  if (known.has(path)) return known.get(path);
   const h = history_[path];
   if (h) return { name: h.name, path, isDir: false, kind: 'video' };
-  const name = decodeURIComponent(path.replace(/\/$/, '').split('/').pop());
-  return { name, path, isDir: path.endsWith('/'), kind: path.endsWith('/') ? 'dir' : 'video' };
+  const real = realPath(path);
+  const name = decodeURIComponent(real.replace(/\/$/, '').split('/').pop());
+  const dir = real.endsWith('/');
+  return { name, path, isDir: dir, kind: dir ? 'dir' : 'video' };
 }
 document.addEventListener('click', (e) => {
   const el = e.target.closest('.card[data-path], .ep[data-path]');
@@ -477,6 +659,26 @@ document.addEventListener('click', (e) => {
   if (el.classList.contains('ep') || el.closest('.continue')) return startPlayback(item);
   activate(item);
 });
+
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-list]:not(#heroList), [data-forget]');
+  if (!b) return;
+  e.stopPropagation(); e.preventDefault();
+  if (b.dataset.list) {
+    const it = findItem(b.dataset.list);
+    toast2(toggleList(it) ? 'Added to My List' : 'Removed from My List');
+  } else {
+    forget(b.dataset.forget);
+    toast2('Removed from Continue watching');
+    if (state.view === 'home') refreshHomeRows(); else render();
+  }
+}, true);
+/** A small note at the bottom of the window (the player has its own toast). */
+let toast2Timer = 0;
+function toast2(msg) {
+  const t = $('note'); t.textContent = msg; t.hidden = false; t.classList.remove('out');
+  clearTimeout(toast2Timer); toast2Timer = setTimeout(() => t.classList.add('out'), 1800);
+}
 
 /* ---------------- downloads (Mac app) ---------------- */
 const fmtBytes = (n) => (n >= 1e9 ? (n / 1e9).toFixed(2) + ' GB' : n >= 1e6 ? (n / 1e6).toFixed(0) + ' MB' : Math.round(n / 1e3) + ' KB');
@@ -531,19 +733,41 @@ document.addEventListener('click', async (e) => {
 }, true);
 
 /* ---------------- details sheet ---------------- */
-let detailsItem = null, detailsFolder = null;
-async function showDetails(item, { metaPath = item.path, folder = null } = {}) {
-  detailsItem = item; detailsFolder = folder;
+let detailsItem = null, detailsFolder = null, detailsVersion = 0;
+/** The file to play: the chosen version (720p, 1080p…) of the movie in the sheet. */
+function detailsPlayable() {
+  const v = detailsItem?.versions?.[detailsVersion];
+  return v ? { ...detailsItem, path: v.path, name: v.name } : detailsItem;
+}
+function renderDetailsActions() {
+  const item = detailsPlayable();
+  const vs = detailsItem.versions || [];
+  // Resume the version that was being watched, if it's another one.
   const p = progressOf(item.path);
-  const name = folder ? folder.name : stem(item.name);
-  $('dTitle').textContent = name;
-  $('dMeta').textContent = ''; $('dOverview').textContent = ''; $('dFile').textContent = item.name;
-  const h0 = hue(name);
-  $('dHero').style.backgroundImage = `radial-gradient(120% 140% at 10% 0%, hsl(${h0} 50% 30%), hsl(${h0 + 40} 40% 12%) 70%)`;
-  $('dPoster').innerHTML = `<div class="ph" style="--h:${h0}"><span class="ph-ico">${I.film}</span><b>${esc(name)}</b></div>`;
   const resume = p && !p.done && p.pos > 30;
   $('dPlay').innerHTML = `${I.play}${resume ? `Resume from ${fmt(p.pos)}` : 'Play'}`;
   $('dRestart').hidden = !resume;
+  $('dForget').hidden = !p;
+  $('dForget').innerHTML = `${I.undo}${p?.done ? 'Mark as unwatched' : 'Remove from Continue watching'}`;
+  $('dVersions').hidden = vs.length < 2;
+  $('dVersions').innerHTML = vs.length < 2 ? '' : `<span>Quality</span>${vs.map((v, i) => `<button class="chip${i === detailsVersion ? ' on' : ''}" data-ver="${i}" title="${esc(v.name)}">${esc(v.quality)}${history_[v.path] && !history_[v.path].done ? ' ·<small>in progress</small>' : ''}</button>`).join('')}`;
+  const listIt = detailsFolder || detailsItem;
+  $('dList').innerHTML = inList(listIt.path) ? `${I.check}In My List` : `${I.plus}My List`;
+  $('dList').classList.toggle('on', inList(listIt.path));
+  $('dFile').textContent = item.name;
+}
+async function showDetails(item, { metaPath = item.path, folder = null } = {}) {
+  detailsItem = item; detailsFolder = folder;
+  // Start on the version last watched, else the best one.
+  const vs = item.versions || [];
+  detailsVersion = Math.max(0, vs.findIndex((v) => v.path === progressFor(item)?.path));
+  const name = folder ? folder.name : stem(item.name);
+  $('dTitle').textContent = niceName(name).title;
+  $('dMeta').textContent = ''; $('dOverview').textContent = '';
+  const [a, b] = PALETTES[hue(niceName(name).title) % PALETTES.length];
+  $('dHero').style.backgroundImage = `radial-gradient(120% 140% at 10% 0%, ${a}, ${b} 70%)`;
+  $('dPoster').innerHTML = coverHtml(name);
+  renderDetailsActions();
   $('dFolder').hidden = !folder;
   $('dDownload').hidden = !state.config?.downloads || item.path.startsWith('local/');
   $('dDownload').innerHTML = `${I.download}Download`;
@@ -562,11 +786,18 @@ async function showDetails(item, { metaPath = item.path, folder = null } = {}) {
 }
 const closeDetails = () => { $('details').hidden = true; detailsItem = null; };
 $('details').addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeDetails(); });
-$('dPlay').onclick = () => { const it = detailsItem; closeDetails(); startPlayback(it); };
-$('dRestart').onclick = () => { const it = detailsItem; closeDetails(); startPlayback(it, { from: 0 }); };
+$('dPlay').onclick = () => { const it = detailsPlayable(); closeDetails(); startPlayback(it); };
+$('dRestart').onclick = () => { const it = detailsPlayable(); closeDetails(); startPlayback(it, { from: 0 }); };
+$('dVersions').addEventListener('click', (e) => { const b = e.target.closest('[data-ver]'); if (b) { detailsVersion = Number(b.dataset.ver); renderDetailsActions(); } });
+$('dList').onclick = () => { toggleList(detailsFolder || detailsItem); renderDetailsActions(); };
+$('dForget').onclick = () => {
+  forget(detailsPlayable().path);
+  renderDetailsActions();
+  if (state.view === 'home') refreshHomeRows(); else render();
+};
 $('dFolder').onclick = () => { const f = detailsFolder; closeDetails(); if (f) go(f.path); };
 $('dDownload').onclick = async () => {
-  const r = await downloadItem(detailsItem);
+  const r = await downloadItem(detailsPlayable());
   if (r) { $('dDownload').innerHTML = `${I.check}Downloading — see Downloads`; }
 };
 
@@ -641,7 +872,7 @@ const S = {
   subs: { id: 'off', label: 'Off', cues: [], delay: 0 }, subOptions: [], subTab: 'tracks', pendingSeek: null, seekTimer: 0, saveTick: 0,
 };
 
-['pClose:back', 'pPlay:play', 'pBack:rew', 'pFwd:fwd', 'pNext:next', 'pMute:vol', 'pPip:pip', 'pFull:full', 'pDownload:download'].forEach((p) => { const [id, ic] = p.split(':'); setIcon($(id), ic); });
+['pClose:down', 'mExpand:expand', 'mClose:close', 'pPlay:play', 'pBack:rew', 'pFwd:fwd', 'pNext:next', 'pMute:vol', 'pPip:pip', 'pFull:full', 'pDownload:download'].forEach((p) => { const [id, ic] = p.split(':'); setIcon($(id), ic); });
 
 const now = () => (S.pendingSeek ?? (S.mode === 'remux' ? S.offset + video.currentTime : video.currentTime));
 const duration = () => S.duration || (Number.isFinite(video.duration) ? video.duration : 0);
@@ -663,7 +894,7 @@ async function startPlayback(item, { from } = {}) {
   S.subs = { id: 'off', label: 'Off', cues: [], delay: sync.s };
   $('pTitle').textContent = stem(item.name); $('pSub').textContent = '';
   banner(''); $('upNext').hidden = true;
-  player.hidden = false; player.classList.add('loading');
+  player.hidden = false; player.classList.remove('mini'); player.classList.add('loading');
   document.body.style.overflow = 'hidden';
   poke();
   meta(item.path).then((m) => {
@@ -753,24 +984,41 @@ function seekTo(t, { immediate = false } = {}) {
 }
 const skip = (s) => { seekTo(now() + s); toast(`${s > 0 ? '+' : '−'}${Math.abs(s)} s`, 600); };
 
+/** Stops playback and closes the player (the × on the mini player). */
 function closePlayer() {
   if (S.item) saveProgress(S.item, now(), duration());
   closeMenu();
   S.item = null;
+  clearTimeout(upNextTimer); $('upNext').hidden = true;
   video.pause(); video.removeAttribute('src'); video.load();
-  player.hidden = true; document.body.style.overflow = '';
+  player.hidden = true; player.classList.remove('mini'); document.body.style.overflow = '';
   if (document.fullscreenElement) document.exitFullscreen();
   $('subLayer').firstElementChild.textContent = '';
   refreshAfterPlayback();
 }
 
+/** Back / Esc: the video keeps playing in a small window in the corner while you browse. */
+const playerFull = () => !player.hidden && !player.classList.contains('mini');
+function minimizePlayer() {
+  if (!S.item) return closePlayer();
+  saveProgress(S.item, now(), duration());
+  closeMenu();
+  if (document.fullscreenElement) document.exitFullscreen();
+  player.classList.add('mini'); player.classList.remove('idle');
+  document.body.style.overflow = '';
+  $('mTitle').textContent = $('pTitle').textContent;
+  updateButtons();
+  refreshAfterPlayback();
+}
+function expandPlayer() {
+  player.classList.remove('mini');
+  document.body.style.overflow = 'hidden';
+  poke();
+}
+
 /** Progress bars and "Continue watching" reflect what was just watched. */
 function refreshAfterPlayback() {
-  if (state.view !== 'home') return render();
-  const old = document.querySelector('#rows .continue');
-  const html = continueRowHtml();
-  if (old) old.outerHTML = html; else if (html) $('rows').insertAdjacentHTML('afterbegin', html);
-  $('rows').querySelectorAll('.continue .card').forEach((c) => lazy.observe(c));
+  if (state.view === 'home') refreshHomeRows(); else render();
 }
 
 function nextItem() {
@@ -828,6 +1076,11 @@ function showUpNext(n) {
 
 function updateButtons() {
   setIcon($('pPlay'), video.paused ? 'play' : 'pause');
+  setIcon($('mPlay'), video.paused ? 'play' : 'pause');
+  const listed = S.item && inList(playerListItem().path);
+  setIcon($('pList'), listed ? 'check' : 'plus');
+  $('pList').title = listed ? 'In My List' : 'Add to My List';
+  $('pList').classList.toggle('on', !!listed);
   setIcon($('pMute'), video.muted || video.volume === 0 ? 'mute' : 'vol');
   setIcon($('pFull'), document.fullscreenElement ? 'unfull' : 'full');
   $('pNext').hidden = !nextItem();
@@ -847,6 +1100,7 @@ function updateTime() {
   const pct = d ? (t / d) * 100 : 0;
   $('seekPlayed').style.width = pct + '%';
   $('seekKnob').style.left = pct + '%';
+  $('mBar').style.width = pct + '%';
   let buf = 0;
   if (video.buffered.length) buf = (S.mode === 'remux' ? S.offset : 0) + video.buffered.end(video.buffered.length - 1);
   $('seekBuf').style.width = d ? Math.min(100, (buf / d) * 100) + '%' : '0';
@@ -878,7 +1132,23 @@ $('pPlay').onclick = togglePlay;
 $('pBack').onclick = () => skip(-10);
 $('pFwd').onclick = () => skip(10);
 $('pNext').onclick = () => { const n = nextItem(); if (n) { saveProgress(S.item, now(), duration()); startPlayback(n, { from: 0 }); } };
-$('pClose').onclick = closePlayer;
+$('pClose').onclick = minimizePlayer;
+$('mExpand').onclick = expandPlayer;
+$('mClose').onclick = closePlayer;
+$('mPlay').onclick = () => togglePlay();
+$('pList').onclick = () => {
+  if (!S.item) return;
+  const it = playerListItem();
+  toast(toggleList(it) ? 'Added to My List' : 'Removed from My List', 1400);
+  updateButtons();
+};
+/** What "My List" saves from the player: a series (the episode's folder), or the movie itself. */
+function playerListItem() {
+  const it = S.item;
+  if (!EPISODE_RE.test(it.name) || it.path.startsWith('local/')) return known.get(it.path) || it;
+  const dir = it.path.replace(/[^/]+$/, '');
+  return known.get(dir) || { name: decodeURIComponent(dir.replace(/\/$/, '').split('/').pop()), path: dir, isDir: true, kind: 'dir' };
+}
 $('pMute').onclick = () => { video.muted = !video.muted; prefs.muted = video.muted; savePrefs(); updateButtons(); };
 $('pVol').oninput = (e) => { video.volume = Number(e.target.value); video.muted = false; prefs.volume = video.volume; prefs.muted = false; savePrefs(); updateButtons(); };
 video.volume = prefs.volume; video.muted = prefs.muted; $('pVol').value = prefs.volume;
@@ -906,15 +1176,15 @@ $('pDownload').onclick = async () => {
 $('pPip').onclick = () => (document.pictureInPictureElement ? document.exitPictureInPicture() : video.requestPictureInPicture()).catch(() => {});
 function toggleFull() { document.fullscreenElement ? document.exitFullscreen() : player.requestFullscreen(); }
 document.addEventListener('fullscreenchange', () => { player.classList.toggle('fs', !!document.fullscreenElement); updateButtons(); });
-video.addEventListener('click', () => { if (!$('menu').hidden) return closeMenu(); togglePlay(); });
-video.addEventListener('dblclick', toggleFull);
+video.addEventListener('click', () => { if (player.classList.contains('mini')) return expandPlayer(); if (!$('menu').hidden) return closeMenu(); togglePlay(); });
+video.addEventListener('dblclick', () => { if (!player.classList.contains('mini')) toggleFull(); });
 
 /* ----- auto-hide controls ----- */
 let idleTimer = 0;
 function poke() {
   player.classList.remove('idle');
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => { if (!video.paused && $('menu').hidden) player.classList.add('idle'); }, 2600);
+  idleTimer = setTimeout(() => { if (!video.paused && $('menu').hidden && playerFull()) player.classList.add('idle'); }, 2600);
 }
 player.addEventListener('mousemove', poke);
 player.addEventListener('mousedown', poke);
@@ -1202,10 +1472,10 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && e.target.id === 'filter') { e.target.value = ''; render(); e.target.blur(); }
     return;
   }
-  if ((e.metaKey || e.ctrlKey) && e.key === 'f' && player.hidden) { e.preventDefault(); $('filter').focus(); return; }
-  if (e.key === '/' && player.hidden && $('details').hidden) { e.preventDefault(); $('filter').focus(); return; }
-  if ((e.metaKey || e.ctrlKey) && e.key === '[') { e.preventDefault(); if (!player.hidden) closePlayer(); else history.back(); return; }
-  if (player.hidden) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'f' && !playerFull()) { e.preventDefault(); $('filter').focus(); return; }
+  if (e.key === '/' && !playerFull() && $('details').hidden) { e.preventDefault(); $('filter').focus(); return; }
+  if ((e.metaKey || e.ctrlKey) && e.key === '[') { e.preventDefault(); if (playerFull()) minimizePlayer(); else history.back(); return; }
+  if (!playerFull()) {
     if (e.key === 'Escape' && !$('details').hidden) closeDetails();
     else if (e.key === 'Backspace' && $('details').hidden && location.hash.length > 2) history.back();
     return;
@@ -1223,12 +1493,12 @@ document.addEventListener('keydown', (e) => {
   else if (k === 'c') { const on = S.subs.id !== 'off'; if (on) selectSubtitle('off'); else { const o = S.subOptions.find((x) => x.type === 'file' || x.text); if (o) selectSubtitle(o.id); else toast('No subtitles for this video', 1500); } }
   else if (k === 'a') { const a = S.probe?.audio || []; if (a.length > 1) $('pAudio').click(); }
   else if (k === '[' || k === ']' || k === '{' || k === '}') setSubDelay(S.subs.delay + ((k === ']' || k === '}') ? 1 : -1) * (e.shiftKey ? 1 : 0.1));
-  else if (k === 'escape') { if (!$('menu').hidden) closeMenu(); else if (!document.fullscreenElement) closePlayer(); }
+  else if (k === 'escape') { if (!$('menu').hidden) closeMenu(); else if (!document.fullscreenElement) minimizePlayer(); }
   else if (/^[0-9]$/.test(k) && duration()) seekTo(duration() * Number(k) / 10, { immediate: true });
 });
 
 /* ----- test hook (read-only): lets automated A/V sync tests read the player's clock ----- */
-window.__mh = { now: () => now(), state: () => ({ mode: S.mode, offset: S.offset, adelay: S.adelay, sdelay: S.subs.delay, src: video.src }) };
+window.__mh = { now: () => now(), state: () => ({ mode: S.mode, offset: S.offset, adelay: S.adelay, sdelay: S.subs.delay, src: video.src, mini: player.classList.contains('mini'), playing: !video.paused }) };
 
 /* ----- boot ----- */
 if (!location.hash) history.replaceState(null, '', '#/');

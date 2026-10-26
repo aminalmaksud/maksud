@@ -25,14 +25,19 @@
 </header>
 
 <section id="hero" hidden>
-  <div class="hero-art" id="heroArt"></div>
-  <div class="hero-text">
+  <div class="hero-slides" id="heroArt"></div>
+  <div class="hero-poster" id="heroPoster" hidden></div>
+  <div class="hero-text" id="heroText">
     <span class="eyebrow">✦ আজকের বাছাই · Featured</span>
     <h1 id="heroTitle"></h1>
     <p class="hero-meta" id="heroMeta"></p>
     <p class="hero-overview" id="heroOverview"></p>
-    <div class="d-actions"><button class="btn primary big" id="heroPlay"></button><button class="btn big" id="heroInfo">More info</button></div>
+    <div class="d-actions"><button class="btn primary big" id="heroPlay"></button><button class="btn big" id="heroInfo">More info</button><button class="btn big" id="heroList"></button></div>
   </div>
+  <button class="hero-arrow left" id="heroPrev" aria-label="Previous"></button>
+  <button class="hero-arrow right" id="heroNext" aria-label="Next"></button>
+  <div class="hero-dots" id="heroDots"></div>
+  <div class="hero-timer"><i id="heroTimer"></i></div>
 </section>
 
 <main id="main">
@@ -64,11 +69,14 @@
         <h2 id="dTitle"></h2>
         <p class="d-meta" id="dMeta"></p>
         <p class="d-overview" id="dOverview"></p>
+        <div class="d-versions" id="dVersions" hidden></div>
         <div class="d-actions">
           <button class="btn primary" id="dPlay"></button>
           <button class="btn" id="dRestart" hidden>Start over</button>
+          <button class="btn list-btn" id="dList"></button>
           <button class="btn" id="dFolder" hidden>All files</button>
           <button class="btn" id="dDownload" hidden></button>
+          <button class="btn quiet" id="dForget" hidden></button>
         </div>
         <p class="d-file" id="dFile"></p>
       </div>
@@ -84,8 +92,10 @@
   <div id="pBanner" hidden></div>
   <div class="p-ui">
     <div class="p-top">
-      <button class="icon-btn" id="pClose" title="Back (Esc)"></button>
+      <button class="icon-btn" id="pClose" title="Minimize — keeps playing (Esc)"></button>
       <div class="p-title"><b id="pTitle"></b><small id="pSub"></small></div>
+      <span class="grow"></span>
+      <button class="icon-btn" id="pList" title="Add to My List"></button>
     </div>
     <div class="p-bottom">
       <div class="seek" id="seek">
@@ -120,7 +130,13 @@
   </div>
   <div id="toast" hidden></div>
   <input type="file" id="subFile" accept=".srt,.vtt" hidden>
+  <div class="mini-ui">
+    <div class="mini-title" id="mTitle"></div>
+    <div class="mini-btns"><button class="icon-btn" id="mExpand" title="Back to full size"></button><button class="icon-btn" id="mPlay" title="Play / pause"></button><button class="icon-btn" id="mClose" title="Stop"></button></div>
+    <div class="mini-bar"><i id="mBar"></i></div>
+  </div>
 </div>
+<div id="note" hidden></div>
 
 <!-- Settings -->
 <dialog id="settings">

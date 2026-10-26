@@ -82,6 +82,12 @@ const tree = {
   '/DHAKA-FLIX-7/English Movies (1080p)/(2024) 1080p/': ['Dune Part Two (2024) 1080p/'],
   '/DHAKA-FLIX-7/English Movies (1080p)/(2024) 1080p/Dune Part Two (2024) 1080p/': ['Dune.Part.Two.2024.1080p.mkv', 'poster.jpg'],
   '/DHAKA-FLIX-7/TV & WEB Series/': [],
+  // A second "Movies" server with the 720p copies and its own spelling of the folders.
+  '/DHAKA-FLIX-14/': ['English Movies/'],
+  '/DHAKA-FLIX-14/English Movies/': ['(2024)/', '(2023)/'],
+  '/DHAKA-FLIX-14/English Movies/(2024)/': ['Dune Part Two (2024) 720p/', 'Civil War (2024)/'],
+  '/DHAKA-FLIX-14/English Movies/(2024)/Dune Part Two (2024) 720p/': ['Dune.Part.Two.2024.720p.mkv'],
+  '/DHAKA-FLIX-14/English Movies/(2023)/': ['Oppenheimer (2023)/'],
 };
 const df = http.createServer((req, res) => {
   const path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
@@ -92,12 +98,12 @@ const df = http.createServer((req, res) => {
   req.on('end', () => {
     const body = JSON.parse(b);
     if (body.search) {
-      const hits = Object.entries(tree).flatMap(([dir, kids]) => kids.map((k) => dir + k)).filter((h) => new RegExp(body.search.pattern, 'i').test(h.split('/').filter(Boolean).pop()));
+      const hits = Object.entries(tree).flatMap(([dir, kids]) => kids.map((k) => dir + k)).filter((h) => h.startsWith(decodeURIComponent(body.search.href)) && new RegExp(body.search.pattern, 'i').test(h.split('/').filter(Boolean).pop()));
       return res.end(JSON.stringify({ search: hits.map((h) => ({ href: enc(h) })) }));
     }
     const href = decodeURIComponent(body.items.href);
     const kids = tree[href] || [];
-    res.end(JSON.stringify({ items: [{ href: '/DHAKA-FLIX-7/' }, { href: enc(href) }, ...kids.map((k) => ({ href: enc(href + k) }))] }));
+    res.end(JSON.stringify({ items: [{ href: '/' + href.split('/')[1] + '/' }, { href: enc(href) }, ...kids.map((k) => ({ href: enc(href + k) }))] }));
   });
 });
 await new Promise((r) => df.listen(0, '127.0.0.1', r));
@@ -111,7 +117,29 @@ r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`))
 r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
 assert.deepEqual(r.items.map((i) => i.kind), ['video', 'image']);
 r = await (await get('/api/search?q=dune part')).json();
-assert.deepEqual(r.items.map((i) => i.name), ['Dune Part Two (2024) 1080p'], 'the movie, not also its file');
+assert.deepEqual(r.items.map((i) => i.name.replace(/ \d+p$/, '')), ['Dune Part Two (2024)'], 'the movie, not also its file or its other copy');
+// Two "Movies" servers become one section; the same folders and movie on both are joined.
+const dfu = `http://127.0.0.1:${df.address().port}`;
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Movies 1080p | ${dfu}/DHAKA-FLIX-7/\nMovies | ${dfu}/DHAKA-FLIX-14/\nTV | ${dfu}/DHAKA-FLIX-7/TV%20%26%20WEB%20Series/` }) });
+r = await (await get('/api/browse?path=')).json();
+assert.deepEqual(r.groups.map((g) => [g.name, g.libs]), [['Movies', [0, 1]], ['TV', [2]]]);
+assert.deepEqual(r.items.map((i) => i.name), ['Movies', 'TV']);
+assert.match(r.items[0].path, /^v:/);
+r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
+assert.deepEqual(r.items.map((i) => i.name), ['English Movies', 'TV & WEB Series'], 'English Movies (1080p) + English Movies');
+r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
+assert.deepEqual(r.items.map((i) => i.name), ['(2024)', '(2023)'], '(2024) 1080p + (2024)');
+r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
+assert.deepEqual(r.items.map((i) => i.name), ['Dune Part Two (2024) 720p', 'Civil War (2024)']);
+r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
+const dune = r.items.find((i) => i.kind === 'video');
+assert.deepEqual(dune.versions.map((v) => v.quality), ['1080p', '720p'], 'one movie, two versions, best first');
+assert.equal(dune.path, dune.versions[0].path);
+assert.equal((await get(`/api/meta?path=${encodeURIComponent(r.path)}`)).status, 200);
+r = await (await get('/api/search?q=dune part')).json();
+assert.equal(r.items.length, 1, 'search shows the movie once');
+assert.equal(r.items[0].library, 'Movies');
+assert.equal((await get('/api/browse?path=v:bogus')).status, 400);
 df.close();
 console.log('all tests passed');
 server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });

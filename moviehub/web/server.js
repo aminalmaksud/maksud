@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT } from './listing.js';
 import { hasFfmpeg, probe, remux, extractSubtitle, keyframeBefore } from './media.js';
 import { metaFor } from './meta.js';
+import { groupKey, mergeListings, encodeV, decodeV } from './merge.js';
 import { downloadsEnabled, startDownload, cancelDownload, deleteDownloaded, listDownloads, localEntries, localFile } from './downloads.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -188,28 +189,63 @@ async function libraryRoot(idx) {
   let listing = await listDir(`${idx}/`);
   for (let depth = 0; depth < 3; depth++) {
     const dirs = listing.items.filter((i) => i.isDir), files = listing.items.filter((i) => i.kind === 'video');
-    if (dirs.length !== 1 || files.length) break;
+    // Only wrapper-style names ("DHAKA-FLIX-7", "data"): a lone "English Movies" is a real category.
+    if (dirs.length !== 1 || files.length || /\s/.test(dirs[0].name)) break;
     listing = await listDir(dirs[0].path);
   }
   libRoots.set(idx, listing);
   return listing;
 }
 
+/** Libraries with the same name apart from quality ("Movies", "Movies 1080p") form one section. */
+function groups() {
+  const names = serverNames(), out = new Map();
+  names.forEach((name, i) => {
+    const k = groupKey(name);
+    if (!out.has(k)) out.set(k, { name, libs: [] });
+    const g = out.get(k);
+    g.libs.push(i);
+    if (name.length < g.name.length) g.name = name;
+  });
+  return [...out.values()];
+}
+const groupRoot = (g, roots) => (g.libs.length > 1 ? encodeV(g.libs.map((i) => roots[i])) : roots[g.libs[0]]);
+
+/** A virtual folder: the same folder on several libraries, listed as one. */
+async function listVirtual(rel, refresh) {
+  const sources = decodeV(rel);
+  if (!sources) throw httpError(400, 'Unknown folder');
+  const names = serverNames();
+  const got = await Promise.allSettled(sources.map((p) => {
+    resolveUnderBase(p);
+    if (refresh) listCache.delete(p);
+    return /^\d+\/$/.test(p) ? libraryRoot(Number(p.slice(0, -1))) : listDir(p);
+  }));
+  const ok = got.map((g, i) => (g.status === 'fulfilled' ? { items: g.value.items, label: names[libOf(sources[i])] } : null)).filter(Boolean);
+  if (!ok.length) throw got[0].reason;
+  return { path: rel, items: mergeListings(ok), sources };
+}
+const libOf = (p) => Number(String(p).split('/')[0]);
+
 async function handleBrowse(url, res) {
   const all = bases();
   const servers = serverNames();
   if (!all.length) throw httpError(400, 'Server URL is not configured');
   let rel = url.searchParams.get('path') || '';
-  if (rel === 'local/') return json(res, 200, { path: 'local/', items: localEntries(), servers, roots: [] });
-  if (url.searchParams.get('refresh')) { listCache.delete(rel); libRoots.clear(); }
+  if (rel === 'local/') return json(res, 200, { path: 'local/', items: localEntries(), servers, roots: [], groups: [] });
+  const refresh = !!url.searchParams.get('refresh');
+  if (refresh) { listCache.delete(rel); libRoots.clear(); }
   const roots = await Promise.all(all.map((_, i) => libraryRoot(i).then((l) => l.path, () => `${i}/`)));
-  if (!rel && all.length > 1) {
-    return json(res, 200, { path: '', servers, roots, items: servers.map((name, i) => ({ name, path: roots[i], isDir: true, kind: 'dir' })) });
+  const gs = groups().map((g) => ({ ...g, root: groupRoot(g, roots) }));
+  const extra = { servers, roots, groups: gs };
+  if (!rel && gs.length > 1) {
+    return json(res, 200, { path: '', ...extra, items: gs.map((g) => ({ name: g.name, path: g.root, isDir: true, kind: 'dir' })) });
   }
-  if (!rel) rel = '0/';
+  if (!rel) rel = gs[0].root;
+  if (rel.startsWith('v:')) return json(res, 200, { ...(await listVirtual(rel, refresh)), ...extra });
   if (!rel.endsWith('/')) rel += '/';
   const listing = /^\d+\/$/.test(rel) ? await libraryRoot(Number(rel.slice(0, -1))) : await listDir(rel);
-  json(res, 200, { ...listing, servers, roots });
+  json(res, 200, { ...listing, ...extra });
 }
 
 /** Search every library. h5ai servers search themselves; others are skipped (their folders can still be filtered). */
@@ -237,10 +273,13 @@ async function handleSearch(url, res) {
     return found;
   }));
   // Folders first (each movie usually lives in its own folder), then loose videos. A video whose folder
-  // is already listed would just be the same movie twice.
+  // is already listed would just be the same movie twice. The same movie on two libraries of one
+  // section (720p and 1080p) is one result.
   const flat = results.flat();
   const dirs = new Set(flat.filter((i) => i.isDir).map((i) => i.path));
-  const items = flat.filter((i) => i.isDir || !dirs.has(i.path.replace(/[^/]+$/, '')))
+  const keep = (i) => i.isDir || !dirs.has(i.path.replace(/[^/]+$/, ''));
+  const items = groups().flatMap((g) => mergeListings(g.libs.map((i) => ({ items: results[i].filter(keep), label: serverNames()[i] })))
+    .map((it) => ({ ...it, library: g.name })))
     .sort((a, b) => Number(b.isDir) - Number(a.isDir)).slice(0, 120);
   json(res, 200, { items, searchable: all.some((b) => h5aiHosts.has(b.origin)) });
 }
@@ -330,7 +369,8 @@ async function handleEmbeddedSub(url, res) {
 }
 
 async function handleMeta(url, res) {
-  const rel = url.searchParams.get('path') || '';
+  let rel = url.searchParams.get('path') || '';
+  if (rel.startsWith('v:')) rel = decodeV(rel)?.[0] || ''; // a joined folder: its first copy has the poster as well as any
   if (!rel.startsWith('local/')) resolveUnderBase(rel);
   const m = await metaFor(rel, async (dir) => (await listDir(dir)).items, config.tmdbKey);
   json(res, 200, m);

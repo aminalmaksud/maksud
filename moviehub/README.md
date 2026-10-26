@@ -8,9 +8,20 @@ or h5ai servers) on:
 - **Mac**: a real app (`mac/`). You don't need a browser or anything else installed, because ffmpeg is built in.
 - **Android TV**: a native app (`android-tv/`).
 
-The Mac app looks like Netflix: a featured title at the top, then a row of posters for every category on
-every server (English Movies, Hindi Movies, TV & Web Series, Anime…). Movie folders open straight to the
-movie, seasons open as episode lists, and the search box searches every server at once.
+The Mac app looks like Netflix: a slideshow of featured titles at the top, then a row of posters for every
+category on every server (English Movies, Hindi Movies, TV & Web Series, Anime…). Movie folders open straight
+to the movie, seasons open as episode lists, and the search box searches every server at once.
+
+- **One section per kind of library.** Libraries whose names differ only by quality ("Movies" and
+  "Movies 1080p") are shown as one *Movies* section. Matching folders are joined by name, so "English Movies"
+  and "English Movies (1080p)", or "(2024)" and "(2024) 1080p", appear once. A movie on both servers shows
+  once, with a **Quality** choice (1080p / 720p) on its page. This works for any server you add.
+- **My List.** Press **+** on any poster, **My List** on a movie's page or the featured panel, or **+** in the player.
+- **Continue watching.** Hover a title and press **×** to remove it, or use *Remove from Continue watching* on
+  its page. In an episode list, hover an episode and press ↺ to clear its progress.
+- **Mini player.** Back / Esc shrinks the video to a corner so you can keep browsing. Click it to make it big
+  again, or press × to stop.
+- Titles without a poster get a cover in the website's colours with the title, year and quality.
 
 Both apps support:
 - **Multiple libraries.** Movies, TV series and anime are often on different servers. Add them all.
@@ -55,7 +66,7 @@ poster images it finds on the server (`poster.jpg`, `folder.jpg`, …) and draws
 - The player has an **audio** button (🎵) for tracks/dubs and a **CC** button for subtitles, timing,
   size and loading your own `.srt`. There's also a speed button, picture-in-picture and full screen.
 - Keys: Space = pause · ← → = 10 s · Shift+← → = 30 s · ↑ ↓ = volume · F = full screen · M = mute ·
-  C = subtitles on/off · A = audio tracks · [ ] = subtitle timing · N = next episode · 0–9 = jump to 0–90% · Esc = back
+  C = subtitles on/off · A = audio tracks · [ ] = subtitle timing · N = next episode · 0–9 = jump to 0–90% · Esc = mini player
 
 ### Sound, sync and subtitles
 Many movies use AC3/DTS audio and MKV files, which normal web players can't decode. The app converts the
