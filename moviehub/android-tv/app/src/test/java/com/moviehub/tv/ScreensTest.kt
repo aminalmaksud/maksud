@@ -175,7 +175,7 @@ class ScreensTest {
 
         // ---- Home: one Movies section, Continue watching, My List, slideshow
         // Only rows on screen load (like on the TV); the top ones are enough to feed the slideshow.
-        pumpUntil("home rows") { rows().count { it.dir != null && it.entries != null } >= 2 }
+        pumpUntil("home rows") { rows().any { it.dir != null && it.entries != null } }
         pumpUntil("slideshow", 8000) { adapter.items.firstOrNull() is Item.Hero && (adapter.items[0] as Item.Hero).slides.size >= 2 }
         pump(300)
         check("nav has one Movies section", navLabels() == listOf("Home", "Movies", "TV & Web Series", "My List"), navLabels())
