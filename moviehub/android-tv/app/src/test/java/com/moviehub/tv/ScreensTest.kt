@@ -125,9 +125,9 @@ class ScreensTest {
 
     /** ExoPlayer waits for its own thread using the (fake) clock; keep that clock moving around player calls. */
     private fun <T> ticking(block: () -> T): T {
-        @Volatile var on = true
-        val t = thread(isDaemon = true) { while (on) { org.robolectric.shadows.ShadowSystemClock.advanceBy(Duration.ofMillis(50)); Thread.sleep(10) } }
-        try { return block() } finally { on = false; t.join() }
+        val on = java.util.concurrent.atomic.AtomicBoolean(true)
+        val t = thread(isDaemon = true) { while (on.get()) { org.robolectric.shadows.ShadowSystemClock.advanceBy(Duration.ofMillis(50)); Thread.sleep(10) } }
+        try { return block() } finally { on.set(false); t.join() }
     }
 
     private fun pump(ms: Long = 40) { shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ms)) }
