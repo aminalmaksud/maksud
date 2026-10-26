@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.request.Disposable
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /** Everything on a browse screen is one of these, shown by [ScreenAdapter]. */
@@ -269,7 +270,8 @@ class ScreenAdapter(private val host: ScreenHost) : RecyclerView.Adapter<Recycle
             cards.submit(entries.orEmpty(), r.special)
             if (entries == null && !r.loading && !r.failed) {
                 r.loading = true
-                host.scope.launch {
+                // Dispatched (not run inline): a cached folder would otherwise update the list mid-layout.
+                host.scope.launch(Dispatchers.Main) {
                     try {
                         val (got, note) = host.rowContent(r)
                         r.entries = got; r.note = note

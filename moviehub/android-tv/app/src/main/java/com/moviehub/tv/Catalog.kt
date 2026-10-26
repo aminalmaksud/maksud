@@ -81,8 +81,9 @@ object Merge {
             val first = all[0].e
             when {
                 all.size == 1 -> first
-                // The plainest name wins: "English Movies" over "English Movies (1080p)".
-                first.kind == Kind.DIR -> Entry(all.minByOrNull { it.e.name.length }!!.e.name, first.url, Kind.DIR, all.flatMap { it.e.sources })
+                // A name without a quality wins ("English Movies" over "English Movies (1080p)"), else the best copy's.
+                first.kind == Kind.DIR -> Entry(all.sortedWith(compareBy<Hit>({ qualityOf(it.e.name).isNotEmpty() }, { -rank(qualityOf(it.e.name)) }, { it.e.name.length })).first().e.name,
+                    first.url, Kind.DIR, all.flatMap { it.e.sources })
                 else -> {
                     val sorted = all.sortedByDescending { rank(it.quality) }
                     val versions = sorted.mapIndexed { i, h -> Version(h.e.url, h.quality.ifEmpty { h.label.ifEmpty { "Copy ${i + 1}" } }, h.e.name) }

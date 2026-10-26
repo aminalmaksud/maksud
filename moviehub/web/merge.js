@@ -62,8 +62,9 @@ export function mergeListings(listings) {
     const { first, all } = byKey.get(x);
     if (all.length === 1) { const { quality, label, ...it } = first; return it; }
     if (first.isDir) {
-      // The plainest name wins: "English Movies" over "English Movies (1080p)".
-      const name = [...all].sort((a, b) => a.name.length - b.name.length)[0].name;
+      // A name without a quality wins ("English Movies" over "English Movies (1080p)"), else the best copy's.
+      const q = (n) => qualityOf(n);
+      const name = [...all].sort((a, b) => (q(a.name) ? 1 : 0) - (q(b.name) ? 1 : 0) || rank(q(b.name)) - rank(q(a.name)) || a.name.length - b.name.length)[0].name;
       return { name, path: encodeV(all.map((a) => a.path)), isDir: true, kind: 'dir', sources: all.length };
     }
     const versions = [...all].sort((a, b) => rank(b.quality) - rank(a.quality))

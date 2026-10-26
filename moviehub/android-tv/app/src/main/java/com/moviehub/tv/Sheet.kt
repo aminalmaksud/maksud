@@ -3,6 +3,7 @@ package com.moviehub.tv
 import android.app.Activity
 import android.app.Dialog
 import android.graphics.Color
+import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.StateListDrawable
 import android.view.Gravity
@@ -39,7 +40,12 @@ object Sheet {
         })
         options.forEachIndexed { i, o ->
             box.addView(TextView(ctx).apply {
-                text = if (o.sub.isEmpty()) o.label else "${o.label}\n${o.sub}"
+                text = if (o.sub.isEmpty()) o.label else android.text.SpannableString("${o.label}\n${o.sub}").apply {
+                    val from = o.label.length + 1
+                    setSpan(android.text.style.RelativeSizeSpan(.72f), from, length, 0)
+                    setSpan(android.text.style.ForegroundColorSpan(0xFFCDB8A4.toInt()), from, length, 0)
+                    setSpan(android.text.style.StyleSpan(Typeface.NORMAL), from, length, 0)
+                }
                 textSize = 18f
                 setTextColor(Color.WHITE)
                 setTypeface(typeface, android.graphics.Typeface.BOLD)

@@ -37,6 +37,13 @@ class CatalogTest {
         assertEquals(listOf("720p", "Movies"), m[0].versions.map { it.quality })
     }
 
+    @Test fun joinedFolderTakesTheBestName() {
+        val m = Merge.merge(listOf(listOf(dir("Dune Part Two (2024) 720p", "a")) to "Movies", listOf(dir("Dune Part Two (2024) 1080p", "b")) to "Movies 1080p"))
+        assertEquals("Dune Part Two (2024) 1080p", m[0].name)
+        val n = Merge.merge(listOf(listOf(dir("Dune Part Two (2024) 1080p", "b")) to "", listOf(dir("Dune Part Two (2024)", "a")) to ""))
+        assertEquals("Dune Part Two (2024)", n[0].name)
+    }
+
     @Test fun differentTitlesStaySeparate() {
         val m = Merge.merge(listOf(listOf(dir("Dune (2021)", "a")) to "", listOf(dir("Dune Part Two (2024)", "b")) to ""))
         assertEquals(2, m.size)

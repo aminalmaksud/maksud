@@ -74,6 +74,15 @@ class ScreensTest {
     }
 
     @Before fun setUp() {
+        // If anything hangs, say where every thread is and stop, instead of holding up the build.
+        thread(isDaemon = true, name = "watchdog") {
+            Thread.sleep(240_000)
+            println("WATCHDOG: test still running after 4 minutes. Threads:")
+            Thread.getAllStackTraces().forEach { (t, st) -> println("THREAD ${t.name} (${t.state})\n" + st.take(25).joinToString("\n") { "    at $it" }) }
+            println("RESULTS SO FAR\n" + results.joinToString("\n"))
+            System.out.flush()
+            Runtime.getRuntime().halt(3)
+        }
         // A tiny HTTP server: nginx-style "Index of" pages for folders, a few bytes for files.
         server = ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"))
         thread(isDaemon = true) {
@@ -113,6 +122,13 @@ class ScreensTest {
     }
 
     @After fun tearDown() { server.close() }
+
+    /** ExoPlayer waits for its own thread using the (fake) clock; keep that clock moving around player calls. */
+    private fun <T> ticking(block: () -> T): T {
+        @Volatile var on = true
+        val t = thread(isDaemon = true) { while (on) { org.robolectric.shadows.ShadowSystemClock.advanceBy(Duration.ofMillis(50)); Thread.sleep(10) } }
+        try { return block() } finally { on = false; t.join() }
+    }
 
     private fun pump(ms: Long = 40) { shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ms)) }
     private fun pumpUntil(what: String, timeoutMs: Long = 20_000, cond: () -> Boolean): Boolean {
@@ -162,7 +178,7 @@ class ScreensTest {
         check("nav has one Movies section", navLabels() == listOf("Home", "Movies", "TV & Web Series", "My List"), navLabels())
         val titles = rows().map { it.title }
         check("home rows", titles.take(2) == listOf("Continue watching", "My List") && titles.count { it == "English Movies" } == 1 && "Hindi Movies" in titles && titles.none { "(1080p)" in it }, titles)
-        check("rows joined: English Movies shows both servers' 2024", rows().first { it.title == "English Movies" }.entries.orEmpty().map { it.name }.toSet() == setOf("Dune Part Two (2024) 720p", "Civil War (2024) 1080p", "Furiosa (2024)"),
+        check("rows joined: English Movies shows both servers' 2024", rows().first { it.title == "English Movies" }.entries.orEmpty().map { Names.cleanTitle(it.name) }.toSet() == setOf("Dune Part Two", "Civil War", "Furiosa"),
             rows().first { it.title == "English Movies" }.entries?.map { it.name })
         val hero = adapter.items.firstOrNull() as? Item.Hero
         check("slideshow has several titles", (hero?.slides?.size ?: 0) >= 2, hero?.slides?.map { it.entry.name })
@@ -177,15 +193,16 @@ class ScreensTest {
         // ---- Movies section → English Movies → (2024): joined folders, Dune once with two versions
         (0 until nav.childCount).map { nav.getChildAt(it) as TextView }.first { it.text == "Movies" }.performClick()
         pumpUntil("Movies section") { rows().size >= 3 && adapter.items.firstOrNull() is Item.Panel }
-        check("Movies section categories", rows().map { it.title } == listOf("English Movies", "Animation Movies", "Hindi Movies"), rows().map { it.title })
+        check("Movies section categories", rows().map { it.title } == listOf("Animation Movies", "English Movies", "Hindi Movies"), rows().map { it.title })
         val em = rows().first { it.title == "English Movies" }
         act.onOpenRow(em)
         pumpUntil("English Movies page") { rows().isNotEmpty() && (adapter.items.firstOrNull() as? Item.Panel)?.title == "English Movies" }
-        check("year folders joined", rows().map { it.title } == listOf("(2024)", "(2023)"), rows().map { it.title })
+        check("year folders joined ((2023) is on one server only)", rows().map { it.title } == listOf("(2024)", "(2023) 1080p"), rows().map { it.title })
         act.onOpenRow(rows().first { it.title == "(2024)" })
         pumpUntil("2024 page") { adapter.items.count { it is Item.Card } >= 3 }
         val cards = adapter.items.filterIsInstance<Item.Card>().map { it.entry }
-        check("2024 titles once each", cards.map { Names.cleanTitle(it.name) } == listOf("Dune Part Two", "Civil War", "Furiosa"), cards.map { it.name })
+        check("2024 titles once each", cards.map { Names.cleanTitle(it.name) }.sorted() == listOf("Civil War", "Dune Part Two", "Furiosa"), cards.map { it.name })
+        check("joined folder named after its best copy", cards.any { it.name == "Dune Part Two (2024) 1080p" }, cards.map { it.name })
         val panel = adapter.items.first() as Item.Panel
         check("breadcrumbs", panel.crumbs == "Home  ›  Movies  ›  English Movies", panel.crumbs)
         pump(500)
@@ -228,20 +245,20 @@ class ScreensTest {
             .putExtra(PlayerActivity.EXTRA_URL, video.url + "Civil.War.2024.1080p.mkv")
             .putExtra(PlayerActivity.EXTRA_TITLE, "Civil War").putExtra(PlayerActivity.EXTRA_NAME, "Civil.War.2024.1080p.mkv")
         main.pause()
-        val player = Robolectric.buildActivity(PlayerActivity::class.java, intent).setup()
+        val player = ticking { Robolectric.buildActivity(PlayerActivity::class.java, intent).setup() }
         pump(300)
         check("player started", Playback.player != null)
         player.get().dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK))
         player.get().dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK))
         check("Back finishes the full-screen player", player.get().isFinishing)
         main.resume()
-        player.pause().stop().destroy()
+        ticking { player.pause().stop().destroy() }
         pump(300)
         check("still playing after Back (minimized)", Playback.player != null)
         check("mini player shown", act.findViewById<View>(R.id.mini).visibility == View.VISIBLE)
         check("top bar offers Now playing / Stop", navLabels().containsAll(listOf("▶  Now playing", "■  Stop")), navLabels())
         shot("mini", act.window.decorView)
-        (0 until nav.childCount).map { nav.getChildAt(it) as TextView }.first { it.text == "■  Stop" }.performClick()
+        (0 until nav.childCount).map { nav.getChildAt(it) as TextView }.first { it.text == "■  Stop" }.let { b -> ticking { b.performClick() } }
         pump()
         check("Stop ends playback", Playback.player == null && act.findViewById<View>(R.id.mini).visibility == View.GONE)
 

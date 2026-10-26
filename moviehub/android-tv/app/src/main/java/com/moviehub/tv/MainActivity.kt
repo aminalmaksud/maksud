@@ -370,7 +370,7 @@ class MainActivity : ComponentActivity(), ScreenHost {
         if (heroBusy) return
         heroBusy = true
         val screen = current
-        scope.launch {
+        scope.launch(kotlinx.coroutines.Dispatchers.Main) {
             val plain = ArrayList<Item.Slide>()
             try {
                 while (heroQueue.isNotEmpty() && (hero?.slides?.size ?: 0) < HERO_MAX && current === screen) {

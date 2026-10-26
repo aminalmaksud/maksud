@@ -130,7 +130,7 @@ assert.deepEqual(r.items.map((i) => i.name), ['English Movies', 'TV & WEB Series
 r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
 assert.deepEqual(r.items.map((i) => i.name), ['(2024)', '(2023)'], '(2024) 1080p + (2024)');
 r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
-assert.deepEqual(r.items.map((i) => i.name), ['Dune Part Two (2024) 720p', 'Civil War (2024)']);
+assert.deepEqual(r.items.map((i) => i.name), ['Dune Part Two (2024) 1080p', 'Civil War (2024)'], 'joined folder named after its best copy');
 r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
 const dune = r.items.find((i) => i.kind === 'video');
 assert.deepEqual(dune.versions.map((v) => v.quality), ['1080p', '720p'], 'one movie, two versions, best first');
