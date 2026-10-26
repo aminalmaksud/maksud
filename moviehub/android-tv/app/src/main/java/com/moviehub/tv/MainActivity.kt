@@ -190,6 +190,7 @@ class MainActivity : ComponentActivity(), ScreenHost {
             text = label
             typeface = font
             textSize = 16f
+            isSingleLine = true
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             val rest = if (accent) Ui.MAROON2 else 0xFF6E5849.toInt()
             setTextColor(if (selected) Ui.GOLD2 else rest)
@@ -303,6 +304,10 @@ class MainActivity : ComponentActivity(), ScreenHost {
             adapter.submit(items)
             restoreFocus(current.focus)
             heroOffer(Prefs.myList(this@MainActivity).take(6))
+            // The slideshow draws from the first few categories, not only the rows that happen to be on screen.
+            items.filterIsInstance<Item.Row>().filter { it.dir != null }.take(4).forEach { r ->
+                launch(kotlinx.coroutines.Dispatchers.Main) { try { heroOffer(rowContent(r).first) } catch (e: Exception) { } }
+            }
         }
     }
 
