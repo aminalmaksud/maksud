@@ -999,6 +999,10 @@ async function startPlayback(item, { from } = {}) {
   S.fmt = video.canPlayType('video/webm') ? 'mkv' : 'mp4';
   if (pr && !pr.ffmpeg) banner(`Some files may play without sound. Install ffmpeg (${INSTALL_FFMPEG}) or use the MusingsofMaksudTV Mac or Windows app, which includes it.`);
 
+  S.stereo = stereos[item.path] || detectStereo(item.name, pr?.video);
+  layoutStereo();
+  if (S.stereo !== 'off' && !stereos[item.path]) toast('3D movie: showing it in 2D', 2200);
+
   buildSubOptions();
   const h = progressOf(item.path);
   const start = from ?? (h && !h.done && h.pos > 30 ? h.pos : 0);
@@ -1006,6 +1010,48 @@ async function startPlayback(item, { from } = {}) {
   autoPickSubtitle();
   updateButtons();
 }
+
+/* ----- 3D movies: show one eye, so a side-by-side or top-and-bottom file plays as a normal 2D picture ----- */
+// 3D releases pack both eyes into each frame. "Half" ones (HSBS, HOU) squeeze each eye into half of a 16:9 frame;
+// "full" ones are twice as wide (3840×1080) or tall. Detected from the file name and frame shape; you can override it
+// per video from the speed menu.
+const stereos = store.get('stereo', {});
+function detectStereo(name, v) {
+  const n = String(name).replace(/[._]+/g, ' ');
+  const is3d = /\b3D\b/i.test(n);
+  if (/\b(?:H ?SBS|HSBS|Half ?SBS|F ?SBS|Full ?SBS|SBS|Side ?by ?Side)\b/i.test(n)) return 'sbs';
+  if (is3d && /\b(?:H ?OU|HOU|H ?TAB|Half ?OU|F ?OU|Full ?OU|OU|TAB|Top ?(?:and|&)? ?Bottom|Over ?Under)\b/i.test(n)) return 'tab';
+  if (v?.width && v?.height && v.width / v.height >= 3.2) return 'sbs';
+  if (is3d) return 'sbs'; // most 3D releases are side by side
+  return 'off';
+}
+const STEREO_NAMES = { off: 'Off: show the file as it is', sbs: 'Side by side → 2D', tab: 'Top and bottom → 2D' };
+/** Sizes the video so only the left (or top) eye shows, at its true shape, centred in the player. */
+function layoutStereo() {
+  const st = video.style;
+  const mode = S.stereo || 'off';
+  const vw = video.videoWidth || S.probe?.video?.width, vh = video.videoHeight || S.probe?.video?.height;
+  if (mode === 'off' || !vw || !vh) {
+    for (const k of ['inset', 'left', 'top', 'width', 'height', 'objectFit', 'clipPath']) st[k] = '';
+    return;
+  }
+  // A "full" file's eye is half the frame; a "half" file's eye was squeezed and is meant to be shown at the frame's shape.
+  const eye = mode === 'sbs' ? (vw / vh >= 3.2 ? vw / 2 / vh : vw / vh) : (vh / vw >= 0.9 ? vw / (vh / 2) : vw / vh);
+  const W = player.clientWidth, H = player.clientHeight;
+  const dw = Math.min(W, H * eye), dh = dw / eye;
+  Object.assign(st, {
+    inset: 'auto', left: `${(W - dw) / 2}px`, top: `${(H - dh) / 2}px`, objectFit: 'fill',
+    width: `${mode === 'sbs' ? dw * 2 : dw}px`, height: `${mode === 'tab' ? dh * 2 : dh}px`,
+    clipPath: mode === 'sbs' ? 'inset(0 50% 0 0)' : 'inset(0 0 50% 0)',
+  });
+}
+function setStereo(mode, { remember = true } = {}) {
+  S.stereo = mode;
+  if (remember) { stereos[S.item.path] = mode; store.set('stereo', stereos); }
+  layoutStereo(); updateButtons();
+}
+new ResizeObserver(() => { if (S.stereo && S.stereo !== 'off') layoutStereo(); }).observe(player);
+video.addEventListener('loadedmetadata', layoutStereo);
 
 function sourceUrl(t) {
   return S.mode === 'direct' ? `/stream?path=${enc(S.item.path)}` : `/remux?path=${enc(S.item.path)}&t=${t}&audio=${S.audio}&adelay=${S.adelay}&fmt=${S.fmt}`;
@@ -1167,6 +1213,8 @@ function updateButtons() {
   $('pSubs').innerHTML = `${I.cc}<span>${esc(S.subs.id === 'off' ? 'Subtitles' : S.subs.label)}</span>`;
   $('pSubs').classList.toggle('on', S.subs.id !== 'off');
   $('pSpeed').innerHTML = `${I.speed}<span>${prefs.speed === 1 ? '1×' : prefs.speed + '×'}</span>`;
+  $('pStereo').hidden = !S.stereo || S.stereo === 'off';
+  $('pStereo').innerHTML = '<span>3D → 2D</span>';
   $('pPip').hidden = !document.pictureInPictureEnabled;
   $('pDownload').hidden = !state.config?.downloads || !S.item || S.item.path.startsWith('local/');
 }
@@ -1303,8 +1351,11 @@ function setAudioDelay(v) {
 }
 
 $('pSpeed').onclick = () => {
-  openMenu('speed', `<h4>Playback speed</h4>${[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => opt(s, s === 1 ? 'Normal' : s + '×', '', prefs.speed === s)).join('')}`);
+  openMenu('speed', `<h4>Playback speed</h4>${[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => opt(s, s === 1 ? 'Normal' : s + '×', '', prefs.speed === s)).join('')}
+    <h4>3D movie</h4>${stereoOpts()}`);
 };
+const stereoOpts = () => Object.entries(STEREO_NAMES).map(([k, l]) => opt(`st:${k}`, l, k === 'off' ? '' : 'Shows one eye of a 3D file', (S.stereo || 'off') === k)).join('');
+$('pStereo').onclick = () => openMenu('stereo', `<h4>3D movie</h4>${stereoOpts()}`);
 
 $('pSubs').onclick = () => openMenu('subs', subsMenuHtml());
 
@@ -1378,6 +1429,8 @@ $('menu').addEventListener('click', (e) => {
     toast('Switching audio…');
     load(now());
     updateButtons();
+  } else if (id.startsWith('st:')) {
+    setStereo(id.slice(3)); closeMenu();
   } else if (menuFor === 'speed') {
     prefs.speed = Number(id); savePrefs(); video.playbackRate = prefs.speed; closeMenu(); updateButtons();
   } else if (menuFor === 'subs') {
