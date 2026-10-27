@@ -1,0 +1,36 @@
+name: Build Mac Cleaner DMG
+
+on:
+  push:
+    branches: [mac-cleaner]
+    paths: ["MacCleaner/**", ".github/workflows/mac-cleaner.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: MacCleaner
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build DMG
+        run: ./build-dmg.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MacCleaner-dmg
+          path: MacCleaner/build/MacCleaner.dmg
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "mac-cleaner-build-${{ github.run_number }}" build/MacCleaner.dmg \
+            --target "${{ github.sha }}" \
+            --title "Mac Cleaner (build ${{ github.run_number }})" \
+            --notes "Download **MacCleaner.dmg** below, open it, and drag Mac Cleaner into Applications. The first time you open it, macOS will say it can't verify the developer: go to System Settings → Privacy & Security, scroll down and click **Open Anyway**."
