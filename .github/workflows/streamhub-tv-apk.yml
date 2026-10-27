@@ -2,7 +2,7 @@ name: MusingsofMaksudTV Android TV APK
 
 on:
   push:
-    paths: ['moviehub/android-tv/**', '.github/workflows/moviehub-tv-apk.yml']
+    paths: ['streamhub/android-tv/**', '.github/workflows/streamhub-tv-apk.yml']
   workflow_dispatch:
 
 jobs:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: moviehub/android-tv
+        working-directory: streamhub/android-tv
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -25,4 +25,4 @@ jobs:
         if: always()
         with:
           name: MusingsofMaksudTV-AndroidTV-apk
-          path: moviehub/android-tv/app/build/outputs/apk/debug/app-debug.apk
+          path: streamhub/android-tv/app/build/outputs/apk/debug/app-debug.apk

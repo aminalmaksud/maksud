@@ -172,7 +172,7 @@ async function fillCard(card) {
 }
 
 /* ---------------- browsing ---------------- */
-const state = { view: '', path: '', items: [], servers: [], roots: [], groups: [], config: null };
+const state = { view: '', path: '', items: [], rows: false, servers: [], roots: [], groups: [], config: null };
 
 // Every item seen while browsing, and the folder it was seen in (for breadcrumbs through joined folders).
 const known = new Map(), trail = new Map();
@@ -399,7 +399,7 @@ setIcon($('heroPrev'), 'back'); setIcon($('heroNext'), 'back');
 
 /* ----- views ----- */
 function resetView(view) {
-  state.view = view;
+  state.view = view; state.rows = false;
   $('rows').innerHTML = ''; $('grid').innerHTML = ''; $('grid').className = '';
   $('status').textContent = ''; $('status').className = '';
   $('folderHead').hidden = view === 'home';
@@ -496,6 +496,7 @@ async function showFolder(path, { refresh = false } = {}) {
   renderNav(); renderHead();
   $('status').textContent = '';
   if (isCategoryFolder(l.items)) {
+    state.rows = true; // drawn as rows: render() must not draw a grid or an "empty" note over them
     $('rows').innerHTML = sortCategories(l.items.filter((x) => x.isDir)).map((d) => rowShell({ title: d.name, path: d.path })).join('');
     $('rows').querySelectorAll('.row[data-row]').forEach((r) => rowObserver.observe(r));
   } else {
@@ -563,7 +564,7 @@ function renderGrid(items, { sub = null } = {}) {
   }
   if (state.view === 'folder') $('status').textContent = !visible.length ? (q ? 'Nothing here matches your search.' : 'This folder is empty.') : '';
 }
-const render = () => { if (state.view === 'folder' || state.view === 'search') renderGrid(gridItems, { sub: gridSub }); };
+const render = () => { if (!state.rows && (state.view === 'folder' || state.view === 'search')) renderGrid(gridItems, { sub: gridSub }); };
 
 function renderNav() {
   const cur = state.view === 'home' ? -1 : state.view === 'folder' ? groupIdxOf(state.path) : -2;

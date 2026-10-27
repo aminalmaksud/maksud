@@ -2,7 +2,7 @@ name: StreamHub Windows app
 
 on:
   push:
-    paths: ['moviehub/web/**', 'moviehub/windows/**', '.github/workflows/moviehub-windows.yml']
+    paths: ['streamhub/web/**', 'streamhub/windows/**', '.github/workflows/streamhub-windows.yml']
   workflow_dispatch:
 
 jobs:
@@ -11,7 +11,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: moviehub/windows
+        working-directory: streamhub/windows
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,11 +19,11 @@ jobs:
           node-version: '24.22.1' # must match NODE_VERSION in scripts/build-server.mjs
       - name: Web tests
         run: node test.js
-        working-directory: moviehub/web
+        working-directory: streamhub/web
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: moviehub/windows/src-tauri
+          workspaces: streamhub/windows/src-tauri
       - name: Install (Windows ffmpeg)
         run: npm ci --no-audit --no-fund
         env:
@@ -50,4 +50,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: StreamHub-windows-x64
-          path: moviehub/windows/src-tauri/target/release/bundle/nsis/*.exe
+          path: streamhub/windows/src-tauri/target/release/bundle/nsis/*.exe
