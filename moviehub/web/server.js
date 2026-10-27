@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT } from './listing.js';
 import { hasFfmpeg, ffmpegVersion, probe, remux, extractSubtitle, keyframeBefore } from './media.js';
 import { metaFor } from './meta.js';
+import { movieHash, searchSubtitles, fetchSubtitle } from './subsearch.js';
 import { groupKey, mergeListings, encodeV, decodeV } from './merge.js';
 import { downloadsEnabled, startDownload, cancelDownload, deleteDownloaded, listDownloads, localEntries, localFile } from './downloads.js';
 
@@ -41,6 +42,8 @@ function loadConfig() {
     username: process.env.SERVER_USER ?? c.username ?? '',
     password: process.env.SERVER_PASS ?? c.password ?? '',
     tmdbKey: process.env.TMDB_KEY ?? c.tmdbKey ?? '',
+    // online subtitles (see subsearch.js)
+    opensubsKey: c.opensubsKey ?? '', opensubsUser: c.opensubsUser ?? '', opensubsPass: c.opensubsPass ?? '', subdlKey: c.subdlKey ?? '',
   };
 }
 let config = loadConfig();
@@ -424,12 +427,67 @@ async function handleConfig(req, res) {
       username: String(b.username || ''),
       password: b.keepPassword ? config.password : String(b.password || ''),
       tmdbKey: b.tmdbKey === undefined ? config.tmdbKey : String(b.tmdbKey).trim(),
+      opensubsKey: b.opensubsKey === undefined ? config.opensubsKey : String(b.opensubsKey).trim(),
+      opensubsUser: b.opensubsUser === undefined ? config.opensubsUser : String(b.opensubsUser).trim(),
+      opensubsPass: b.keepOpensubsPass || b.opensubsPass === undefined ? config.opensubsPass : String(b.opensubsPass),
+      subdlKey: b.subdlKey === undefined ? config.subdlKey : String(b.subdlKey).trim(),
     };
     listCache.clear(); libRoots.clear();
     fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
-  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND });
+  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND,
+    opensubsKey: config.opensubsKey, opensubsUser: config.opensubsUser, hasOpensubsPass: !!config.opensubsPass, subdlKey: config.subdlKey });
+}
+
+/** Bytes start..end (inclusive) of a playable item, and its total size. */
+async function readRange(m, start, end) {
+  if (m.local) {
+    const fd = fs.openSync(m.src, 'r');
+    try {
+      const size = fs.fstatSync(fd).size, buf = Buffer.alloc(Math.max(0, Math.min(end, size - 1) - start + 1));
+      fs.readSync(fd, buf, 0, buf.length, start);
+      return { buf, size };
+    } finally { fs.closeSync(fd); }
+  }
+  const r = await fetch(m.src, { headers: upstreamHeaders({ range: `bytes=${start}-${end}` }), signal: AbortSignal.timeout(15000) });
+  if (r.status !== 206) { r.body?.cancel().catch(() => {}); throw new Error('server ignores ranges'); }
+  return { buf: Buffer.from(await r.arrayBuffer()), size: Number(/\/(\d+)$/.exec(r.headers.get('content-range') || '')?.[1]) || 0 };
+}
+
+const subKeys = () => ({ opensubsKey: config.opensubsKey, opensubsUser: config.opensubsUser, opensubsPass: config.opensubsPass, subdlKey: config.subdlKey });
+/** GET /api/subsearch?path=&q=&langs=en,bn — online subtitles for a video, best matches first. */
+async function handleSubSearch(url, res) {
+  const rel = url.searchParams.get('path') || '';
+  const m = media(rel);
+  const meta = rel.startsWith('local/') ? {} : await metaFor(rel, async (dir) => (await listDir(dir)).items, config.tmdbKey).catch(() => ({}));
+  const langs = (url.searchParams.get('langs') || 'en').split(',').map((l) => l.trim().toLowerCase()).filter((l) => /^[a-z]{2}(-[a-z]{2})?$/.test(l)).slice(0, 5);
+  const typed = (url.searchParams.get('q') || '').trim();
+  let hash = null;
+  if (config.opensubsKey && !typed) {
+    try {
+      const first = await readRange(m, 0, 65535);
+      hash = await movieHash(first.size, async (a, b) => (a === 0 ? first.buf : (await readRange(m, a, b)).buf));
+    } catch { /* no hash: search by name only */ }
+  }
+  const tv = meta.season != null || meta.episode != null;
+  const q = {
+    query: typed || (tv ? meta.show : meta.matched) || meta.title || extOf(rel) && decodeURIComponent(rel.split('/').pop()).replace(/\.[^.]+$/, ''),
+    year: typed ? null : meta.year, season: typed ? null : meta.season ?? null, episode: typed ? null : meta.episode ?? null,
+    tmdbId: typed ? null : (tv ? meta.tmdbType === 'tv' : meta.tmdbType === 'movie') ? meta.tmdbId : null,
+    hash, langs: langs.length ? langs : ['en'],
+  };
+  json(res, 200, { query: q.query, ...(await searchSubtitles(q, subKeys())) });
+}
+
+/** GET /api/subget?id=&ep= — downloads one result as WebVTT. */
+async function handleSubGet(url, res) {
+  const ep = url.searchParams.get('ep');
+  let sub;
+  try { sub = await fetchSubtitle(url.searchParams.get('id') || '', subKeys(), { episode: ep ? Number(ep) : null }); }
+  catch (e) { throw httpError(502, e.message); }
+  res.writeHead(200, { 'content-type': 'text/vtt; charset=utf-8', 'x-sub-name': encodeURIComponent(sub.name) });
+  res.end(/^\s*WEBVTT/.test(sub.text) ? sub.text : srtToVtt(sub.text));
 }
 
 /** What the Windows app's Server page shows: uptime, ffmpeg, and how quickly each library answers. */
@@ -481,6 +539,8 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/search') return await handleSearch(url, res);
     if (p === '/api/config') return await handleConfig(req, res);
     if (p === '/api/status') return await handleStatus(res);
+    if (p === '/api/subsearch') return await handleSubSearch(url, res);
+    if (p === '/api/subget') return await handleSubGet(url, res);
     if (p === '/api/meta') return await handleMeta(url, res);
     if (p === '/api/probe') return await handleProbe(url, res);
     if (p === '/api/seek-point') return await handleSeekPoint(url, res);

@@ -505,6 +505,15 @@ dialog code { background: var(--raised); padding: 1px 6px; border-radius: 6px; b
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; } /* fields line up even when only one label has a hint */
 .two label { margin: 6px 0; }
 .note { font-size: 13px; color: var(--dim); background: var(--raised); border: 1px solid var(--line); padding: 11px 13px; border-radius: 13px; }
+.subkeys { margin: 18px 0 6px; padding: 4px 0 0; border: 0; border-top: 1px solid var(--line); }
+.subkeys legend { padding: 12px 0 0; font-weight: 700; font-size: 14px; }
+.subkeys legend small { display: block; font-weight: 500; color: var(--faint); font-size: 12.5px; margin-top: 2px; }
+.menu .ss-form { display: flex; gap: 6px; padding: 0 8px 8px; }
+.menu .ss-form input { flex: 1; min-width: 0; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .07); color: #fff; font: inherit; font-size: 14px; outline: none; }
+.menu .ss-form input:focus { border-color: var(--gold-2); }
+.menu .ss-go { all: unset; cursor: pointer; padding: 8px 14px; border-radius: 10px; background: rgba(255, 255, 255, .12); font-weight: 700; font-size: 13px; }
+.menu .ss-go:hover { background: rgba(255, 255, 255, .2); }
+.menu .chips + .opt, .menu .chips + .hint { margin-top: 8px; }
 .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 #dhakaflixBtn { margin: -4px 0 6px; padding: 7px 14px; font-size: 13px; }
 .themes { display: flex; gap: 10px; }

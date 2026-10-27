@@ -874,6 +874,8 @@ async function openSettings() {
   const f = $('settingsForm');
   f.servers.value = c.servers.join('\n'); f.username.value = c.username; f.password.value = ''; f.tmdbKey.value = c.tmdbKey || '';
   f.password.placeholder = c.hasPassword ? '•••••• (saved)' : '';
+  f.opensubsKey.value = c.opensubsKey || ''; f.opensubsUser.value = c.opensubsUser || ''; f.opensubsPass.value = ''; f.subdlKey.value = c.subdlKey || '';
+  f.opensubsPass.placeholder = c.hasOpensubsPass ? '•••••• (saved)' : 'optional';
   markTheme();
   $('ffmpegNote').innerHTML = c.ffmpeg
     ? '✓ Sound &amp; format fix is on — every file plays with sound, and you can switch audio tracks and built-in subtitles.'
@@ -918,7 +920,11 @@ $('settingsForm').onsubmit = async (e) => {
   const f = e.target;
   try {
     const keepPw = !f.password.value && state.config?.hasPassword && f.username.value === state.config.username;
-    await saveConfig({ servers: f.servers.value, username: f.username.value, password: f.password.value, keepPassword: keepPw, tmdbKey: f.tmdbKey.value });
+    await saveConfig({
+      servers: f.servers.value, username: f.username.value, password: f.password.value, keepPassword: keepPw, tmdbKey: f.tmdbKey.value,
+      opensubsKey: f.opensubsKey.value, opensubsUser: f.opensubsUser.value, opensubsPass: f.opensubsPass.value,
+      keepOpensubsPass: !f.opensubsPass.value && state.config?.hasOpensubsPass && f.opensubsUser.value === state.config.opensubsUser, subdlKey: f.subdlKey.value,
+    });
     $('settings').close();
   } catch (err) { alert(err.message); }
 };
@@ -930,7 +936,7 @@ const video = $('video');
 const player = $('player');
 const prefs = Object.assign({
   volume: 1, muted: false, subLang: '', audioLang: '', speed: 1,
-  subSize: 1, subBg: 0, subFont: 'sans', subColor: '#ffffff', subEdge: 'shadow', subPos: 'low',
+  subSize: 1, subBg: 0, subFont: 'sans', subColor: '#ffffff', subEdge: 'shadow', subPos: 'low', subSearchLangs: ['en', 'bn'],
 }, store.get('prefs', {}));
 const savePrefs = () => store.set('prefs', prefs);
 // Audio / subtitle sync are properties of a particular file, so they're remembered per video.
@@ -944,7 +950,7 @@ function saveSync() {
 
 const S = {
   item: null, list: [], probe: null, mode: 'direct', fmt: 'mkv', offset: 0, duration: 0, audio: 0, adelay: 0, adelayTimer: 0,
-  subs: { id: 'off', label: 'Off', cues: [], delay: 0 }, subOptions: [], subTab: 'tracks', pendingSeek: null, seekTimer: 0, saveTick: 0,
+  subs: { id: 'off', label: 'Off', cues: [], delay: 0 }, subOptions: [], online: [], subTab: 'tracks', pendingSeek: null, seekTimer: 0, saveTick: 0,
 };
 
 ['pClose:down', 'mExpand:expand', 'mClose:close', 'pPlay:play', 'pBack:rew', 'pFwd:fwd', 'pNext:next', 'pMute:vol', 'pPip:pip', 'pFull:full', 'pDownload:download'].forEach((p) => { const [id, ic] = p.split(':'); setIcon($(id), ic); });
@@ -969,6 +975,7 @@ async function startPlayback(item, { from } = {}) {
   const sync = syncOf(item.path);
   S.adelay = sync.a;
   S.subs = { id: 'off', label: 'Off', cues: [], delay: sync.s };
+  S.online = [];
   $('pTitle').textContent = stem(item.name); $('pSub').textContent = '';
   banner(''); $('upNext').hidden = true;
   player.hidden = false; player.classList.remove('mini'); player.classList.add('loading');
@@ -1390,7 +1397,69 @@ function subsMenuHtml() {
   return `${tabs}${opt('off', 'Off', '', S.subs.id === 'off')}
     ${ext.length ? `<h4>From the server</h4>${ext.map((o) => opt(o.id, o.label, o.sub, S.subs.id === o.id)).join('')}` : ''}
     ${emb.length ? `<h4>Built into the file</h4>${emb.map((o) => opt(o.id, o.label, o.text ? o.sub : 'Image subtitles — can’t be shown', S.subs.id === o.id, !o.text)).join('')}` : ''}
-    <h4>More</h4>${opt('load', 'Load a subtitle file…', `.srt or .vtt from your ${DEVICE}`, false)}`;
+    ${S.online.length ? `<h4>Found online</h4>${S.online.map((o) => opt(o.id, o.label, o.sub, S.subs.id === o.id)).join('')}` : ''}
+    <h4>More</h4>${opt('search', 'Search online…', 'OpenSubtitles and SubDL, like VLC', false)}${opt('load', 'Load a subtitle file…', `.srt or .vtt from your ${DEVICE}`, false)}`;
+}
+
+/* ----- online subtitle search (OpenSubtitles, SubDL) ----- */
+$('menu').addEventListener('submit', (e) => {
+  if (!e.target.matches('[data-ss]')) return;
+  e.preventDefault();
+  subFind.q = e.target.q.value.trim();
+  runSubSearch();
+});
+const SEARCH_LANGS = [['en', 'English'], ['bn', 'বাংলা'], ['hi', 'हिन्दी'], ['ar', 'العربية'], ['es', 'Español'], ['fr', 'Français']];
+let subFind = { q: '', busy: false, results: [], errors: [], needsKey: false, query: '' };
+function subSearchHtml() {
+  const langs = prefs.subSearchLangs;
+  const f = subFind;
+  const body = f.needsKey
+    ? `<p class="hint">Add a free API key from OpenSubtitles.com or SubDL in <a data-act="sskeys">Settings</a> to search for subtitles online.</p>`
+    : f.busy ? '<p class="hint">Searching…</p>'
+    : `${f.errors.map((e) => `<p class="hint">⚠ ${esc(e)}</p>`).join('')}${f.results.length
+      ? f.results.map((r, i) => opt(`r:${i}`, r.name || 'Subtitle', [langName(r.lang) || r.lang, r.provider, r.hashMatch ? 'Exact match for this file' : '', r.downloads ? `${r.downloads.toLocaleString()} downloads` : '', r.hi ? 'Hearing impaired' : '', r.machine ? 'Machine translated' : ''].filter(Boolean).join(' · '), false)).join('')
+      : f.query ? '<p class="hint">Nothing found. Try another name or language.</p>' : ''}`;
+  return `<h4>Search subtitles online</h4>
+    <form class="ss-form" data-ss><input name="q" placeholder="${esc(f.query || 'Movie or series name')}" value="${esc(f.q)}" autocomplete="off" spellcheck="false"><button class="ss-go" type="submit">Search</button></form>
+    <div class="chips">${SEARCH_LANGS.map(([c, l]) => chip(`sslang:${c}`, l, langs.includes(c))).join('')}</div>
+    ${body}`;
+}
+async function runSubSearch() {
+  const item = S.item;
+  subFind = { ...subFind, busy: true, results: [], errors: [] };
+  if (menuFor === 'subsearch') $('menu').innerHTML = subSearchHtml();
+  try {
+    const r = await api(`/api/subsearch?path=${enc(item.path)}&langs=${prefs.subSearchLangs.join(',')}&q=${enc(subFind.q)}`);
+    if (S.item !== item) return;
+    subFind = { ...subFind, busy: false, results: r.results, errors: r.errors, needsKey: r.needsKey, query: r.query || '' };
+  } catch (e) {
+    subFind = { ...subFind, busy: false, errors: [e.message] };
+  }
+  if (menuFor === 'subsearch') $('menu').innerHTML = subSearchHtml();
+}
+function openSubSearch() {
+  subFind = { q: '', busy: false, results: [], errors: [], needsKey: false, query: '' };
+  openMenu('subsearch', subSearchHtml());
+  runSubSearch();
+}
+async function useOnlineSub(r) {
+  const item = S.item;
+  closeMenu();
+  toast('Downloading subtitles…', 8000);
+  try {
+    const ep = S.item && meta(S.item.path);
+    const m = ep ? await ep : null;
+    const res = await fetch(`/api/subget?id=${enc(r.id)}${m?.episode != null ? `&ep=${m.episode}` : ''}`);
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Download failed');
+    const cues = parseCues(await res.text());
+    if (S.item !== item) return;
+    const id = 'o:' + r.id;
+    if (!S.online.some((o) => o.id === id)) S.online.push({ id, label: `${langName(r.lang) || r.lang} — ${r.provider}`, sub: r.name, cues });
+    S.subs = { ...S.subs, id, label: langName(r.lang) || 'Online', cues, type: 'file' };
+    prefs.subLang = r.lang; savePrefs();
+    toast(cues.length ? 'Subtitles loaded' : 'That file had no subtitles in it', 1800);
+  } catch (e) { toast(e.message, 3000); }
+  updateButtons();
 }
 
 $('menu').addEventListener('click', (e) => {
@@ -1402,6 +1471,11 @@ $('menu').addEventListener('click', (e) => {
     else if (/^s[+-]/.test(act)) setSubDelay(S.subs.delay + Number(act.slice(1)));
     else if (act === 's0') setSubDelay(0);
     else if (k === 'tab') S.subTab = v;
+    else if (k === 'sslang') {
+      const l = prefs.subSearchLangs;
+      prefs.subSearchLangs = l.includes(v) ? (l.length > 1 ? l.filter((x) => x !== v) : l) : [...l, v];
+      savePrefs(); runSubSearch(); return;
+    } else if (act === 'sskeys') { closeMenu(); minimizePlayer(); openSettings(); return; }
     else {
       if (act === 'size-') prefs.subSize = Math.max(0.6, +(prefs.subSize - 0.1).toFixed(1));
       if (act === 'size+') prefs.subSize = Math.min(2.2, +(prefs.subSize + 0.1).toFixed(1));
@@ -1433,9 +1507,15 @@ $('menu').addEventListener('click', (e) => {
     setStereo(id.slice(3)); closeMenu();
   } else if (menuFor === 'speed') {
     prefs.speed = Number(id); savePrefs(); video.playbackRate = prefs.speed; closeMenu(); updateButtons();
+  } else if (menuFor === 'subsearch') {
+    const r = subFind.results[Number(id.slice(2))];
+    if (r) useOnlineSub(r);
   } else if (menuFor === 'subs') {
+    if (id === 'search') return openSubSearch();
     closeMenu();
     if (id === 'load') return $('subFile').click();
+    const on = S.online.find((o) => o.id === id);
+    if (on) { S.subs = { ...S.subs, id, label: on.label, cues: on.cues, type: 'file' }; return updateButtons(); }
     selectSubtitle(id);
   }
 });

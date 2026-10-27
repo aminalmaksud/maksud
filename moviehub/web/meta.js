@@ -49,6 +49,7 @@ function lookup(key, p, preferTv) {
       if (!hit && p.year) hit = await multi();
       if (!hit) return null;
       return {
+        tmdbId: hit.id, tmdbType: hit.media_type || (hit.title ? 'movie' : 'tv'),
         title: hit.title || hit.name, year: Number((hit.release_date || hit.first_air_date || '').slice(0, 4)) || p.year,
         overview: hit.overview || '', rating: hit.vote_average ? Math.round(hit.vote_average * 10) / 10 : null,
         poster: hit.poster_path ? `/tmdb/w342${hit.poster_path}` : null,
@@ -101,6 +102,7 @@ export async function metaFor(rel, list, tmdbKey) {
       overview: t?.overview || '', rating: t?.rating ?? null,
       poster: poster || t?.poster || null, backdrop: t?.backdrop || null,
       matched: t ? t.title : null,
+      tmdbId: t?.tmdbId ?? null, tmdbType: t?.tmdbType ?? null,
     };
   })();
   cache.set(key, job);

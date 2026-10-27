@@ -380,3 +380,12 @@ html.streamhub .sv-empty { color: var(--muted); margin: 0; }
   html.streamhub .d-info { padding-top: 0; }
   html.streamhub .sv-grid { grid-template-columns: 1fr; }
 }
+
+/* online subtitles */
+html.streamhub .subkeys { border-top-color: var(--line2); }
+html.streamhub .subkeys legend { font-weight: 600; font-size: 15px; color: var(--strong); }
+html.streamhub .subkeys legend small { color: var(--subtle); font-weight: 400; }
+html.streamhub .menu .ss-form input { border-radius: 8px; border-color: #263041; background: #080C14; font-family: var(--body); }
+html.streamhub .menu .ss-form input:focus { border-color: var(--blue); }
+html.streamhub .menu .ss-go { border-radius: 8px; background: var(--blue); }
+html.streamhub .menu .ss-go:hover { background: var(--blue-hover); }

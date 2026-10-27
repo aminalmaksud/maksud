@@ -47,6 +47,13 @@ Anime | http://172.16.50.14/
 To find the right addresses, open your ISP's media portal in a browser. Copy the address of each
 server or folder that holds videos.
 
+**Online subtitles** (optional): to use **Search online…** in the player's subtitle menu (like VLC), add a free API key
+from [OpenSubtitles.com](https://www.opensubtitles.com/consumers), from [SubDL](https://subdl.com) (on your profile page), or from both.
+Signing in with your OpenSubtitles account allows more downloads a day. Results that match the exact file come first,
+and a season pack gives you the right episode.
+
+**3D movies** (side by side or top and bottom) play in 2D automatically. Use the **3D → 2D** button in the player to switch.
+
 **TMDB API key** (Mac app, recommended): adds real posters, backdrops, ratings and plot summaries. To get one for free,
 create an account at themoviedb.org, then go to Settings → API. Without a key the app still uses any
 poster images it finds on the server (`poster.jpg`, `folder.jpg`, …) and draws a colored card otherwise.

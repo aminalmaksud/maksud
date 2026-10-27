@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { parseListing, srtToVtt } from './listing.js';
 
 const nginx = `<html><head><title>Index of /movies/</title></head><body><h1>Index of /movies/</h1><hr><pre><a href="../">../</a>
@@ -42,6 +43,52 @@ const isp = http.createServer((req, res) => {
   res.writeHead(404); res.end();
 });
 await new Promise((r) => isp.listen(0, '127.0.0.1', r));
+
+// --- fake OpenSubtitles.com and SubDL for the online subtitle search
+function zipOf(files) { // minimal .zip writer: deflated entries + central directory
+  const locals = [], centrals = []; let off = 0;
+  for (const [name, text] of files) {
+    const data = Buffer.from(text), comp = zlib.deflateRawSync(data), n = Buffer.from(name);
+    const lh = Buffer.alloc(30); lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(8, 8); lh.writeUInt32LE(comp.length, 18); lh.writeUInt32LE(data.length, 22); lh.writeUInt16LE(n.length, 26);
+    const ch = Buffer.alloc(46); ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(8, 10); ch.writeUInt32LE(comp.length, 20); ch.writeUInt32LE(data.length, 24); ch.writeUInt16LE(n.length, 28); ch.writeUInt32LE(off, 42);
+    locals.push(lh, n, comp); centrals.push(ch, n); off += 30 + n.length + comp.length;
+  }
+  const cd = Buffer.concat(centrals), end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(files.length, 8); end.writeUInt16LE(files.length, 10); end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(off, 16);
+  return Buffer.concat([...locals, cd, end]);
+}
+const subApiSeen = [];
+const subApi = http.createServer((req, res) => {
+  const u = new URL(req.url, 'http://x');
+  subApiSeen.push(u.pathname + u.search);
+  const j = (o, st = 200) => { res.writeHead(st, { 'content-type': 'application/json' }); res.end(JSON.stringify(o)); };
+  if (u.pathname === '/os/subtitles') {
+    if (req.headers['api-key'] !== 'OSKEY') return j({ message: 'You cannot consume this service' }, 403);
+    return j({ data: [
+      { attributes: { language: 'en', release: 'Big.Film.2020.1080p', download_count: 900, files: [{ file_id: 11, file_name: 'a.srt' }] } },
+      { attributes: { language: 'bn', release: 'Big.Film.2020.Bangla', download_count: 5, files: [{ file_id: 12, file_name: 'b.srt' }] } },
+    ] });
+  }
+  if (u.pathname === '/os/download' && req.method === 'POST') return j({ link: `http://127.0.0.1:${subApi.address().port}/os/file/12.srt`, file_name: 'b.srt' });
+  if (u.pathname === '/os/file/12.srt') return res.end('1\n00:00:01,000 --> 00:00:02,000\nহ্যালো');
+  if (u.pathname === '/sd/subtitles') {
+    if (u.searchParams.get('api_key') !== 'SDKEY') return j({ status: false, error: 'Not Authorized' }, 403);
+    return j({ status: true, subtitles: [{ release_name: 'Big Film Pack', language: 'EN', url: '/subtitle/7.zip' }] });
+  }
+  if (u.pathname === '/sddl/subtitle/7.zip') {
+    res.writeHead(200, { 'content-type': 'application/zip' });
+    return res.end(zipOf([['Pack/Show.S01E01.srt', '1\n00:00:01,000 --> 00:00:02,000\nOne'], ['Pack/Show.S01E02.srt', '1\n00:00:01,000 --> 00:00:02,000\nTwo']]));
+  }
+  j({ message: 'nope' }, 404);
+});
+await new Promise((r) => subApi.listen(0, '127.0.0.1', r));
+const subApiBase = `http://127.0.0.1:${subApi.address().port}`;
+process.env.OPENSUBTITLES_API = `${subApiBase}/os`; process.env.SUBDL_API = `${subApiBase}/sd`; process.env.SUBDL_DL = `${subApiBase}/sddl`;
+const { movieHash, unzip } = await import('./subsearch.js');
+const hashBuf = Buffer.from(Array.from({ length: 200000 }, (_, i) => (i * 7 + 3) % 251));
+assert.equal(await movieHash(hashBuf.length, async (a, b) => hashBuf.subarray(a, b + 1)), 'e6ed0e283146465f', 'OpenSubtitles hash');
+assert.deepEqual(unzip(zipOf([['x/a.srt', 'hello']])).map((f) => [f.name, f.data.toString()]), [['x/a.srt', 'hello']]);
+
 process.env.SERVER_URL = `http://127.0.0.1:${isp.address().port}/movies/`;
 process.env.PORT = '0';
 process.env.CONFIG_FILE = path.join(os.tmpdir(), `moviehub-test-${process.pid}.json`);
@@ -141,5 +188,22 @@ assert.equal(r.items.length, 1, 'search shows the movie once');
 assert.equal(r.items[0].library, 'Movies');
 assert.equal((await get('/api/browse?path=v:bogus')).status, 400);
 df.close();
+
+// --- online subtitles
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies }) });
+r = await (await get('/api/subsearch?path=0%2FBig%2520Film%2520(2020).mkv&langs=bn,en')).json();
+assert.equal(r.needsKey, true, 'no keys yet');
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, opensubsKey: 'OSKEY', subdlKey: 'SDKEY' }) });
+r = await (await get('/api/subsearch?path=0%2FBig%2520Film%2520(2020).mkv&langs=bn,en')).json();
+assert.equal(r.query, 'Big Film');
+assert.deepEqual(r.results.map((x) => [x.provider, x.lang]), [['OpenSubtitles', 'bn'], ['OpenSubtitles', 'en'], ['SubDL', 'en']], 'Bangla first (language order), then by downloads');
+assert.ok(subApiSeen.some((s) => s.startsWith('/os/subtitles?') && s.includes('query=Big+Film') && s.includes('year=2020') && s.includes('languages=bn%2Cen')));
+assert.ok(subApiSeen.some((s) => s.startsWith('/sd/subtitles?') && s.includes('film_name=Big+Film') && s.includes('languages=BN%2CEN') && s.includes('type=movie')));
+let sub = await (await get(`/api/subget?id=${encodeURIComponent(r.results[0].id)}`)).text();
+assert.match(sub, /^WEBVTT[\s\S]*হ্যালো/);
+sub = await (await get(`/api/subget?id=${encodeURIComponent(r.results[2].id)}&ep=2`)).text();
+assert.match(sub, /^WEBVTT[\s\S]*Two/, 'the right episode from a season pack');
+assert.equal((await get('/api/subget?id=sd:http://evil.test/x')).status, 502, 'only provider paths are fetched');
+subApi.close();
 console.log('all tests passed');
 server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });
