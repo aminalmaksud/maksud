@@ -216,7 +216,8 @@ fs.writeFileSync(path.join(lib, 'Movie', 'Inception (2010)', 'Inception.2010.108
 fs.writeFileSync(path.join(lib, 'Movie', 'Inception (2010)', 'poster.jpg'), 'jpg');
 fs.mkdirSync(path.join(lib, 'Movie', '$RECYCLE.BIN'));
 fs.writeFileSync(path.join(lib, 'secret.txt'), 'outside');
-fs.symlinkSync(path.join(lib, 'secret.txt'), path.join(lib, 'Movie', 'Inception (2010)', 'escape.mkv'));
+let canLink = true;
+try { fs.symlinkSync(path.join(lib, 'secret.txt'), path.join(lib, 'Movie', 'Inception (2010)', 'escape.mkv')); } catch { canLink = false; } // Windows may need admin rights
 const movieDir = path.join(lib, 'Movie');
 assert.equal((await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Movies | ${movies}\nNope | ${path.join(lib, 'missing')}` }) })).status, 400, 'missing folder rejected');
 await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Movies | ${movies}\nMy Movie | ${movieDir}` }) });
@@ -226,13 +227,13 @@ r = await (await get('/api/browse?path=1/')).json();
 assert.deepEqual(r.items.map((i) => [i.name, i.kind]), [['Inception (2010)', 'dir']], 'system folders hidden');
 assert.deepEqual(r.localLibs, [1]);
 r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
-assert.deepEqual(r.items.map((i) => i.kind).sort(), ['image', 'sub', 'video', 'video']);
+assert.deepEqual(r.items.map((i) => i.kind).sort(), canLink ? ['image', 'sub', 'video', 'video'] : ['image', 'sub', 'video']);
 const vid = r.items.find((i) => i.name.endsWith('1080p.mkv'));
 r = await get(`/stream?path=${encodeURIComponent(vid.path)}`, { range: 'bytes=10-19' });
 assert.equal(r.status, 206); assert.equal(r.headers.get('content-range'), 'bytes 10-19/1000');
 assert.match(await (await get(`/subs?path=${encodeURIComponent(vid.path.replace(/mkv$/, 'srt'))}`)).text(), /Dream/);
 assert.equal((await get(`/img?path=${encodeURIComponent(vid.path.replace(/[^/]+$/, 'poster.jpg'))}`)).status, 200);
-assert.equal((await get(`/stream?path=${encodeURIComponent(vid.path.replace(/[^/]+$/, 'escape.mkv'))}`)).status, 400, 'symlink out of the library refused');
+if (canLink) assert.equal((await get(`/stream?path=${encodeURIComponent(vid.path.replace(/[^/]+$/, 'escape.mkv'))}`)).status, 400, 'symlink out of the library refused');
 assert.equal((await get('/stream?path=1%2F..%2Fsecret.txt')).status, 400, '.. refused');
 r = await (await get('/api/search?q=incep')).json();
 assert.deepEqual(r.items.map((i) => i.name), ['Inception (2010)'], 'local folders are searched');
@@ -240,7 +241,8 @@ r = await (await get('/api/status')).json();
 assert.equal(r.libraries[1].local, true);
 r = await fetch(base + '/api/downloads', { method: 'POST', body: JSON.stringify({ path: vid.path }) });
 assert.ok([400, 404].includes(r.status), 'no downloading what is already here');
-assert.equal((await fetch(base + '/api/pick-folder', { method: 'POST' })).status, process.platform === 'linux' ? 501 : 200);
+// The picker itself opens a real dialog on Mac and Windows, so only the method check runs here.
+assert.equal((await get('/api/pick-folder')).status, 405);
 fs.rmSync(lib, { recursive: true, force: true });
 console.log('all tests passed');
 server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });
