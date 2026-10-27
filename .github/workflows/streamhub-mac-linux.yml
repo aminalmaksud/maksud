@@ -4,7 +4,7 @@ name: MusingsofMaksudTV Mac app (built on Linux)
 # Used when GitHub's Mac machines aren't available.
 on:
   push:
-    paths: ['moviehub/web/**', 'moviehub/mac/**', '.github/workflows/moviehub-mac-linux.yml']
+    paths: ['streamhub/web/**', 'streamhub/mac/**', '.github/workflows/streamhub-mac-linux.yml']
   workflow_dispatch:
 
 jobs:
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: moviehub/mac
+        working-directory: streamhub/mac
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,7 +23,7 @@ jobs:
           node-version: '20'
       - name: Web tests
         run: node test.js
-        working-directory: moviehub/web
+        working-directory: streamhub/web
       - name: Install (macOS ffmpeg for ${{ matrix.arch }})
         run: npm install --no-audit --no-fund
         env:
@@ -46,4 +46,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: MusingsofMaksudTV-mac-${{ matrix.arch == 'arm64' && 'apple-silicon' || 'intel' }}-zip
-          path: moviehub/mac/dist/*.zip
+          path: streamhub/mac/dist/*.zip

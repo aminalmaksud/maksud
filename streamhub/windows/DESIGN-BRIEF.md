@@ -3,7 +3,7 @@
 > **Status:** the resulting design is in [`design/`](design/) and is built into the app (`web/public/streamhub.css`). See `design/README.md` for what's done and what's still to come.
 
 Paste this into Claude Design to start the StreamHub (Windows) UI redesign. The result gets built into the
-shared `moviehub/web/public/` (plain HTML/CSS/JS, no framework), so keep designs implementable as web pages.
+shared `streamhub/web/public/` (plain HTML/CSS/JS, no framework), so keep designs implementable as web pages.
 
 ## Product
 StreamHub is a Netflix-style home media app for Windows PCs. It finds movies, TV series and anime on the
