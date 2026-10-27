@@ -34,14 +34,16 @@ jobs:
       - name: Smoke test the bundled server
         run: |
           mkdir -p "$RUNNER_TEMP/data"
-          PORT=47990 WEB_ROOT="$PWD/../web" CONFIG_FILE="$RUNNER_TEMP/data/config.json" \
+          PORT=47990 BRAND=streamhub WEB_ROOT="$PWD/../web" CONFIG_FILE="$RUNNER_TEMP/data/config.json" \
             FFMPEG_PATH="$PWD/src-tauri/binaries/ffmpeg-x86_64-pc-windows-msvc.exe" \
             FFPROBE_PATH="$PWD/src-tauri/binaries/ffprobe-x86_64-pc-windows-msvc.exe" \
             src-tauri/binaries/mmtv-server-x86_64-pc-windows-msvc.exe &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:47990/api/config > config.json && break; sleep 1; done
           cat config.json
           grep -q '"ffmpeg":true' config.json
-          curl -sf http://127.0.0.1:47990/ | grep -q '<title>'
+          curl -sf http://127.0.0.1:47990/ | grep -q 'class="streamhub"'
+          curl -sf http://127.0.0.1:47990/streamhub.css > /dev/null
+          curl -sf http://127.0.0.1:47990/api/status | grep -q '"libraries"'
           kill %1
       - name: Build installer
         run: npx tauri build

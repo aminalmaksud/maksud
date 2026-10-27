@@ -2058,16 +2058,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "musingsofmaksudtv"
-version = "1.0.0"
-dependencies = [
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-opener",
-]
-
-[[package]]
 name = "ndk"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3214,6 +3204,16 @@ name = "static_vcruntime"
 version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff7589a1859b09232522bb9edf076ca7fcf14ded96685d3fa629db73023ffbb7"
+
+[[package]]
+name = "streamhub"
+version = "1.0.0"
+dependencies = [
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+]
 
 [[package]]
 name = "string_cache"

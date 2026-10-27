@@ -61,6 +61,8 @@ fn start_server(app: &AppHandle, port: u16) -> Result<Server, String> {
         .env("FFMPEG_PATH", exe_dir.join("ffmpeg.exe"))
         .env("FFPROBE_PATH", exe_dir.join("ffprobe.exe"))
         .env("MMTV_EXIT_WITH_PARENT", "1")
+        .env("BRAND", "streamhub")
+        .env("APP_VERSION", app.package_info().version.to_string())
         .stdin(Stdio::piped())
         .stdout(log.try_clone().map_err(|e| e.to_string())?)
         .stderr(log);
@@ -121,7 +123,7 @@ fn main() {
                 .title("StreamHub")
                 .inner_size(1320.0, 840.0)
                 .min_inner_size(760.0, 500.0)
-                .background_color(tauri::window::Color(0xf6, 0xef, 0xe4, 0xff))
+                .background_color(tauri::window::Color(0x08, 0x0c, 0x14, 0xff))
                 .additional_browser_args(BROWSER_ARGS)
                 // Links (e.g. "get a TMDB key") open in the default browser, never inside the app.
                 .on_navigation(move |url| {

@@ -10,6 +10,15 @@ export const hasFfmpeg = (() => {
   try { return spawnSync(FFMPEG, ['-version'], { windowsHide: true }).status === 0 && spawnSync(FFPROBE, ['-version'], { windowsHide: true }).status === 0; } catch { return false; }
 })();
 
+let version = null;
+/** "7.0.2" — shown on the Windows app's Server page. */
+export function ffmpegVersion() {
+  if (version === null) {
+    try { version = (/ffmpeg version n?([\w.-]+)/.exec(spawnSync(FFMPEG, ['-version'], { windowsHide: true }).stdout) || ['', ''])[1]; } catch { version = ''; }
+  }
+  return version;
+}
+
 const PLAYABLE_VIDEO = new Set(['h264', 'hevc', 'vp8', 'vp9', 'av1']);
 const PLAYABLE_AUDIO = new Set(['aac', 'mp3', 'opus', 'vorbis', 'flac']);
 const TEXT_SUBS = new Set(['subrip', 'ass', 'ssa', 'webvtt', 'mov_text', 'text']);

@@ -99,7 +99,8 @@ Install ffmpeg first (`brew install ffmpeg`) to get sound for every file. Tests:
 
 ## Windows app (StreamHub)
 
-StreamHub is the Windows version of the Mac app: the same screens, player, downloads and keys. It's built with
+StreamHub is the Windows version of the Mac app, with the same library, player, downloads and keys. It has its own
+look: sidebar navigation, light and dark themes that follow Windows, and a Server page (see `windows/design/`). It's built with
 [Tauri](https://tauri.app): a small Rust program shows the app in Windows' built-in browser engine (WebView2) and
 runs the same server as the Mac app in the background, with ffmpeg included. You never have to start anything yourself.
 

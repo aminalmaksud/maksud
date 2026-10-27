@@ -9,19 +9,35 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Cinzel:wght@600;700&display=swap">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
-<script>try { document.documentElement.dataset.theme = (JSON.parse(localStorage.getItem('mh.prefs')) || {}).theme || 'parchment'; } catch { document.documentElement.dataset.theme = 'parchment'; }</script>
+<link rel="stylesheet" href="streamhub.css">
+<script>
+  // StreamHub (Windows) has its own light/dark themes; "system" follows Windows. See shTheme in app.js.
+  (() => {
+    const de = document.documentElement, sh = de.classList.contains('streamhub');
+    let p = {};
+    try { p = JSON.parse(localStorage.getItem('mh.prefs')) || {}; } catch { /* private mode */ }
+    if (!sh) { de.dataset.theme = p.theme || 'parchment'; return; }
+    const m = p.shTheme || 'system';
+    de.dataset.theme = (m === 'system' ? matchMedia('(prefers-color-scheme: light)').matches : m === 'light') ? 'sh-light' : 'sh-dark';
+  })();
+</script>
 </head>
 <body>
 <header id="top">
   <button id="backBtn" class="icon-btn" title="Back (⌘[)" hidden></button>
-  <a id="logo" href="#/"><img class="logo-mark" src="logo.svg" alt=""><span class="logo-text"><b>Musings of Maksud</b><small>মুসিংস অব মাকসুদ • টিভি</small></span><span class="logo-tv">TV</span></a>
+  <a id="logo" href="#/"><img class="sh-mark" src="assets/streamhub-mark.svg" alt=""><span class="sh-name">StreamHub</span><img class="logo-mark" src="logo.svg" alt=""><span class="logo-text"><b>Musings of Maksud</b><small>মুসিংস অব মাকসুদ • টিভি</small></span><span class="logo-tv">TV</span></a>
   <nav id="nav"></nav>
   <div class="search">
     <span class="search-ico"></span>
     <input id="filter" type="search" placeholder="Titles, people, years…" autocomplete="off" spellcheck="false">
+    <kbd class="sh-kbd">Ctrl K</kbd>
   </div>
   <button id="refreshBtn" class="icon-btn" title="Refresh"></button>
   <button id="settingsBtn" class="icon-btn" title="Settings"></button>
+  <div id="shFoot">
+    <a id="shStatus" href="#/server"><b><i></i>Server running</b><code id="shAddr"></code></a>
+    <button id="shTheme" type="button"><span class="sh-ico"></span>Theme<small id="shThemeName"></small></button>
+  </div>
 </header>
 
 <section id="hero" hidden>
@@ -152,9 +168,14 @@
     <label>TMDB API key <small>recommended — adds posters, backdrops, ratings and plot summaries. Free at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a></small>
       <input name="tmdbKey" autocomplete="off" spellcheck="false" placeholder="paste API key or read access token"></label>
     <div class="field"><span class="flabel">Theme</span>
-      <div class="themes">
+      <div class="themes mh-only">
         <button type="button" class="theme-pick" data-theme-pick="parchment"><i></i>Parchment</button>
         <button type="button" class="theme-pick" data-theme-pick="night"><i></i>Night</button>
+      </div>
+      <div class="sh-seg sh-only">
+        <button type="button" data-sh-theme="system">System</button>
+        <button type="button" data-sh-theme="light">Light</button>
+        <button type="button" data-sh-theme="dark">Dark</button>
       </div>
     </div>
     <p class="note" id="ffmpegNote"></p>

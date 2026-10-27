@@ -7,7 +7,7 @@ import { Readable } from 'node:stream';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT } from './listing.js';
-import { hasFfmpeg, probe, remux, extractSubtitle, keyframeBefore } from './media.js';
+import { hasFfmpeg, ffmpegVersion, probe, remux, extractSubtitle, keyframeBefore } from './media.js';
 import { metaFor } from './meta.js';
 import { groupKey, mergeListings, encodeV, decodeV } from './merge.js';
 import { downloadsEnabled, startDownload, cancelDownload, deleteDownloaded, listDownloads, localEntries, localFile } from './downloads.js';
@@ -18,6 +18,9 @@ const PUBLIC = path.join(here, 'public');
 const CONFIG_FILE = process.env.CONFIG_FILE || path.join(here, 'config.json');
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || '127.0.0.1'; // set HOST=0.0.0.0 to open it to your home network
+// BRAND=streamhub (set by the Windows app) switches the UI to the StreamHub look; see public/streamhub.css.
+const BRAND = process.env.BRAND === 'streamhub' ? 'streamhub' : '';
+const started = Date.now();
 
 const MIME = {
   html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8',
@@ -426,7 +429,25 @@ async function handleConfig(req, res) {
     fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
-  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled() });
+  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND });
+}
+
+/** What the Windows app's Server page shows: uptime, ffmpeg, and how quickly each library answers. */
+async function handleStatus(res) {
+  const libraries = await Promise.all(config.servers.map(async (line, i) => {
+    const t = Date.now();
+    let ms = null;
+    try {
+      const r = await fetch(bases()[i].href, { headers: upstreamHeaders(), signal: AbortSignal.timeout(5000) });
+      r.body?.cancel().catch(() => {});
+      if (r.ok) ms = Date.now() - t;
+    } catch { /* unreachable */ }
+    return { name: serverNames()[i], url: splitLabel(line).url, ms };
+  }));
+  json(res, 200, {
+    version: process.env.APP_VERSION || '', uptime: Math.round((Date.now() - started) / 1000),
+    ffmpeg: hasFfmpeg ? ffmpegVersion() || 'ready' : '', downloads: downloadsEnabled() ? listDownloads().dir : '', libraries,
+  });
 }
 
 function serveStatic(url, res) {
@@ -436,6 +457,11 @@ function serveStatic(url, res) {
     res.writeHead(404); return res.end('Not found');
   }
   res.writeHead(200, { 'content-type': MIME[extOf(file)] || 'application/octet-stream', 'cache-control': 'no-cache' });
+  if (BRAND && rel === 'index.html') {
+    // Marked before the first paint, so the StreamHub look shows without a flash of the Mac one.
+    return res.end(fs.readFileSync(file, 'utf8').replace('<html lang="en">', `<html lang="en" class="${BRAND}">`)
+      .replace('<title>MusingsofMaksudTV</title>', '<title>StreamHub</title>').replace('href="logo.svg" type="image/svg+xml"', 'href="assets/streamhub-icon.svg" type="image/svg+xml"'));
+  }
   fs.createReadStream(file).pipe(res);
 }
 
@@ -454,6 +480,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/browse') return await handleBrowse(url, res);
     if (p === '/api/search') return await handleSearch(url, res);
     if (p === '/api/config') return await handleConfig(req, res);
+    if (p === '/api/status') return await handleStatus(res);
     if (p === '/api/meta') return await handleMeta(url, res);
     if (p === '/api/probe') return await handleProbe(url, res);
     if (p === '/api/seek-point') return await handleSeekPoint(url, res);

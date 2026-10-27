@@ -3,6 +3,8 @@ const $ = (id) => document.getElementById(id);
 if (navigator.userAgent.includes('Electron')) document.documentElement.classList.add('electron');
 const WIN = navigator.userAgent.includes('Windows');
 const DEVICE = WIN ? 'PC' : 'Mac'; // "save it to this Mac / PC"
+// The Windows app (StreamHub) has its own look: sidebar navigation, blue on slate, light/dark themes.
+const SH = document.documentElement.classList.contains('streamhub');
 const INSTALL_FFMPEG = WIN ? '<code>winget install ffmpeg</code>' : '<code>brew install ffmpeg</code>';
 
 /* ---------------- icons ---------------- */
@@ -43,6 +45,10 @@ const I = {
   down: P('<path d="M6 9l6 6 6-6"/>'),
   expand: P('<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>'),
   undo: P('<path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/>'),
+  home: P('<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>'),
+  monitor: P('<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>'),
+  sun: P('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+  moon: P('<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'),
 };
 const setIcon = (el, name) => { el.innerHTML = I[name]; };
 setIcon($('backBtn'), 'back'); setIcon($('settingsBtn'), 'gear'); setIcon($('refreshBtn'), 'refresh');
@@ -561,10 +567,29 @@ const render = () => { if (state.view === 'folder' || state.view === 'search') r
 
 function renderNav() {
   const cur = state.view === 'home' ? -1 : state.view === 'folder' ? groupIdxOf(state.path) : -2;
+  if (SH) return renderSideNav(cur);
   $('nav').innerHTML = `<a href="#/" class="${cur === -1 ? 'on' : ''}">Home</a>` +
     state.groups.map((g, i) => `<a data-go="${esc(g.root)}" class="${cur === i ? 'on' : ''}">${esc(g.name)}</a>`).join('') +
     `<a href="#/list" class="${state.view === 'list' ? 'on' : ''}">My List</a>` +
     (state.config?.downloads ? `<a href="#/downloads" class="${state.view === 'downloads' ? 'on' : ''}">⬇ Downloads</a>` : '');
+}
+
+/** StreamHub's sidebar: the same places as the Mac app's tabs, with icons, plus the Server page. */
+function renderSideNav(cur) {
+  const item = (on, attrs, icon, label, extra = '') => `<a ${attrs} class="${on ? 'on' : ''}" title="${esc(label)}">${icon}<span>${esc(label)}</span>${extra}</a>`;
+  const sectionIcon = (name) => (/anime|cartoon|animation/i.test(name) ? I.spark : /series|tv|show|season|drama/i.test(name) ? I.tv : I.film);
+  $('nav').innerHTML = item(cur === -1, 'href="#/"', I.home, 'Home') +
+    state.groups.map((g, i) => item(cur === i, `data-go="${esc(g.root)}"`, sectionIcon(g.name), g.name)).join('') +
+    item(state.view === 'list', 'href="#/list"', I.bookmark, 'My List') +
+    (state.config?.downloads ? item(state.view === 'downloads', 'href="#/downloads"', I.download, 'Downloads', '<em id="dlBadge" hidden></em>') : '') +
+    item(state.view === 'server', 'href="#/server"', I.server, 'Server');
+  if (state.config?.downloads) {
+    api('/api/downloads').then((d) => {
+      const n = d.active.filter((j) => j.status === 'downloading').length;
+      const b = $('dlBadge');
+      if (b) { b.textContent = n; b.hidden = !n; }
+    }).catch(() => {});
+  }
 }
 
 function renderHead() {
@@ -609,6 +634,7 @@ function route({ refresh = false } = {}) {
   if (h.startsWith('search/')) return showSearch(decodeURIComponent(h.slice(7)));
   if (h === 'downloads') return showDownloads();
   if (h === 'list') return showList();
+  if (h === 'server' && SH) return showServer();
   return showHome();
 }
 window.addEventListener('hashchange', () => route());
@@ -735,6 +761,36 @@ document.addEventListener('click', async (e) => {
   if (state.view === 'downloads') showDownloads();
 }, true);
 
+/* ---------------- server page (StreamHub) ---------------- */
+const fmtUptime = (sec) => (sec >= 3600 ? `${Math.floor(sec / 3600)} h ${Math.floor((sec % 3600) / 60)} min` : `${Math.max(1, Math.floor(sec / 60))} min`);
+async function showServer() {
+  resetView('server');
+  renderNav();
+  $('crumbs').innerHTML = '';
+  $('folderTitle').textContent = 'Server';
+  $('folderSub').textContent = 'StreamHub runs a small server on this PC that reads your libraries and plays them.';
+  $('backBtn').hidden = false;
+  $('status').textContent = 'Checking your libraries…';
+  let st;
+  try { st = await api('/api/status'); } catch (e) { $('status').textContent = e.message; $('status').className = 'error'; return; }
+  if (state.view !== 'server') return;
+  $('status').textContent = '';
+  const ok = st.libraries.filter((l) => l.ms !== null).length;
+  const row = (k, v) => `<div class="sv-kv"><span>${esc(k)}</span><code>${esc(v)}</code></div>`;
+  const lib = (l) => `<div class="sv-lib"><div><b>${esc(l.name)}</b><code>${esc(l.url)}</code></div>
+    <span class="sv-ping ${l.ms === null ? 'bad' : l.ms > 300 ? 'slow' : 'ok'}"><i></i>${l.ms === null ? 'Can’t reach' : l.ms > 300 ? `Slow · ${l.ms} ms` : `${l.ms} ms`}</span></div>`;
+  $('rows').innerHTML = `<div class="sv-grid">
+    <section class="sv-card"><h3><i class="sv-dot"></i>Running<small>Up ${esc(fmtUptime(st.uptime))}</small></h3>
+      <div class="sv-stats"><div><span>Libraries</span><b>${ok}/${st.libraries.length}</b></div><div><span>Sound fix</span><b>${st.ffmpeg ? 'On' : 'Off'}</b></div>
+      <div><span>Downloads</span><b>${st.downloads ? 'On' : 'Off'}</b></div></div></section>
+    <section class="sv-card"><h3>System</h3>
+      ${row('Address', location.host)}${row('FFmpeg', st.ffmpeg ? `${st.ffmpeg} · ready` : 'not found')}${st.downloads ? row('Downloads', st.downloads) : ''}${st.version ? row('Version', st.version) : ''}</section>
+    <section class="sv-card wide"><h3>Libraries<a class="sv-link" id="svManage">Manage</a></h3>
+      ${st.libraries.length ? st.libraries.map(lib).join('') : '<p class="sv-empty">No libraries yet. Add a server in Settings.</p>'}</section>
+  </div>`;
+  $('svManage').onclick = openSettings;
+}
+
 /* ---------------- details sheet ---------------- */
 let detailsItem = null, detailsFolder = null, detailsVersion = 0;
 /** The file to play: the chosen version (720p, 1080p…) of the movie in the sheet. */
@@ -832,7 +888,23 @@ async function saveConfig(body) {
 }
 function markTheme() {
   document.querySelectorAll('[data-theme-pick]').forEach((b) => b.classList.toggle('on', b.dataset.themePick === document.documentElement.dataset.theme));
+  if (!SH) return;
+  const m = prefs.shTheme || 'system';
+  document.querySelectorAll('[data-sh-theme]').forEach((b) => b.classList.toggle('on', b.dataset.shTheme === m));
+  $('shThemeName').textContent = m[0].toUpperCase() + m.slice(1);
+  $('shTheme').querySelector('.sh-ico').innerHTML = { system: I.monitor, light: I.sun, dark: I.moon }[m];
 }
+// StreamHub: System (follows Windows) / Light / Dark. The page applies it before first paint too (index.html).
+const lightQuery = matchMedia('(prefers-color-scheme: light)');
+function applyShTheme() {
+  const m = prefs.shTheme || 'system';
+  document.documentElement.dataset.theme = (m === 'system' ? lightQuery.matches : m === 'light') ? 'sh-light' : 'sh-dark';
+  markTheme();
+}
+function setShTheme(m) { prefs.shTheme = m; savePrefs(); applyShTheme(); }
+document.querySelectorAll('[data-sh-theme]').forEach((b) => { b.onclick = () => setShTheme(b.dataset.shTheme); });
+$('shTheme').onclick = () => setShTheme({ system: 'light', light: 'dark', dark: 'system' }[prefs.shTheme || 'system']);
+lightQuery.addEventListener('change', () => { if (SH) applyShTheme(); });
 document.querySelectorAll('[data-theme-pick]').forEach((b) => {
   b.onclick = () => { document.documentElement.dataset.theme = b.dataset.themePick; prefs.theme = b.dataset.themePick; savePrefs(); markTheme(); };
 });
@@ -1477,7 +1549,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && e.target.id === 'filter') { e.target.value = ''; render(); e.target.blur(); }
     return;
   }
-  if ((e.metaKey || e.ctrlKey) && e.key === 'f' && !playerFull()) { e.preventDefault(); $('filter').focus(); return; }
+  if ((e.metaKey || e.ctrlKey) && (e.key === 'f' || e.key === 'k') && !playerFull()) { e.preventDefault(); $('filter').focus(); return; }
   if (e.key === '/' && !playerFull() && $('details').hidden) { e.preventDefault(); $('filter').focus(); return; }
   if ((e.metaKey || e.ctrlKey) && e.key === '[') { e.preventDefault(); if (playerFull()) minimizePlayer(); else history.back(); return; }
   if (!playerFull()) {
@@ -1508,5 +1580,14 @@ window.__mh = { now: () => now(), state: () => ({ mode: S.mode, offset: S.offset
 /* ----- boot ----- */
 if (!location.hash) history.replaceState(null, '', '#/');
 api('/api/config').then((c) => { state.config = c; renderNav(); }).catch(() => {});
+if (SH) {
+  applyShTheme();
+  $('shAddr').textContent = location.host;
+  $('filter').placeholder = 'Search';
+  document.querySelector('#hero .eyebrow').textContent = 'Featured';
+  document.querySelector('#welcome .eyebrow').textContent = 'Welcome';
+  document.querySelector('#welcome h1').innerHTML = 'Stream<span>Hub</span>';
+  document.querySelector('#welcome p').textContent = 'Every movie, series and anime on your ISP’s BDIX servers, ready to play on this PC.';
+}
 route();
 window.addEventListener('scroll', () => document.body.classList.toggle('scrolled', window.scrollY > 30), { passive: true });
