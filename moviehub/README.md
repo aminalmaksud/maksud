@@ -1,6 +1,6 @@
 # StreamHub
 
-<img src="web/public/logo.svg" width="96" alt="MusingsofMaksudTV logo">
+<img src="web/public/assets/streamhub-icon.svg" width="96" alt="StreamHub logo">
 
 Watch the movies, TV series and anime on your ISP's media servers (BDIX / FTP-style "Index of /"
 or h5ai servers) on:
