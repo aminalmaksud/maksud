@@ -502,7 +502,7 @@ dialog :is(input, textarea) { display: block; width: 100%; margin-top: 4px; padd
   background: var(--bg); color: var(--text); font: 14px/1.45 ui-monospace, "SF Mono", Menlo, monospace; outline: none; resize: vertical; }
 dialog :is(input, textarea):focus { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(212, 163, 63, .16); }
 dialog code { background: var(--raised); padding: 1px 6px; border-radius: 6px; border: 1px solid var(--line); }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; } /* fields line up even when only one label has a hint */
 .two label { margin: 6px 0; }
 .note { font-size: 13px; color: var(--dim); background: var(--raised); border: 1px solid var(--line); padding: 11px 13px; border-radius: 13px; }
 .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }

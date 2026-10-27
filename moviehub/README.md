@@ -107,7 +107,7 @@ runs the same server as the Mac app in the background, with ffmpeg included. You
 ### Install
 1. On GitHub, open **Actions → StreamHub Windows app**, then the latest green run, and download
    **StreamHub-windows-x64**.
-2. Unzip it and run `StreamHub_1.0.0_x64-setup.exe`. It installs for your user only, so you don't need admin rights.
+2. Unzip it and run `StreamHub_1.0.1_x64-setup.exe`. It installs for your user only, so you don't need admin rights.
    Windows 10 PCs without WebView2 get it during setup. Windows 11 already has it.
 3. The app isn't signed by a registered publisher yet, so Windows SmartScreen may warn the first time.
    Click **More info → Run anyway**.
