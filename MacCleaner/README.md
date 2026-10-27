@@ -19,16 +19,22 @@ For a quick test without building the app bundle, run `swift run`. You can also 
 | Category | Location | Pre-selected |
 |---|---|---|
 | App Caches | `~/Library/Caches` | ✅ |
+| Sandboxed App Caches | `~/Library/Containers/*/Data/Library/Caches` | ✅ |
 | Logs & Crash Reports | `~/Library/Logs` | ✅ |
 | Xcode DerivedData | `~/Library/Developer/Xcode/DerivedData` | ✅ |
 | Xcode Device Support | `~/Library/Developer/Xcode/*OS DeviceSupport` | ✅ |
 | Simulator Caches | `~/Library/Developer/CoreSimulator/Caches` | ✅ |
 | Mail Attachments Cache | `~/Library/Containers/com.apple.mail/.../Mail Downloads` | ✅ |
+| iPhone & iPad Update Files | `~/Library/iTunes/*Software Updates` | ✅ |
 | Developer Package Caches | `~/.npm`, `~/.cache`, `~/.gradle/caches`, Cargo, Go, Dart | review |
 | Xcode Archives | `~/Library/Developer/Xcode/Archives` | review |
 | iPhone & iPad Backups | `~/Library/Application Support/MobileSync/Backup` | review |
+| Messages Attachments | Files over 1 MB in `~/Library/Messages/Attachments` | review |
+| Uninstalled App Leftovers | Folders in Application Support, Containers, Saved Application State, HTTPStorages and WebKit that belong to no installed app and haven't changed in 30+ days | review |
 | Old Downloads | `~/Downloads`, untouched for 90+ days | review |
 | Trash | `~/.Trash` | review |
+
+The **Duplicates** tab finds files with identical contents (checked by SHA-256) in your home folder. **Select Extra Copies** keeps the oldest copy in each set and selects the rest, and the app warns you if you've selected every copy of a file.
 
 The **Large Files** tab searches your home folder for big files (100 MB to 5 GB and up). It skips `~/Library` and the inside of app/Photos bundles.
 

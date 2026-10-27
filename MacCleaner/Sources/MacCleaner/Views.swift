@@ -8,6 +8,7 @@ struct ContentView: View {
             TabView {
                 CleanupView().tabItem { Label("Cleanup", systemImage: "sparkles") }
                 LargeFilesView().tabItem { Label("Large Files", systemImage: "doc.badge.ellipsis") }
+                DuplicatesView().tabItem { Label("Duplicates", systemImage: "doc.on.doc") }
             }
         }
         .padding()
@@ -183,6 +184,66 @@ struct LargeFilesView: View {
             }
         } message: {
             Text(model.deletePermanently ? "This can't be undone." : "You can restore them from the Trash.")
+        }
+    }
+}
+
+// MARK: - Duplicates tab
+
+struct DuplicatesView: View {
+    @EnvironmentObject private var model: CleanerModel
+    @State private var confirming = false
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Picker("Compare files larger than", selection: $model.duplicateMinMB) {
+                    Text("1 MB").tag(1)
+                    Text("10 MB").tag(10)
+                    Text("100 MB").tag(100)
+                }
+                .fixedSize()
+                Button("Search") { Task { await model.scanDuplicates() } }
+                    .disabled(model.busy != nil)
+                Spacer()
+                if !model.duplicateGroups.isEmpty {
+                    Text("\(model.duplicateGroups.count) sets of duplicates, \(formatBytes(model.duplicateWaste)) wasted")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            List {
+                if model.hasSearchedDuplicates && model.duplicateGroups.isEmpty {
+                    Text("No duplicate files found.").foregroundStyle(.secondary)
+                }
+                ForEach(Array(model.duplicateGroups.enumerated()), id: \.offset) { _, group in
+                    Section {
+                        ForEach(group) { ItemRow(item: $0, selection: $model.duplicateSelected) }
+                    } header: {
+                        Text("\(group.count) copies of \(group[0].name) · \(formatBytes(group[0].size)) each")
+                    }
+                }
+            }
+            HStack {
+                StatusText()
+                Spacer()
+                Button("Select Extra Copies") { model.selectDuplicateExtras() }
+                    .help("Selects every copy except the oldest one in each set.")
+                    .disabled(model.duplicateGroups.isEmpty || model.busy != nil)
+                Toggle("Delete permanently", isOn: $model.deletePermanently)
+                Button("Remove \(formatBytes(model.duplicateSelectedSize))") { confirming = true }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(model.busy != nil || model.duplicateSelected.isEmpty)
+            }
+        }
+        .padding(8)
+        .confirmationDialog("Remove \(model.duplicateSelected.count) files?", isPresented: $confirming) {
+            Button(model.deletePermanently ? "Delete Permanently" : "Move to Trash", role: .destructive) {
+                Task { await model.removeSelectedDuplicates() }
+            }
+        } message: {
+            let all = model.fullySelectedDuplicateGroups
+            Text((all > 0 ? "Warning: you selected every copy in \(all) set(s), so no copy of those files will be left. " : "")
+                 + (model.deletePermanently ? "This can't be undone." : "You can restore them from the Trash."))
         }
     }
 }

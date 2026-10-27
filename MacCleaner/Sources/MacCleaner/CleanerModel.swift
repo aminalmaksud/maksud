@@ -10,6 +10,11 @@ final class CleanerModel: ObservableObject {
     @Published var largeThresholdMB = 500
     @Published private(set) var hasSearchedLargeFiles = false
 
+    @Published private(set) var duplicateGroups: [[CleanupItem]] = []
+    @Published var duplicateSelected: Set<URL> = []
+    @Published var duplicateMinMB = 10
+    @Published private(set) var hasSearchedDuplicates = false
+
     @Published var deletePermanently = false
     /// Non-nil while scanning or cleaning; describes what's happening.
     @Published private(set) var busy: String?
@@ -32,6 +37,19 @@ final class CleanerModel: ObservableObject {
 
     var largeSelectedSize: Int64 {
         largeFiles.filter { largeSelected.contains($0.url) }.reduce(0) { $0 + $1.size }
+    }
+
+    var duplicateSelectedSize: Int64 {
+        duplicateGroups.joined().filter { duplicateSelected.contains($0.url) }.reduce(0) { $0 + $1.size }
+    }
+
+    var duplicateWaste: Int64 {
+        duplicateGroups.reduce(0) { $0 + DiskScanner.wasted(by: $1) }
+    }
+
+    /// Groups where every copy is selected, so removing them would leave no copy at all.
+    var fullySelectedDuplicateGroups: Int {
+        duplicateGroups.filter { $0.allSatisfy { duplicateSelected.contains($0.url) } }.count
     }
 
     func scan() async {
@@ -60,6 +78,31 @@ final class CleanerModel: ObservableObject {
         largeSelected = []
         hasSearchedLargeFiles = true
         busy = nil
+    }
+
+    func scanDuplicates() async {
+        guard busy == nil else { return }
+        busy = "Comparing files in your home folder… this can take a few minutes."
+        let minSize = Int64(duplicateMinMB) * 1_000_000
+        duplicateGroups = await Task.detached(priority: .userInitiated) {
+            DiskScanner.duplicateGroups(minSize: minSize)
+        }.value
+        duplicateSelected = []
+        hasSearchedDuplicates = true
+        busy = nil
+    }
+
+    /// Selects every copy except the oldest in each group.
+    func selectDuplicateExtras() {
+        duplicateSelected = Set(duplicateGroups.flatMap { $0.dropFirst().map(\.url) })
+    }
+
+    func removeSelectedDuplicates() async {
+        let removed = await remove(duplicateGroups.joined().filter { duplicateSelected.contains($0.url) })
+        duplicateGroups = duplicateGroups
+            .map { $0.filter { !removed.contains($0.url) } }
+            .filter { $0.count > 1 }
+        duplicateSelected.subtract(removed)
     }
 
     func cleanSelected() async {

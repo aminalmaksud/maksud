@@ -7,6 +7,15 @@ enum Risk: String, Sendable {
     case review = "Review"
 }
 
+enum ScanKind: Sendable {
+    /// Each direct child of the folder is one item.
+    case contents
+    /// Every file inside the folder (at any depth) at least this big is one item.
+    case filesInside(minSize: Int64)
+    /// Children that belong to apps that are no longer installed.
+    case leftovers
+}
+
 /// A group of locations whose *contents* are candidates for removal.
 /// The folders themselves are never deleted, only what's inside them.
 struct CleanupCategory: Identifiable, Sendable {
@@ -14,14 +23,20 @@ struct CleanupCategory: Identifiable, Sendable {
     let name: String
     let detail: String
     let symbol: String
-    /// Folders relative to the home directory.
+    /// Folders relative to the home directory. A "*" segment matches every subfolder.
     let paths: [String]
     let risk: Risk
     /// Child names to leave alone.
     var excluded: Set<String> = []
     /// Only include items not modified for this many days.
     var minAgeDays: Int? = nil
+    var kind: ScanKind = .contents
 }
+
+private let protectedCacheNames: Set<String> = [
+    "CloudKit", "com.apple.bird", "com.apple.homed", "FamilyCircle",
+    "com.apple.containermanagerd", "local.maccleaner",
+]
 
 extension CleanupCategory {
     static let all: [CleanupCategory] = [
@@ -29,8 +44,12 @@ extension CleanupCategory {
             id: "appCaches", name: "App Caches",
             detail: "Temporary data apps rebuild automatically. Quit apps first for best results.",
             symbol: "archivebox", paths: ["Library/Caches"], risk: .safe,
-            excluded: ["CloudKit", "com.apple.bird", "com.apple.homed", "FamilyCircle",
-                       "com.apple.containermanagerd", "local.maccleaner"]),
+            excluded: protectedCacheNames),
+        CleanupCategory(
+            id: "sandboxCaches", name: "Sandboxed App Caches",
+            detail: "Caches for Safari, App Store apps and other sandboxed apps. Rebuilt automatically.",
+            symbol: "square.stack.3d.up", paths: ["Library/Containers/*/Data/Library/Caches"],
+            risk: .safe, excluded: protectedCacheNames),
         CleanupCategory(
             id: "logs", name: "Logs & Crash Reports",
             detail: "Diagnostic logs written by apps and the system.",
@@ -57,6 +76,13 @@ extension CleanupCategory {
             symbol: "paperclip",
             paths: ["Library/Containers/com.apple.mail/Data/Library/Mail Downloads"], risk: .safe),
         CleanupCategory(
+            id: "deviceUpdates", name: "iPhone & iPad Update Files",
+            detail: "iOS/iPadOS installers (.ipsw) Finder downloaded. Downloaded again if ever needed.",
+            symbol: "arrow.down.app",
+            paths: ["Library/iTunes/iPhone Software Updates", "Library/iTunes/iPad Software Updates",
+                    "Library/iTunes/iPod Software Updates"],
+            risk: .safe),
+        CleanupCategory(
             id: "devCaches", name: "Developer Package Caches",
             detail: "npm, pip, Gradle, Cargo, Go and similar caches. Re-downloaded when needed.",
             symbol: "shippingbox",
@@ -72,6 +98,18 @@ extension CleanupCategory {
             detail: "Local device backups made by Finder. Make sure you have a newer backup first.",
             symbol: "externaldrive.badge.timemachine",
             paths: ["Library/Application Support/MobileSync/Backup"], risk: .review),
+        CleanupCategory(
+            id: "messagesAttachments", name: "Messages Attachments",
+            detail: "Photos, videos and files from Messages larger than 1 MB. They stop showing in chats on this Mac; other devices keep theirs.",
+            symbol: "message", paths: ["Library/Messages/Attachments"], risk: .review,
+            kind: .filesInside(minSize: 1_000_000)),
+        CleanupCategory(
+            id: "leftovers", name: "Uninstalled App Leftovers",
+            detail: "Data from apps that are no longer installed and unused for 30+ days. Check each item.",
+            symbol: "puzzlepiece.extension",
+            paths: ["Library/Application Support", "Library/Containers", "Library/Saved Application State",
+                    "Library/HTTPStorages", "Library/WebKit"],
+            risk: .review, kind: .leftovers),
         CleanupCategory(
             id: "oldDownloads", name: "Old Downloads",
             detail: "Items in Downloads not modified in the last 90 days.",
