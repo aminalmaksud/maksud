@@ -1,4 +1,4 @@
-# MusingsofMaksudTV
+# StreamHub
 
 <img src="web/public/logo.svg" width="96" alt="MusingsofMaksudTV logo">
 
