@@ -775,10 +775,11 @@ async function showServer() {
   try { st = await api('/api/status'); } catch (e) { $('status').textContent = e.message; $('status').className = 'error'; return; }
   if (state.view !== 'server') return;
   $('status').textContent = '';
-  const ok = st.libraries.filter((l) => l.ms !== null).length;
+  const ok = st.libraries.filter((l) => l.ms !== null || l.local).length;
   const row = (k, v) => `<div class="sv-kv"><span>${esc(k)}</span><code>${esc(v)}</code></div>`;
   const lib = (l) => `<div class="sv-lib"><div><b>${esc(l.name)}</b><code>${esc(l.url)}</code></div>
-    <span class="sv-ping ${l.ms === null ? 'bad' : l.ms > 300 ? 'slow' : 'ok'}"><i></i>${l.ms === null ? 'Can’t reach' : l.ms > 300 ? `Slow · ${l.ms} ms` : `${l.ms} ms`}</span></div>`;
+    ${l.local !== undefined ? `<span class="sv-ping ${l.local ? 'ok' : 'bad'}"><i></i>${l.local ? 'On this PC' : 'Folder missing'}</span>`
+    : `<span class="sv-ping ${l.ms === null ? 'bad' : l.ms > 300 ? 'slow' : 'ok'}"><i></i>${l.ms === null ? 'Can’t reach' : l.ms > 300 ? `Slow · ${l.ms} ms` : `${l.ms} ms`}</span>`}</div>`;
   $('rows').innerHTML = `<div class="sv-grid">
     <section class="sv-card"><h3><i class="sv-dot"></i>Running<small>Up ${esc(fmtUptime(st.uptime))}</small></h3>
       <div class="sv-stats"><div><span>Libraries</span><b>${ok}/${st.libraries.length}</b></div><div><span>Sound fix</span><b>${st.ffmpeg ? 'On' : 'Off'}</b></div>
@@ -828,7 +829,7 @@ async function showDetails(item, { metaPath = item.path, folder = null } = {}) {
   $('dPoster').innerHTML = coverHtml(name);
   renderDetailsActions();
   $('dFolder').hidden = !folder;
-  $('dDownload').hidden = !state.config?.downloads || item.path.startsWith('local/');
+  $('dDownload').hidden = !state.config?.downloads || !canDownload(item.path);
   $('dDownload').innerHTML = `${I.download}Download`;
   $('details').hidden = false;
   $('dPlay').focus();
@@ -876,7 +877,7 @@ async function openSettings() {
   f.password.placeholder = c.hasPassword ? '•••••• (saved)' : '';
   f.opensubsKey.value = c.opensubsKey || ''; f.opensubsUser.value = c.opensubsUser || ''; f.opensubsPass.value = ''; f.subdlKey.value = c.subdlKey || '';
   f.opensubsPass.placeholder = c.hasOpensubsPass ? '•••••• (saved)' : 'optional';
-  markTheme();
+  markTheme(); markLook();
   $('ffmpegNote').innerHTML = c.ffmpeg
     ? '✓ Sound &amp; format fix is on — every file plays with sound, and you can switch audio tracks and built-in subtitles.'
     : `⚠ ffmpeg was not found, so some files may play without sound and audio-track switching is off. Install it with ${INSTALL_FFMPEG} (the Mac and Windows apps include it).`;
@@ -910,9 +911,27 @@ lightQuery.addEventListener('change', () => { if (SH) applyShTheme(); });
 document.querySelectorAll('[data-theme-pick]').forEach((b) => {
   b.onclick = () => { document.documentElement.dataset.theme = b.dataset.themePick; prefs.theme = b.dataset.themePick; savePrefs(); markTheme(); };
 });
+// Looks: switching swaps the whole layout, so the page reloads in the new one (your place is kept in the URL).
+const markLook = () => document.querySelectorAll('[data-look]').forEach((b) => b.classList.toggle('on', (b.dataset.look === 'contemporary') === SH));
+document.querySelectorAll('[data-look]').forEach((b) => {
+  b.onclick = () => { if ((b.dataset.look === 'contemporary') === SH) return; prefs.look = b.dataset.look; savePrefs(); location.reload(); };
+});
 $('settingsBtn').onclick = openSettings;
 $('cancelBtn').onclick = () => $('settings').close();
 $('dhakaflixBtn').onclick = () => { $('settingsForm').servers.value = DHAKAFLIX; };
+// Local folders: the system's folder picker (Mac and Windows apps), else type the path.
+$('addFolderBtn').onclick = async () => {
+  const ta = $('settingsForm').servers;
+  let picked = '';
+  try { picked = (await api('/api/pick-folder', { method: 'POST' })).path; } catch {
+    picked = prompt('Folder with movies or series (for example G:\\Movie or /Users/you/Movies):') || '';
+  }
+  if (!picked) return;
+  const name = picked.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || picked;
+  ta.value = `${ta.value.replace(/\s+$/, '')}${ta.value.trim() ? '\n' : ''}${name} | ${picked}`;
+};
+/** Downloads make no sense for files that are already on this computer. */
+const canDownload = (p) => !String(p).startsWith('local/') && !(state.config?.localLibs || []).includes(Number(realPath(p).split('/')[0]));
 $('welcomeOwn').onclick = openSettings;
 $('welcomeDhakaflix').onclick = () => saveConfig({ servers: DHAKAFLIX, keepPassword: true }).catch((e) => alert(e.message));
 $('settingsForm').onsubmit = async (e) => {
@@ -1223,7 +1242,7 @@ function updateButtons() {
   $('pStereo').hidden = !S.stereo || S.stereo === 'off';
   $('pStereo').innerHTML = '<span>3D → 2D</span>';
   $('pPip').hidden = !document.pictureInPictureEnabled;
-  $('pDownload').hidden = !state.config?.downloads || !S.item || S.item.path.startsWith('local/');
+  $('pDownload').hidden = !state.config?.downloads || !S.item || !canDownload(S.item.path);
 }
 
 function updateTime() {
@@ -1713,6 +1732,8 @@ window.__mh = { now: () => now(), state: () => ({ mode: S.mode, offset: S.offset
 /* ----- boot ----- */
 if (!location.hash) history.replaceState(null, '', '#/');
 api('/api/config').then((c) => { state.config = c; renderNav(); }).catch(() => {});
+document.title = SH ? 'StreamHub' : 'MusingsofMaksudTV';
+document.querySelector('link[rel="icon"]').href = SH ? 'assets/streamhub-icon.svg' : 'logo.svg';
 if (SH) {
   applyShTheme();
   $('shAddr').textContent = location.host;

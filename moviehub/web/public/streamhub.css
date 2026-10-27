@@ -389,3 +389,12 @@ html.streamhub .menu .ss-form input { border-radius: 8px; border-color: #263041;
 html.streamhub .menu .ss-form input:focus { border-color: var(--blue); }
 html.streamhub .menu .ss-go { border-radius: 8px; background: var(--blue); }
 html.streamhub .menu .ss-go:hover { background: var(--blue-hover); }
+
+/* look picker */
+html.streamhub .look-pick { border-radius: 8px; border: 1px solid var(--line2); font-weight: 600; }
+html.streamhub .look-pick small { color: var(--subtle); font-weight: 400; }
+html.streamhub .look-pick.on { border-color: var(--blue); background: var(--sel); color: var(--selText); }
+
+/* Mac app (Electron, hidden title bar): keep the sidebar clear of the window buttons, and let it drag the window */
+html.electron.streamhub header#top { padding-left: 8px; padding-top: 44px; -webkit-app-region: drag; }
+html.electron.streamhub #backBtn { top: 40px; }

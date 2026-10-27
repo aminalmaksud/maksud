@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT } from './listing.js';
 import { hasFfmpeg, ffmpegVersion, probe, remux, extractSubtitle, keyframeBefore } from './media.js';
 import { metaFor } from './meta.js';
@@ -49,18 +49,36 @@ function loadConfig() {
 let config = loadConfig();
 
 /** A server line is "http://host/path/" or "Label | http://host/path/". */
-const splitLabel = (s) => { const m = /^(.*?)\s*\|\s*(\S+)$/.exec(s); return m ? { label: m[1], url: m[2] } : { label: '', url: s }; };
+const splitLabel = (s) => { const m = /^(.*?)\s*\|\s*(.+?)\s*$/.exec(s); return m ? { label: m[1], url: m[2] } : { label: '', url: s.trim() }; };
 
+/** A folder on this computer: "G:\\Movie", "/Users/me/Movies", "~/Movies" or "file:///...". */
+const isFolderPath = (s) => /^(?:[a-z]:[\\/]|\\\\|\/|~[\\/]|file:)/i.test(s);
 function toBase(line) {
   const s = splitLabel(line).url;
+  if (isFolderPath(s)) {
+    const u = /^file:/i.test(s) ? new URL(s) : pathToFileURL(path.resolve(s.replace(/^~(?=[\\/])/, process.env.HOME || process.env.USERPROFILE || '~')));
+    if (!u.pathname.endsWith('/')) u.pathname += '/';
+    return u;
+  }
   const u = new URL(/^https?:\/\//i.test(s) ? s : 'http://' + s);
   if (!u.pathname.endsWith('/')) u.pathname += '/';
   u.search = ''; u.hash = '';
   return u;
 }
 const bases = () => config.servers.map(toBase);
+const isLocalBase = (b) => b.protocol === 'file:';
+const localLibs = () => bases().map((b, i) => (isLocalBase(b) ? i : -1)).filter((i) => i >= 0);
+/** Real path of a file:// URL inside a local library, or an error if it (or a symlink in it) leads outside. */
+function localPathIn(base, u) {
+  const root = fs.realpathSync(fileURLToPath(base));
+  let real;
+  try { real = fs.realpathSync(fileURLToPath(u)); } catch { throw httpError(404, 'Not found on this PC'); }
+  if (real !== root && !real.startsWith(root.endsWith(path.sep) ? root : root + path.sep)) throw httpError(400, 'Path outside library');
+  return real;
+}
 const serverNames = () => config.servers.map((line, i) => splitLabel(line).label
-  || decodeURIComponent(bases()[i].host + bases()[i].pathname).replace(/\/$/, '').replace(/\//g, ' / '));
+  || (isLocalBase(bases()[i]) ? path.basename(fileURLToPath(bases()[i])) || fileURLToPath(bases()[i])
+    : decodeURIComponent(bases()[i].host + bases()[i].pathname).replace(/\/$/, '').replace(/\//g, ' / ')));
 
 const authValue = () => (config.username ? 'Basic ' + Buffer.from(`${config.username}:${config.password}`).toString('base64') : '');
 function upstreamHeaders(extra = {}) {
@@ -92,7 +110,8 @@ function media(rel) {
     if (!file) throw httpError(404, 'Downloaded file not found');
     return { src: file, auth: '', local: true, ext: extOf(file) };
   }
-  const { url } = resolveUnderBase(rel);
+  const { base, url } = resolveUnderBase(rel);
+  if (isLocalBase(base)) return { src: localPathIn(base, url), auth: '', local: true, ext: extOf(url.pathname), url };
   return { src: url.href, auth: authValue(), local: false, ext: extOf(url.pathname), url };
 }
 
@@ -155,6 +174,20 @@ async function h5aiApi(dir, body) {
   return null;
 }
 
+// Windows and macOS keep these in every drive or home folder; they're never media.
+const SKIP_LOCAL = /^(?:\$recycle\.bin|system volume information|recovery|config\.msi|msocache|\$windows\.~bt|found\.\d+|thumbs\.db|desktop\.ini|lost\+found)$/i;
+/** A local folder's entries as h5ai-style { href } items, ready for parseListing (same paths as a server listing). */
+function listLocalFolder(base, dir) {
+  const real = localPathIn(base, dir);
+  let entries;
+  try { entries = fs.readdirSync(real, { withFileTypes: true }); } catch (e) { throw httpError(e.code === 'ENOENT' ? 404 : 403, `Can't open this folder: ${e.code || e.message}`); }
+  return entries.filter((e) => !e.name.startsWith('.') && !SKIP_LOCAL.test(e.name)).flatMap((e) => {
+    let isDir = e.isDirectory();
+    if (e.isSymbolicLink()) { try { isDir = fs.statSync(path.join(real, e.name)).isDirectory(); } catch { return []; } }
+    return [{ href: dir.pathname + encodeURIComponent(e.name) + (isDir ? '/' : '') }];
+  });
+}
+
 const linksHtml = (items) => (items || []).map((i) => `<a href="${String(i.href).replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">`).join('');
 
 /** Entries of a folder, with paths in client form ("<idx>/..."). Cached briefly; posters reuse it. */
@@ -165,6 +198,11 @@ function listDir(rel) {
   const job = upstreamLimit(async () => {
     const { base, idx, url: dir } = resolveUnderBase(rel);
     if (!dir.pathname.endsWith('/')) dir.pathname += '/';
+    if (isLocalBase(base)) {
+      const items = parseListing(linksHtml(listLocalFolder(base, dir)), dir.href, base.href);
+      for (const it of items) it.path = `${idx}/${it.path}`;
+      return { path: relOf(idx, base, dir), items };
+    }
     let up;
     try { up = await fetch(dir, { headers: upstreamHeaders(), signal: AbortSignal.timeout(15000) }); }
     catch (e) { throw httpError(502, `Cannot reach the server: ${e.cause?.code || e.message}`); }
@@ -245,7 +283,7 @@ async function handleBrowse(url, res) {
   if (refresh) { listCache.delete(rel); libRoots.clear(); }
   const roots = await Promise.all(all.map((_, i) => libraryRoot(i).then((l) => l.path, () => `${i}/`)));
   const gs = groups().map((g) => ({ ...g, root: groupRoot(g, roots) }));
-  const extra = { servers, roots, groups: gs };
+  const extra = { servers, roots, groups: gs, localLibs: localLibs() };
   if (!rel && gs.length > 1) {
     return json(res, 200, { path: '', ...extra, items: gs.map((g) => ({ name: g.name, path: g.root, isDir: true, kind: 'dir' })) });
   }
@@ -264,6 +302,7 @@ async function handleSearch(url, res) {
   const all = bases();
   await Promise.all(all.map((_, i) => libraryRoot(i).catch(() => null)));
   const results = await Promise.all(all.map(async (base, idx) => {
+    if (isLocalBase(base)) return searchLocal(base, idx, new RegExp(pattern, 'i'));
     if (!h5aiHosts.has(base.origin)) return [];
     const root = new URL(base);
     const data = await h5aiApi(root, { action: 'get', search: { href: root.pathname, pattern, ignorecase: true } });
@@ -289,7 +328,53 @@ async function handleSearch(url, res) {
   const items = groups().flatMap((g) => mergeListings(g.libs.map((i) => ({ items: results[i].filter(keep), label: serverNames()[i] })))
     .map((it) => ({ ...it, library: g.name })))
     .sort((a, b) => Number(b.isDir) - Number(a.isDir)).slice(0, 120);
-  json(res, 200, { items, searchable: all.some((b) => h5aiHosts.has(b.origin)) });
+  json(res, 200, { items, searchable: all.some((b) => h5aiHosts.has(b.origin) || isLocalBase(b)) });
+}
+
+const localWalks = new Map(); // library root -> { at, entries: [{ name, path (file URL), isDir }] }
+/** Folders and videos in a local library whose name matches, found by walking it (4 levels, cached a few minutes). */
+function searchLocal(base, idx, re) {
+  let walk = localWalks.get(base.href);
+  if (!walk || Date.now() - walk.at > LIST_TTL) {
+    const entries = [];
+    const visit = (dirUrl, depth) => {
+      let kids;
+      try { kids = listLocalFolder(base, dirUrl); } catch { return; }
+      for (const k of kids) {
+        if (entries.length > 20000) return;
+        const u = new URL(k.href, dirUrl);
+        const isDir = k.href.endsWith('/');
+        entries.push({ u, isDir, name: decodeURIComponent(u.pathname.replace(/\/$/, '').split('/').pop()) });
+        if (isDir && depth < 4) visit(u, depth + 1);
+      }
+    };
+    visit(base, 1);
+    walk = { at: Date.now(), entries };
+    localWalks.set(base.href, walk);
+  }
+  return walk.entries.filter((e) => re.test(e.name) && (e.isDir || VIDEO_EXT.has(extOf(e.name))))
+    .map((e) => ({ name: e.name, path: relOf(idx, base, e.u), isDir: e.isDir, kind: e.isDir ? 'dir' : 'video', library: serverNames()[idx] }));
+}
+
+/** POST /api/pick-folder: the system's folder picker (Windows and Mac apps). Answers { path } or { path: '' } if cancelled. */
+async function handlePickFolder(req, res) {
+  if (req.method !== 'POST') throw httpError(405, 'Use POST');
+  const cmd = process.platform === 'win32'
+    ? ['powershell.exe', ['-NoProfile', '-STA', '-Command',
+      // A hidden topmost window owns the dialog so it opens in front of the app.
+      'Add-Type -AssemblyName System.Windows.Forms; $o = New-Object System.Windows.Forms.Form -Property @{TopMost=$true; ShowInTaskbar=$false; Opacity=0}; $o.Show(); $d = New-Object System.Windows.Forms.FolderBrowserDialog; $d.Description = "Choose a folder with movies or series"; $d.ShowNewFolderButton = $false; if ($d.ShowDialog($o) -eq "OK") { [Console]::OutputEncoding = [Text.Encoding]::UTF8; $d.SelectedPath }; $o.Close()']]
+    : process.platform === 'darwin'
+      ? ['osascript', ['-e', 'POSIX path of (choose folder with prompt "Choose a folder with movies or series")']]
+      : null;
+  if (!cmd) throw httpError(501, 'Type the folder path instead');
+  const out = await new Promise((resolve) => {
+    const p = spawn(cmd[0], cmd[1], { windowsHide: true });
+    let o = '';
+    p.stdout.on('data', (d) => (o += d));
+    p.on('error', () => resolve(''));
+    p.on('close', () => resolve(o.trim()));
+  });
+  json(res, 200, { path: out.replace(/\/$/, '') && out.replace(/(.)[\\/]$/, '$1') });
 }
 
 async function proxy(req, res, target, { cache } = {}) {
@@ -389,7 +474,8 @@ async function handleDownloads(req, url, res) {
   if (!downloadsEnabled()) throw httpError(404, 'Downloads are available in the Mac app');
   if (req.method === 'POST') {
     const { path: rel } = JSON.parse((await readBody(req)) || '{}');
-    const { url: target } = resolveUnderBase(rel);
+    const { base: lib, url: target } = resolveUnderBase(rel);
+    if (isLocalBase(lib)) throw httpError(400, 'This is already on your computer');
     const name = decodeURIComponent(String(rel).split('/').pop());
     const stem = name.replace(/\.[^.]+$/, '').toLowerCase();
     let extras = [];
@@ -421,7 +507,11 @@ async function handleConfig(req, res) {
   if (req.method === 'POST') {
     const b = JSON.parse((await readBody(req)) || '{}');
     const servers = splitServers(b.servers ?? b.serverUrl);
-    for (const s of servers) { try { toBase(s); } catch { throw httpError(400, `Invalid server address: ${s}`); } }
+    for (const s of servers) {
+      let b;
+      try { b = toBase(s); } catch { throw httpError(400, `Invalid server address: ${s}`); }
+      if (isLocalBase(b) && !fs.existsSync(fileURLToPath(b))) throw httpError(400, `Folder not found: ${splitLabel(s).url}`);
+    }
     config = {
       servers,
       username: String(b.username || ''),
@@ -432,11 +522,11 @@ async function handleConfig(req, res) {
       opensubsPass: b.keepOpensubsPass || b.opensubsPass === undefined ? config.opensubsPass : String(b.opensubsPass),
       subdlKey: b.subdlKey === undefined ? config.subdlKey : String(b.subdlKey).trim(),
     };
-    listCache.clear(); libRoots.clear();
+    listCache.clear(); libRoots.clear(); localWalks.clear();
     fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
-  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND,
+  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND, localLibs: localLibs(),
     opensubsKey: config.opensubsKey, opensubsUser: config.opensubsUser, hasOpensubsPass: !!config.opensubsPass, subdlKey: config.subdlKey });
 }
 
@@ -495,6 +585,7 @@ async function handleStatus(res) {
   const libraries = await Promise.all(config.servers.map(async (line, i) => {
     const t = Date.now();
     let ms = null;
+    if (isLocalBase(bases()[i])) return { name: serverNames()[i], url: splitLabel(line).url, ms: null, local: fs.existsSync(fileURLToPath(bases()[i])) };
     try {
       const r = await fetch(bases()[i].href, { headers: upstreamHeaders(), signal: AbortSignal.timeout(5000) });
       r.body?.cancel().catch(() => {});
@@ -541,6 +632,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/status') return await handleStatus(res);
     if (p === '/api/subsearch') return await handleSubSearch(url, res);
     if (p === '/api/subget') return await handleSubGet(url, res);
+    if (p === '/api/pick-folder') return await handlePickFolder(req, res);
     if (p === '/api/meta') return await handleMeta(url, res);
     if (p === '/api/probe') return await handleProbe(url, res);
     if (p === '/api/seek-point') return await handleSeekPoint(url, res);
@@ -551,7 +643,10 @@ const server = http.createServer(async (req, res) => {
       const m = media(url.searchParams.get('path'));
       return m.local ? serveFile(req, res, m.src) : await proxy(req, res, m.src);
     }
-    if (p === '/img') return await proxy(req, res, resolveUnderBase(url.searchParams.get('path')).url.href, { cache: true });
+    if (p === '/img') {
+      const m = media(url.searchParams.get('path'));
+      return m.local ? serveFile(req, res, m.src) : await proxy(req, res, m.src, { cache: true });
+    }
     if (p === '/remux') return await handleRemux(url, res);
     if (p === '/subs') return await handleSubs(url, res);
     if (p.startsWith('/tmdb/')) return await handleTmdbImage(req, url, res);

@@ -515,7 +515,15 @@ dialog code { background: var(--raised); padding: 1px 6px; border-radius: 6px; b
 .menu .ss-go:hover { background: rgba(255, 255, 255, .2); }
 .menu .chips + .opt, .menu .chips + .hint { margin-top: 8px; }
 .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
-#dhakaflixBtn { margin: -4px 0 6px; padding: 7px 14px; font-size: 13px; }
+.lib-btns { display: flex; gap: 8px; flex-wrap: wrap; margin: -4px 0 6px; }
+.lib-btns .btn { padding: 7px 14px; font-size: 13px; }
+.looks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.look-pick { all: unset; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; border-radius: 16px; border: 2px solid var(--line); font-weight: 700; font-size: 14px; }
+.look-pick small { display: block; font-weight: 500; font-size: 12px; color: var(--faint); }
+.look-pick i { width: 34px; height: 34px; border-radius: 10px; flex: none; }
+.look-pick[data-look="vintage"] i { background: linear-gradient(135deg, #f6efe4 45%, #7a1820 45% 75%, #d4a33f 75%); border: 1px solid #d8c6ae; }
+.look-pick[data-look="contemporary"] i { background: linear-gradient(135deg, #080C14 45%, #2563FF 45% 75%, #E9EDF3 75%); }
+.look-pick.on { border-color: var(--maroon); background: rgba(163, 36, 47, .07); }
 .themes { display: flex; gap: 10px; }
 .theme-pick { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 9px 16px 9px 9px; border-radius: 999px; border: 2px solid var(--line); font-weight: 700; font-size: 14px; }
 .theme-pick i { width: 26px; height: 26px; border-radius: 50%; }

@@ -11,11 +11,15 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="streamhub.css">
 <script>
-  // StreamHub (Windows) has its own light/dark themes; "system" follows Windows. See shTheme in app.js.
+  // Two looks: Vintage (parchment, the original) and Contemporary (StreamHub). The app picks a default
+  // (the Windows app's server marks the page "streamhub"); a choice in Settings overrides it. Each look
+  // has its own themes: Parchment/Night, or System/Light/Dark. See setLook / shTheme in app.js.
   (() => {
-    const de = document.documentElement, sh = de.classList.contains('streamhub');
+    const de = document.documentElement;
     let p = {};
     try { p = JSON.parse(localStorage.getItem('mh.prefs')) || {}; } catch { /* private mode */ }
+    if (p.look) de.classList.toggle('streamhub', p.look === 'contemporary');
+    const sh = de.classList.contains('streamhub');
     if (!sh) { de.dataset.theme = p.theme || 'parchment'; return; }
     const m = p.shTheme || 'system';
     de.dataset.theme = (m === 'system' ? matchMedia('(prefers-color-scheme: light)').matches : m === 'light') ? 'sh-light' : 'sh-dark';
@@ -159,9 +163,9 @@
 <dialog id="settings">
   <form method="dialog" id="settingsForm">
     <h2>Settings</h2>
-    <label>Libraries <small>One per line, with a name: <code>TV Series | http://172.16.50.12/</code></small>
+    <label>Libraries <small>One per line, with a name: <code>TV Series | http://172.16.50.12/</code> or a folder on this computer: <code>Movie | G:\Movie</code></small>
       <textarea name="servers" rows="5" spellcheck="false" placeholder="Movies | http://172.16.50.7/&#10;TV Series | http://172.16.50.12/" required></textarea></label>
-    <button type="button" class="btn" id="dhakaflixBtn">Fill in DhakaFlix servers</button>
+    <div class="lib-btns"><button type="button" class="btn" id="dhakaflixBtn">Fill in DhakaFlix servers</button><button type="button" class="btn" id="addFolderBtn">Add folder…</button></div>
     <div class="two">
       <label>Username <small>if the server asks</small><input name="username" autocomplete="off"></label>
       <label>Password<input name="password" type="password" autocomplete="off"></label>
@@ -178,6 +182,12 @@
       <label>SubDL API key <small>free on your profile page at <a href="https://subdl.com" target="_blank" rel="noopener">subdl.com</a></small>
         <input name="subdlKey" autocomplete="off" spellcheck="false"></label>
     </fieldset>
+    <div class="field"><span class="flabel">Look</span>
+      <div class="looks">
+        <button type="button" class="look-pick" data-look="vintage"><i></i><span>Vintage<small>Parchment and maroon, the original</small></span></button>
+        <button type="button" class="look-pick" data-look="contemporary"><i></i><span>Contemporary<small>StreamHub: sidebar, flat and modern</small></span></button>
+      </div>
+    </div>
     <div class="field"><span class="flabel">Theme</span>
       <div class="themes mh-only">
         <button type="button" class="theme-pick" data-theme-pick="parchment"><i></i>Parchment</button>

@@ -28,7 +28,9 @@ const isp = http.createServer((req, res) => {
   if (u === '/_h5ai/public/index.php') {
     let b = ''; req.on('data', (c) => (b += c));
     return req.on('end', () => {
-      const href = JSON.parse(b).items.href;
+      const q = JSON.parse(b);
+      if (!q.items) return res.end(JSON.stringify({ search: [] }));
+      const href = q.items.href;
       res.end(JSON.stringify({ items: [{ href: '/h5/' }, { href }, { href: href + 'Dune%20(2021)/' }, { href: href + 'Up.mp4' }] }));
     });
   }
@@ -205,5 +207,40 @@ sub = await (await get(`/api/subget?id=${encodeURIComponent(r.results[2].id)}&ep
 assert.match(sub, /^WEBVTT[\s\S]*Two/, 'the right episode from a season pack');
 assert.equal((await get('/api/subget?id=sd:http://evil.test/x')).status, 502, 'only provider paths are fetched');
 subApi.close();
+
+// --- local folder libraries ("Movie | G:\\Movie")
+const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'mh-local-'));
+fs.mkdirSync(path.join(lib, 'Movie', 'Inception (2010)'), { recursive: true });
+fs.writeFileSync(path.join(lib, 'Movie', 'Inception (2010)', 'Inception.2010.1080p.mkv'), FILE);
+fs.writeFileSync(path.join(lib, 'Movie', 'Inception (2010)', 'Inception.2010.1080p.srt'), '1\n00:00:01,000 --> 00:00:02,000\nDream');
+fs.writeFileSync(path.join(lib, 'Movie', 'Inception (2010)', 'poster.jpg'), 'jpg');
+fs.mkdirSync(path.join(lib, 'Movie', '$RECYCLE.BIN'));
+fs.writeFileSync(path.join(lib, 'secret.txt'), 'outside');
+fs.symlinkSync(path.join(lib, 'secret.txt'), path.join(lib, 'Movie', 'Inception (2010)', 'escape.mkv'));
+const movieDir = path.join(lib, 'Movie');
+assert.equal((await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Movies | ${movies}\nNope | ${path.join(lib, 'missing')}` }) })).status, 400, 'missing folder rejected');
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Movies | ${movies}\nMy Movie | ${movieDir}` }) });
+r = await (await get('/api/config')).json();
+assert.deepEqual(r.localLibs, [1]);
+r = await (await get('/api/browse?path=1/')).json();
+assert.deepEqual(r.items.map((i) => [i.name, i.kind]), [['Inception (2010)', 'dir']], 'system folders hidden');
+assert.deepEqual(r.localLibs, [1]);
+r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
+assert.deepEqual(r.items.map((i) => i.kind).sort(), ['image', 'sub', 'video', 'video']);
+const vid = r.items.find((i) => i.name.endsWith('1080p.mkv'));
+r = await get(`/stream?path=${encodeURIComponent(vid.path)}`, { range: 'bytes=10-19' });
+assert.equal(r.status, 206); assert.equal(r.headers.get('content-range'), 'bytes 10-19/1000');
+assert.match(await (await get(`/subs?path=${encodeURIComponent(vid.path.replace(/mkv$/, 'srt'))}`)).text(), /Dream/);
+assert.equal((await get(`/img?path=${encodeURIComponent(vid.path.replace(/[^/]+$/, 'poster.jpg'))}`)).status, 200);
+assert.equal((await get(`/stream?path=${encodeURIComponent(vid.path.replace(/[^/]+$/, 'escape.mkv'))}`)).status, 400, 'symlink out of the library refused');
+assert.equal((await get('/stream?path=1%2F..%2Fsecret.txt')).status, 400, '.. refused');
+r = await (await get('/api/search?q=incep')).json();
+assert.deepEqual(r.items.map((i) => i.name), ['Inception (2010)'], 'local folders are searched');
+r = await (await get('/api/status')).json();
+assert.equal(r.libraries[1].local, true);
+r = await fetch(base + '/api/downloads', { method: 'POST', body: JSON.stringify({ path: vid.path }) });
+assert.ok([400, 404].includes(r.status), 'no downloading what is already here');
+assert.equal((await fetch(base + '/api/pick-folder', { method: 'POST' })).status, process.platform === 'linux' ? 501 : 200);
+fs.rmSync(lib, { recursive: true, force: true });
 console.log('all tests passed');
 server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });

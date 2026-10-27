@@ -47,6 +47,15 @@ Anime | http://172.16.50.14/
 To find the right addresses, open your ISP's media portal in a browser. Copy the address of each
 server or folder that holds videos.
 
+**Folders on this computer** work as libraries too, next to the ISP servers. In Settings click **Add folder…**
+(or type a line such as `Movie | G:\Movie` or `Movies | /Users/you/Movies`). Movies and series in them get posters,
+sections, search, resume and the full player. Name a folder library the same as an ISP library (for example
+`Movies`) to show both as one section. Download is hidden for these, because they're already on your computer.
+
+**Look:** Settings → **Look** switches between **Vintage** (parchment and maroon, the original) and **Contemporary**
+(StreamHub: sidebar, flat and modern) on both the Mac and Windows apps. The Mac app starts in Vintage and the Windows app in
+Contemporary. Each look has its own themes: Parchment / Night, or System / Light / Dark.
+
 **Online subtitles** (optional): to use **Search online…** in the player's subtitle menu (like VLC), add a free API key
 from [OpenSubtitles.com](https://www.opensubtitles.com/consumers), from [SubDL](https://subdl.com) (on your profile page), or from both.
 Signing in with your OpenSubtitles account allows more downloads a day. Results that match the exact file come first,
