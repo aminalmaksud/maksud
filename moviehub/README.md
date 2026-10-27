@@ -6,6 +6,7 @@ Watch the movies, TV series and anime on your ISP's media servers (BDIX / FTP-st
 or h5ai servers) on:
 
 - **Mac**: a real app (`mac/`). You don't need a browser or anything else installed, because ffmpeg is built in.
+- **Windows**: **StreamHub** (`windows/`), the same app for Windows PCs, with ffmpeg built in too.
 - **Android TV**: a native app (`android-tv/`).
 
 The Mac app looks like Netflix: a slideshow of featured titles at the top, then a row of posters for every
@@ -86,15 +87,43 @@ seeks, and the sync controls.
   reading ahead as you watch. Image subtitles (PGS/VobSub) can't be shown on the Mac; the TV app shows them.
 - **Themes:** Parchment (default) or Night, in Settings.
 
-### Downloads (Mac app only)
+### Downloads (Mac and Windows apps)
 Press **⬇** in the player, or **Download** on a movie's page. Movies (with their subtitle files) are saved to
-`Downloads/MusingsofMaksudTV` and appear under **⬇ Downloads** in the top bar, where you can watch them without
-the internet, delete them, or open the folder in Finder. Interrupted downloads continue where they stopped.
+`Downloads/MusingsofMaksudTV` (`Downloads\StreamHub` on Windows) and appear under **⬇ Downloads** in the top bar, where
+you can watch them without the internet, delete them, or open the folder in Finder or File Explorer. Interrupted downloads continue where they stopped.
 
 ### Running from source (developers)
 `cd mac && npm install && npm start`. The Mac app is a small Electron wrapper around `web/`.
 You can also run `web/` alone with `node web/server.js` and open http://localhost:8080 in a browser.
 Install ffmpeg first (`brew install ffmpeg`) to get sound for every file. Tests: `node web/test.js`.
+
+## Windows app (StreamHub)
+
+StreamHub is the Windows version of the Mac app: the same screens, player, downloads and keys. It's built with
+[Tauri](https://tauri.app): a small Rust program shows the app in Windows' built-in browser engine (WebView2) and
+runs the same server as the Mac app in the background, with ffmpeg included. You never have to start anything yourself.
+
+### Install
+1. On GitHub, open **Actions → StreamHub Windows app**, then the latest green run, and download
+   **StreamHub-windows-x64**.
+2. Unzip it and run `StreamHub_1.0.0_x64-setup.exe`. It installs for your user only, so you don't need admin rights.
+   Windows 10 PCs without WebView2 get it during setup. Windows 11 already has it.
+3. The app isn't signed by a registered publisher yet, so Windows SmartScreen may warn the first time.
+   Click **More info → Run anyway**.
+
+Your settings live in `%APPDATA%\com.musingsofmaksud.streamhub`, and downloads go to `Downloads\StreamHub`.
+If the app ever can't start, the error message points to `server.log` in the settings folder.
+
+### Building it (developers)
+You need Node 24.22.1 (exactly, see `scripts/build-server.mjs`), Rust and the Visual Studio C++ build tools.
+
+```
+cd windows
+npm ci
+npm run build      # server + ffmpeg sidecars, then the installer in src-tauri/target/release/bundle/nsis
+```
+
+`npm run dev` opens the app without making an installer.
 
 ## Android TV
 

@@ -1,9 +1,10 @@
-// MusingsofMaksudTV: serves the UI and proxies the ISP media server. Used by the Mac app (mac/) and runnable on
-// its own: `node server.js`, then open http://localhost:8080
+// MusingsofMaksudTV: serves the UI and proxies the ISP media server. Used by the Mac app (mac/), the Windows app
+// (windows/) and runnable on its own: `node server.js`, then open http://localhost:8080
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
+import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT } from './listing.js';
 import { hasFfmpeg, probe, remux, extractSubtitle, keyframeBefore } from './media.js';
@@ -11,7 +12,8 @@ import { metaFor } from './meta.js';
 import { groupKey, mergeListings, encodeV, decodeV } from './merge.js';
 import { downloadsEnabled, startDownload, cancelDownload, deleteDownloaded, listDownloads, localEntries, localFile } from './downloads.js';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
+// WEB_ROOT is set by the Windows app, whose bundled server has no file of its own to sit next to.
+const here = process.env.WEB_ROOT || (import.meta.url ? path.dirname(fileURLToPath(import.meta.url)) : path.dirname(process.execPath));
 const PUBLIC = path.join(here, 'public');
 const CONFIG_FILE = process.env.CONFIG_FILE || path.join(here, 'config.json');
 const PORT = Number(process.env.PORT || 8080);
@@ -437,6 +439,14 @@ function serveStatic(url, res) {
   fs.createReadStream(file).pipe(res);
 }
 
+/** Opens a folder in Finder (hook set by the Mac app) or File Explorer. */
+function reveal(dir) {
+  if (globalThis.__revealInFinder) return globalThis.__revealInFinder(dir);
+  if (process.platform !== 'win32') return;
+  fs.mkdirSync(dir, { recursive: true });
+  spawn('explorer.exe', [dir], { detached: true, stdio: 'ignore' }).unref();
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
@@ -449,7 +459,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/seek-point') return await handleSeekPoint(url, res);
     if (p === '/api/embedded-sub') return await handleEmbeddedSub(url, res);
     if (p === '/api/downloads') return await handleDownloads(req, url, res);
-    if (p === '/api/reveal') { globalThis.__revealInFinder?.(listDownloads().dir); return json(res, 200, { ok: true }); }
+    if (p === '/api/reveal') { reveal(listDownloads().dir); return json(res, 200, { ok: true }); }
     if (p === '/stream') {
       const m = media(url.searchParams.get('path'));
       return m.local ? serveFile(req, res, m.src) : await proxy(req, res, m.src);
@@ -465,7 +475,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  server.listen(PORT, HOST, () => console.log(`MusingsofMaksudTV running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`));
-}
-export { server };
+const start = () => server.listen(PORT, HOST, () => console.log(`MusingsofMaksudTV running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`));
+// import.meta.url is empty in the Windows app's bundle, which calls start() from serve.js instead.
+if (import.meta.url && process.argv[1] === fileURLToPath(import.meta.url)) start();
+export { server, start };

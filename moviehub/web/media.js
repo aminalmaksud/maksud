@@ -7,7 +7,7 @@ const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg';
 const FFPROBE = process.env.FFPROBE_PATH || 'ffprobe';
 
 export const hasFfmpeg = (() => {
-  try { return spawnSync(FFMPEG, ['-version']).status === 0 && spawnSync(FFPROBE, ['-version']).status === 0; } catch { return false; }
+  try { return spawnSync(FFMPEG, ['-version'], { windowsHide: true }).status === 0 && spawnSync(FFPROBE, ['-version'], { windowsHide: true }).status === 0; } catch { return false; }
 })();
 
 const PLAYABLE_VIDEO = new Set(['h264', 'hevc', 'vp8', 'vp9', 'av1']);
@@ -18,7 +18,7 @@ const headerArgs = (auth) => (auth ? ['-headers', `Authorization: ${auth}\r\n`] 
 
 function run(cmd, args, { timeoutMs }) {
   return new Promise((resolve, reject) => {
-    const p = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    const p = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
     const out = []; let err = '';
     const t = setTimeout(() => p.kill('SIGKILL'), timeoutMs);
     p.stdout.on('data', (d) => out.push(d));
@@ -123,7 +123,7 @@ export function remux(url, auth, { start = 0, audio = 0, audioDelay = 0, info, f
     '-map', '0:v:0?', ...(a ? ['-map', `0:a:${audio}`] : []),
     ...videoArgs, ...audioArgs, '-sn', '-dn', ...out,
   ];
-  return spawn(FFMPEG, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+  return spawn(FFMPEG, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 }
 
 const subCache = new Map();

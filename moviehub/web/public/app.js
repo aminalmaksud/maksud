@@ -1,6 +1,9 @@
 // MusingsofMaksudTV UI: library browser with posters, details sheet, and a player with audio/subtitle menus.
 const $ = (id) => document.getElementById(id);
 if (navigator.userAgent.includes('Electron')) document.documentElement.classList.add('electron');
+const WIN = navigator.userAgent.includes('Windows');
+const DEVICE = WIN ? 'PC' : 'Mac'; // "save it to this Mac / PC"
+const INSTALL_FFMPEG = WIN ? '<code>winget install ffmpeg</code>' : '<code>brew install ffmpeg</code>';
 
 /* ---------------- icons ---------------- */
 const P = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -680,7 +683,7 @@ function toast2(msg) {
   clearTimeout(toast2Timer); toast2Timer = setTimeout(() => t.classList.add('out'), 1800);
 }
 
-/* ---------------- downloads (Mac app) ---------------- */
+/* ---------------- downloads (Mac and Windows apps) ---------------- */
 const fmtBytes = (n) => (n >= 1e9 ? (n / 1e9).toFixed(2) + ' GB' : n >= 1e6 ? (n / 1e6).toFixed(0) + ' MB' : Math.round(n / 1e3) + ' KB');
 let dlTimer = 0;
 async function downloadItem(item) {
@@ -701,7 +704,7 @@ async function showDownloads() {
     if (state.view !== 'downloads') return;
     let d;
     try { d = await api('/api/downloads'); } catch (e) { $('status').textContent = e.message; return; }
-    $('folderSub').innerHTML = `Saved in <code>${esc(d.dir.replace(/^\/Users\/[^/]+/, '~'))}</code> · watch them without the internet <button class="btn mini" id="revealBtn">Show in Finder</button>`;
+    $('folderSub').innerHTML = `Saved in <code>${esc(d.dir.replace(/^\/Users\/[^/]+|^[A-Z]:\\Users\\[^\\]+/i, '~'))}</code> · watch them without the internet <button class="btn mini" id="revealBtn">Show in ${WIN ? 'Explorer' : 'Finder'}</button>`;
     $('revealBtn').onclick = () => api('/api/reveal').catch(() => {});
     $('rows').innerHTML = d.active.length ? `<div class="dl-list">${d.active.map((j) => {
       const pct = j.total ? Math.floor((j.received / j.total) * 100) : 0;
@@ -716,7 +719,7 @@ async function showDownloads() {
     $('grid').innerHTML = gridItems.map((it) => cardHtml(it, { sub: fmtBytes(it.size) }).replace('<div class="hover-play">',
       `<span class="dl-del" data-del="${esc(it.name)}" title="Delete download">${I.trash}</span><div class="hover-play">`)).join('');
     $('grid').querySelectorAll('.card').forEach((c) => lazy.observe(c));
-    $('status').textContent = !d.active.length && !d.done.length ? 'Nothing downloaded yet. Press ⬇ in the player or on a movie to save it to this Mac.' : '';
+    $('status').textContent = !d.active.length && !d.done.length ? `Nothing downloaded yet. Press ⬇ in the player or on a movie to save it to this ${DEVICE}.` : '';
     clearTimeout(dlTimer);
     if (d.active.some((j) => j.status === 'downloading')) dlTimer = setTimeout(tick, 1500);
   };
@@ -728,7 +731,7 @@ document.addEventListener('click', async (e) => {
   e.stopPropagation(); e.preventDefault();
   if (c.dataset.cancel) await api(`/api/downloads?id=${enc(c.dataset.cancel)}`, { method: 'DELETE' });
   if (c.dataset.retry) await api('/api/downloads', { method: 'POST', body: JSON.stringify({ path: c.dataset.retry }) });
-  if (c.dataset.del && confirm('Delete this download from your Mac?')) await api(`/api/downloads?name=${enc(c.dataset.del)}`, { method: 'DELETE' });
+  if (c.dataset.del && confirm(`Delete this download from your ${DEVICE}?`)) await api(`/api/downloads?name=${enc(c.dataset.del)}`, { method: 'DELETE' });
   if (state.view === 'downloads') showDownloads();
 }, true);
 
@@ -818,7 +821,7 @@ async function openSettings() {
   markTheme();
   $('ffmpegNote').innerHTML = c.ffmpeg
     ? '✓ Sound &amp; format fix is on — every file plays with sound, and you can switch audio tracks and built-in subtitles.'
-    : '⚠ ffmpeg was not found, so some files may play without sound and audio-track switching is off. Install it with <code>brew install ffmpeg</code> (the Mac app includes it).';
+    : `⚠ ffmpeg was not found, so some files may play without sound and audio-track switching is off. Install it with ${INSTALL_FFMPEG} (the Mac and Windows apps include it).`;
   if (!$('settings').open) $('settings').showModal();
 }
 async function saveConfig(body) {
@@ -873,6 +876,8 @@ const S = {
 };
 
 ['pClose:down', 'mExpand:expand', 'mClose:close', 'pPlay:play', 'pBack:rew', 'pFwd:fwd', 'pNext:next', 'pMute:vol', 'pPip:pip', 'pFull:full', 'pDownload:download'].forEach((p) => { const [id, ic] = p.split(':'); setIcon($(id), ic); });
+$('pDownload').title = `Download to this ${DEVICE}`;
+if (WIN) $('backBtn').title = 'Back (Ctrl+[)';
 
 const now = () => (S.pendingSeek ?? (S.mode === 'remux' ? S.offset + video.currentTime : video.currentTime));
 const duration = () => S.duration || (Number.isFinite(video.duration) ? video.duration : 0);
@@ -920,7 +925,7 @@ async function startPlayback(item, { from } = {}) {
   S.mode = !pr?.ffmpeg || (pr.direct && S.audio === 0 && !S.adelay) ? 'direct' : 'remux';
   // Converted streams are Matroska (exact sync, true timestamps); MP4 only where Matroska can't play.
   S.fmt = video.canPlayType('video/webm') ? 'mkv' : 'mp4';
-  if (pr && !pr.ffmpeg) banner('Some files may play without sound. Install ffmpeg (<code>brew install ffmpeg</code>) or use the MusingsofMaksudTV Mac app, which includes it.');
+  if (pr && !pr.ffmpeg) banner(`Some files may play without sound. Install ffmpeg (${INSTALL_FFMPEG}) or use the MusingsofMaksudTV Mac or Windows app, which includes it.`);
 
   buildSubOptions();
   const h = progressOf(item.path);
@@ -1153,13 +1158,13 @@ $('pMute').onclick = () => { video.muted = !video.muted; prefs.muted = video.mut
 $('pVol').oninput = (e) => { video.volume = Number(e.target.value); video.muted = false; prefs.volume = video.volume; prefs.muted = false; savePrefs(); updateButtons(); };
 video.volume = prefs.volume; video.muted = prefs.muted; $('pVol').value = prefs.volume;
 $('pFull').onclick = toggleFull;
-// Download the movie that's playing (Mac app), showing progress on the button.
+// Download the movie that's playing (Mac and Windows apps), showing progress on the button.
 $('pDownload').onclick = async () => {
   const item = S.item;
   if (!item) return;
   const r = await downloadItem(item);
   if (!r) return;
-  toast('Downloading to your Mac — find it in Downloads', 2500);
+  toast(`Downloading to your ${DEVICE} — find it in Downloads`, 2500);
   const btn = $('pDownload');
   const poll = async () => {
     if (S.item !== item) return;
@@ -1217,7 +1222,7 @@ $('pAudio').onclick = () => openMenu('audio', audioMenuHtml());
 
 /** Audio sync: restart the converted stream with the sound shifted (debounced while clicking). */
 function setAudioDelay(v) {
-  if (!S.probe?.ffmpeg) return toast('Audio sync needs ffmpeg (built into the Mac app)', 2500);
+  if (!S.probe?.ffmpeg) return toast('Audio sync needs ffmpeg (built into the Mac and Windows apps)', 2500);
   S.adelay = Math.max(-20, Math.min(20, +v.toFixed(1)));
   saveSync();
   toast(`Audio ${signed(S.adelay)}`, 900);
@@ -1262,7 +1267,7 @@ function subsMenuHtml() {
   return `${tabs}${opt('off', 'Off', '', S.subs.id === 'off')}
     ${ext.length ? `<h4>From the server</h4>${ext.map((o) => opt(o.id, o.label, o.sub, S.subs.id === o.id)).join('')}` : ''}
     ${emb.length ? `<h4>Built into the file</h4>${emb.map((o) => opt(o.id, o.label, o.text ? o.sub : 'Image subtitles — can’t be shown', S.subs.id === o.id, !o.text)).join('')}` : ''}
-    <h4>More</h4>${opt('load', 'Load a subtitle file…', '.srt or .vtt from your Mac', false)}`;
+    <h4>More</h4>${opt('load', 'Load a subtitle file…', `.srt or .vtt from your ${DEVICE}`, false)}`;
 }
 
 $('menu').addEventListener('click', (e) => {
