@@ -398,3 +398,9 @@ html.streamhub .look-pick.on { border-color: var(--blue); background: var(--sel)
 /* Mac app (Electron, hidden title bar): keep the sidebar clear of the window buttons, and let it drag the window */
 html.electron.streamhub header#top { padding-left: 8px; padding-top: 44px; -webkit-app-region: drag; }
 html.electron.streamhub #backBtn { top: 40px; }
+
+/* TV share */
+html.streamhub dialog label.check input { accent-color: var(--blue); }
+html.streamhub .tv-lines { border-radius: 8px; background: var(--raised); border-color: var(--line2); color: var(--muted); }
+html.streamhub .tv-lines pre { border-radius: 6px; border-color: var(--line2); background: var(--bg); font-family: var(--mono); }
+html.streamhub .sv-card .tv-lines { background: none; border: 0; padding: 0; }

@@ -164,6 +164,18 @@ The TV app works like the Mac app: one *Movies* section for Movies + Movies 1080
 - **Back** in the player shrinks the video into the corner of the home screen and it keeps playing.
   **▶ Now playing** in the top bar makes it full screen again; **■ Stop** ends it. The remote's play/pause key works too.
 
+### Watch your computer's folders on the TV
+The TV app plays the ISP servers by itself, without your computer. When your Mac or PC is on, it can also play that
+computer's own folders (the ones added with **Add folder…**):
+1. On the computer, open **Settings**, tick **Share my folders with my TV**, then click **Save**. Allow incoming connections if
+   Windows or macOS asks (private networks).
+2. Settings (and the **Server** page) then list one line per folder, such as `Movie (PC) | http://192.168.0.105:8090/Movie/`.
+   Add those lines to the TV app's **Settings → Libraries**.
+
+They show as their own sections. When the computer is off, those sections just can't be reached, and everything else
+works as normal. Only devices on your home network get answers. The folders are shared read-only, and only video,
+subtitle and poster files.
+
 ### Remote
 OK = play/pause and show controls · ◀ ▶ = skip 10 s · Back = up one folder / shrink the player to the corner.
 While the controls are showing, press **Up** to reach the **Audio** and **Subtitles** buttons.

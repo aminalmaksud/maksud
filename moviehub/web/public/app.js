@@ -772,6 +772,7 @@ async function showServer() {
   $('backBtn').hidden = false;
   $('status').textContent = 'Checking your libraries…';
   let st;
+  try { state.config = await api('/api/config'); } catch { /* keep the old one */ }
   try { st = await api('/api/status'); } catch (e) { $('status').textContent = e.message; $('status').className = 'error'; return; }
   if (state.view !== 'server') return;
   $('status').textContent = '';
@@ -786,6 +787,7 @@ async function showServer() {
       <div><span>Downloads</span><b>${st.downloads ? 'On' : 'Off'}</b></div></div></section>
     <section class="sv-card"><h3>System</h3>
       ${row('Address', location.host)}${row('FFmpeg', st.ffmpeg ? `${st.ffmpeg} · ready` : 'not found')}${st.downloads ? row('Downloads', st.downloads) : ''}${st.version ? row('Version', st.version) : ''}</section>
+    ${state.config?.share?.enabled ? `<section class="sv-card wide"><h3>Shared with your TV<small>${state.config.share.running ? 'On' : 'Starting'}</small></h3><div class="tv-lines">${tvLinesHtml(state.config.share)}</div></section>` : ''}
     <section class="sv-card wide"><h3>Libraries<a class="sv-link" id="svManage">Manage</a></h3>
       ${st.libraries.length ? st.libraries.map(lib).join('') : '<p class="sv-empty">No libraries yet. Add a server in Settings.</p>'}</section>
   </div>`;
@@ -877,6 +879,8 @@ async function openSettings() {
   f.password.placeholder = c.hasPassword ? '•••••• (saved)' : '';
   f.opensubsKey.value = c.opensubsKey || ''; f.opensubsUser.value = c.opensubsUser || ''; f.opensubsPass.value = ''; f.subdlKey.value = c.subdlKey || '';
   f.opensubsPass.placeholder = c.hasOpensubsPass ? '•••••• (saved)' : 'optional';
+  f.shareTv.checked = !!c.share?.enabled;
+  renderTvLines(c.share);
   markTheme(); markLook();
   $('ffmpegNote').innerHTML = c.ffmpeg
     ? '✓ Sound &amp; format fix is on — every file plays with sound, and you can switch audio tracks and built-in subtitles.'
@@ -930,6 +934,22 @@ $('addFolderBtn').onclick = async () => {
   const name = picked.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || picked;
   ta.value = `${ta.value.replace(/\s+$/, '')}${ta.value.trim() ? '\n' : ''}${name} | ${picked}`;
 };
+/** The lines to type into the TV app's Settings, one per shared folder. */
+function tvLinesHtml(sh) {
+  if (!sh?.enabled) return '';
+  if (!sh.lines.length) return '<p>Add a folder above first, then save.</p>';
+  return `<p>${sh.running ? 'Shared.' : 'Starting…'} In the TV app, open <b>Settings → Libraries</b> and add:</p>
+    <pre>${sh.lines.map(esc).join('\n')}</pre><button type="button" class="btn mini" data-copy-tv>Copy</button>
+    ${sh.addresses.length > 1 ? `<p>This computer has more than one address (${sh.addresses.map(esc).join(', ')}). Use the one on the same Wi-Fi as the TV.</p>` : ''}
+    <p>Windows or macOS may ask once to allow incoming connections. Choose Allow (private networks).</p>`;
+}
+function renderTvLines(sh) { $('tvLines').innerHTML = tvLinesHtml(sh); $('tvLines').hidden = !sh?.enabled; }
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-copy-tv]');
+  if (!b) return;
+  navigator.clipboard?.writeText(b.previousElementSibling.textContent).then(() => { b.textContent = 'Copied'; }, () => {});
+});
+$('settingsForm').shareTv.onchange = (e) => { if (!e.target.checked) renderTvLines(null); else renderTvLines({ ...(state.config?.share || {}), enabled: true, lines: state.config?.share?.lines || [] }); };
 /** Downloads make no sense for files that are already on this computer. */
 const canDownload = (p) => !String(p).startsWith('local/') && !(state.config?.localLibs || []).includes(Number(realPath(p).split('/')[0]));
 $('welcomeOwn').onclick = openSettings;
@@ -942,6 +962,7 @@ $('settingsForm').onsubmit = async (e) => {
     await saveConfig({
       servers: f.servers.value, username: f.username.value, password: f.password.value, keepPassword: keepPw, tmdbKey: f.tmdbKey.value,
       opensubsKey: f.opensubsKey.value, opensubsUser: f.opensubsUser.value, opensubsPass: f.opensubsPass.value,
+      shareTv: f.shareTv.checked,
       keepOpensubsPass: !f.opensubsPass.value && state.config?.hasOpensubsPass && f.opensubsUser.value === state.config.opensubsUser, subdlKey: f.subdlKey.value,
     });
     $('settings').close();

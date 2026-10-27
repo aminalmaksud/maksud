@@ -514,6 +514,11 @@ dialog code { background: var(--raised); padding: 1px 6px; border-radius: 6px; b
 .menu .ss-go { all: unset; cursor: pointer; padding: 8px 14px; border-radius: 10px; background: rgba(255, 255, 255, .12); font-weight: 700; font-size: 13px; }
 .menu .ss-go:hover { background: rgba(255, 255, 255, .2); }
 .menu .chips + .opt, .menu .chips + .hint { margin-top: 8px; }
+dialog label.check { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+dialog label.check input { display: inline-block; width: auto; margin: 0; accent-color: var(--maroon); }
+dialog label.check small { flex-basis: 100%; margin: 0 0 0 26px; }
+.tv-lines { font-size: 13px; color: var(--dim); background: var(--raised); border: 1px solid var(--line); padding: 4px 13px 10px; border-radius: 13px; margin-bottom: 12px; }
+.tv-lines pre { margin: 6px 0; padding: 9px 11px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); color: var(--text); font: 12.5px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-all; }
 .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 .lib-btns { display: flex; gap: 8px; flex-wrap: wrap; margin: -4px 0 6px; }
 .lib-btns .btn { padding: 7px 14px; font-size: 13px; }

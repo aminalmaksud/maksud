@@ -1,6 +1,7 @@
 // MusingsofMaksudTV: serves the UI and proxies the ISP media server. Used by the Mac app (mac/), the Windows app
 // (windows/) and runnable on its own: `node server.js`, then open http://localhost:8080
 import http from 'node:http';
+import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
@@ -44,6 +45,7 @@ function loadConfig() {
     tmdbKey: process.env.TMDB_KEY ?? c.tmdbKey ?? '',
     // online subtitles (see subsearch.js)
     opensubsKey: c.opensubsKey ?? '', opensubsUser: c.opensubsUser ?? '', opensubsPass: c.opensubsPass ?? '', subdlKey: c.subdlKey ?? '',
+    shareTv: !!c.shareTv, // share local folders with the Android TV app (see shareServer)
   };
 }
 let config = loadConfig();
@@ -521,12 +523,14 @@ async function handleConfig(req, res) {
       opensubsUser: b.opensubsUser === undefined ? config.opensubsUser : String(b.opensubsUser).trim(),
       opensubsPass: b.keepOpensubsPass || b.opensubsPass === undefined ? config.opensubsPass : String(b.opensubsPass),
       subdlKey: b.subdlKey === undefined ? config.subdlKey : String(b.subdlKey).trim(),
+      shareTv: b.shareTv === undefined ? config.shareTv : !!b.shareTv,
     };
     listCache.clear(); libRoots.clear(); localWalks.clear();
+    updateShare();
     fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
-  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND, localLibs: localLibs(),
+  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND, localLibs: localLibs(), share: shareInfo(),
     opensubsKey: config.opensubsKey, opensubsUser: config.opensubsUser, hasOpensubsPass: !!config.opensubsPass, subdlKey: config.subdlKey });
 }
 
@@ -622,6 +626,80 @@ function reveal(dir) {
   spawn('explorer.exe', [dir], { detached: true, stdio: 'ignore' }).unref();
 }
 
+/* ---------------- sharing local folders with the TV ----------------
+   The Android TV app reads "Index of /" pages, the same as the ISP servers. With "Share my folders with my TV" on,
+   the local folder libraries are also served that way on the home network, read-only, at
+   http://<this computer>:8090/<library>/. Only devices on the local network get answers. There's no password because
+   the TV app sends one username and password to every server, which would leak it to the ISP servers. */
+const SHARE_PORT = Number(process.env.SHARE_PORT ?? 8090);
+let shareServer = null, sharePort = 0;
+const isPrivateIp = (ip) => /^(?:::ffff:)?(?:127\.|10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.|169\.254\.)|^::1$|^f[cd]|^fe80:/i.test(ip || '');
+const lanAddresses = () => Object.values(os.networkInterfaces()).flat()
+  .filter((n) => n && n.family === 'IPv4' && !n.internal && isPrivateIp(n.address)).map((n) => n.address);
+/** URL segment for each local library, by its name ("My Movies" -> "My%20Movies"), unique. */
+function sharedLibs() {
+  const names = serverNames(), seen = new Set();
+  return localLibs().map((i) => {
+    let seg = names[i].replace(/[\\/]/g, '-').trim() || `Folder ${i}`;
+    while (seen.has(seg.toLowerCase())) seg += ' 2';
+    seen.add(seg.toLowerCase());
+    return { idx: i, name: names[i], seg };
+  });
+}
+function shareInfo() {
+  const port = sharePort || SHARE_PORT, ip = lanAddresses()[0] || '<this computer’s IP>';
+  return {
+    enabled: config.shareTv, running: !!shareServer, port, addresses: lanAddresses(),
+    lines: sharedLibs().map((l) => `${l.name} (PC) | http://${ip}:${port}/${encodeURIComponent(l.seg)}/`),
+  };
+}
+const escHtml = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function indexPage(res, title, links, head) {
+  res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+  if (head) return res.end();
+  res.end(`<html><head><title>Index of ${escHtml(title)}</title></head><body><h1>Index of ${escHtml(title)}</h1><hr><pre><a href="../">../</a>\n${
+    links.map((l) => `<a href="${escHtml(l)}">${escHtml(decodeURIComponent(l))}</a>`).join('\n')}</pre><hr></body></html>`);
+}
+function handleShare(req, res) {
+  try {
+    if (!isPrivateIp(req.socket.remoteAddress)) { res.writeHead(403); return res.end('Only for devices on this network'); }
+    if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); return res.end(); }
+    const head = req.method === 'HEAD';
+    const u = new URL(req.url, 'http://share');
+    const segs = u.pathname.split('/').slice(1);
+    const libs = sharedLibs();
+    if (!segs[0]) return indexPage(res, '/', libs.map((l) => `${encodeURIComponent(l.seg)}/`), head);
+    const lib = libs.find((l) => encodeURIComponent(l.seg) === canonPath(segs[0]) || l.seg === decodeURIComponent(segs[0]));
+    if (!lib) { res.writeHead(404); return res.end('Not found'); }
+    const base = bases()[lib.idx];
+    const target = new URL(segs.slice(1).map((x) => encodeURIComponent(decodeURIComponent(x))).join('/'), base);
+    if (!canonPath(target.pathname).startsWith(canonPath(base.pathname))) { res.writeHead(400); return res.end(); }
+    const real = localPathIn(base, target);
+    if (fs.statSync(real).isDirectory()) {
+      if (!u.pathname.endsWith('/')) { res.writeHead(301, { location: u.pathname + '/' }); return res.end(); }
+      return indexPage(res, u.pathname, listLocalFolder(base, target).map((k) => k.href.slice(target.pathname.length))
+        .filter((h) => h.endsWith('/') || /^(?:video|sub|image)$/.test(kindOf(decodeURIComponent(h)))), head);
+    }
+    if (!/^(?:video|sub|image)$/.test(kindOf(real))) { res.writeHead(403); return res.end(); }
+    if (head) { res.writeHead(200, { 'content-length': fs.statSync(real).size, 'accept-ranges': 'bytes', 'content-type': MIME[extOf(real)] || 'application/octet-stream' }); return res.end(); }
+    serveFile(req, res, real);
+  } catch (e) {
+    if (!res.headersSent) { res.writeHead(e.status || 404); res.end(e.status === 400 ? 'Bad path' : 'Not found'); }
+  }
+}
+const kindOf = (name) => (VIDEO_EXT.has(extOf(name)) ? 'video' : /^(srt|vtt)$/.test(extOf(name)) ? 'sub' : /^(jpe?g|png|webp)$/.test(extOf(name)) ? 'image' : 'other');
+/** Starts or stops the TV share to match Settings. */
+function updateShare() {
+  if (config.shareTv && !shareServer) {
+    const srv = http.createServer(handleShare);
+    srv.on('error', (e) => { console.error('TV share:', e.message); if (shareServer === srv) { shareServer = null; sharePort = 0; } });
+    srv.listen(SHARE_PORT, '0.0.0.0', () => { sharePort = srv.address().port; });
+    shareServer = srv;
+  } else if (!config.shareTv && shareServer) {
+    shareServer.close(); shareServer = null; sharePort = 0;
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
@@ -657,6 +735,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+server.on('listening', updateShare);
+server.on('close', () => { if (shareServer) { shareServer.close(); shareServer = null; } });
 const start = () => server.listen(PORT, HOST, () => console.log(`MusingsofMaksudTV running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`));
 // import.meta.url is empty in the Windows app's bundle, which calls start() from serve.js instead.
 if (import.meta.url && process.argv[1] === fileURLToPath(import.meta.url)) start();

@@ -166,6 +166,9 @@
     <label>Libraries <small>One per line, with a name: <code>TV Series | http://172.16.50.12/</code> or a folder on this computer: <code>Movie | G:\Movie</code></small>
       <textarea name="servers" rows="5" spellcheck="false" placeholder="Movies | http://172.16.50.7/&#10;TV Series | http://172.16.50.12/" required></textarea></label>
     <div class="lib-btns"><button type="button" class="btn" id="dhakaflixBtn">Fill in DhakaFlix servers</button><button type="button" class="btn" id="addFolderBtn">Add folder…</button></div>
+    <label class="check"><input type="checkbox" name="shareTv"> Share my folders with my TV
+      <small>Your Android TV app can then play the folders on this computer (when it's on), next to the ISP servers. Only devices on your home network can see them.</small></label>
+    <div class="tv-lines" id="tvLines" hidden></div>
     <div class="two">
       <label>Username <small>if the server asks</small><input name="username" autocomplete="off"></label>
       <label>Password<input name="password" type="password" autocomplete="off"></label>

@@ -94,6 +94,7 @@ assert.deepEqual(unzip(zipOf([['x/a.srt', 'hello']])).map((f) => [f.name, f.data
 process.env.SERVER_URL = `http://127.0.0.1:${isp.address().port}/movies/`;
 process.env.PORT = '0';
 process.env.CONFIG_FILE = path.join(os.tmpdir(), `moviehub-test-${process.pid}.json`);
+process.env.SHARE_PORT = '0'; // any free port for the TV share
 const { server } = await import('./server.js');
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${server.address().port}`;
@@ -243,6 +244,28 @@ r = await fetch(base + '/api/downloads', { method: 'POST', body: JSON.stringify(
 assert.ok([400, 404].includes(r.status), 'no downloading what is already here');
 // The picker itself opens a real dialog on Mac and Windows, so only the method check runs here.
 assert.equal((await get('/api/pick-folder')).status, 405);
+
+// --- sharing local folders with the TV (read-only "Index of /" pages on the home network)
+fs.writeFileSync(path.join(lib, 'Movie', 'Inception (2010)', 'notes.txt'), 'private');
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Movies | ${movies}\nMy Movie | ${movieDir}`, shareTv: true }) });
+await new Promise((res) => setTimeout(res, 200));
+r = await (await get('/api/config')).json();
+assert.equal(r.share.enabled, true); assert.equal(r.share.running, true);
+assert.match(r.share.lines[0], /^My Movie \(PC\) \| http:\/\/.+:\d+\/My%20Movie\/$/);
+const share = `http://127.0.0.1:${r.share.port}`;
+let page = await (await fetch(share + '/')).text();
+assert.deepEqual(parseListing(page, share + '/', share + '/').map((i) => i.name), ['My Movie'], 'root lists the shared folders');
+page = await (await fetch(share + '/My%20Movie/Inception%20(2010)/')).text();
+const tvItems = parseListing(page, share + '/My%20Movie/Inception%20(2010)/', share + '/My%20Movie/');
+assert.deepEqual(tvItems.map((i) => i.kind).sort(), canLink ? ['image', 'sub', 'video', 'video'] : ['image', 'sub', 'video'], 'what the TV app sees; notes.txt hidden');
+r = await fetch(share + '/My%20Movie/Inception%20(2010)/Inception.2010.1080p.mkv', { headers: { range: 'bytes=0-9' } });
+assert.equal(r.status, 206, 'the TV can seek');
+assert.equal((await fetch(share + '/My%20Movie/Inception%20(2010)/notes.txt')).status, 403, 'only media files');
+assert.equal((await fetch(share + '/My%20Movie/..%2F..%2Fsecret.txt')).status !== 200, true, 'no way out of the folder');
+assert.equal((await fetch(share + '/Nope/')).status, 404);
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Movies | ${movies}\nMy Movie | ${movieDir}`, shareTv: false }) });
+await new Promise((res) => setTimeout(res, 200));
+assert.equal((await (await get('/api/config')).json()).share.running, false, 'switching it off stops the share');
 fs.rmSync(lib, { recursive: true, force: true });
 console.log('all tests passed');
 server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });
