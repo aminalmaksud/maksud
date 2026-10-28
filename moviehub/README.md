@@ -121,12 +121,21 @@ look: sidebar navigation, light and dark themes that follow Windows, and a Serve
 runs the same server as the Mac app in the background, with ffmpeg included. You never have to start anything yourself.
 
 ### Install
-1. On GitHub, open **Actions → StreamHub Windows app**, then the latest green run, and download
-   **StreamHub-windows-x64**.
-2. Unzip it and run `StreamHub_1.0.1_x64-setup.exe`. It installs for your user only, so you don't need admin rights.
+1. On GitHub, open **Releases** and download `StreamHub_1.0.1_x64-setup.exe` from the newest **StreamHub** pre-release.
+   Every build is published there. It's also in **Actions → StreamHub Windows app** as the zipped
+   **StreamHub-windows-x64** artifact.
+2. Run the setup. It installs for your user only, so you don't need admin rights.
    Windows 10 PCs without WebView2 get it during setup. Windows 11 already has it.
 3. The app isn't signed by a registered publisher yet, so Windows SmartScreen may warn the first time.
-   Click **More info → Run anyway**.
+   Click **More info → Run anyway**. Chrome can also block a new, unsigned download. If it does, open
+   `chrome://downloads` and choose **Keep** / **Download dangerous file**, or use Edge or Firefox.
+
+**Why the warning, and the real fix.** Browsers and SmartScreen trust programs by their publisher's code-signing
+certificate, and by reputation they build up over time. StreamHub doesn't have a certificate yet. (Builds before
+this fix also carried Node's broken signature inside the bundled server, which made Chrome call them dangerous. The
+build now removes it, and CI checks for it.) To stop the warnings, buy a code-signing certificate, for example
+[Certum's open-source certificate](https://shop.certum.eu/open-source-code-signing.html), which is available to
+individuals. Then CI can sign each build.
 
 Your settings live in `%APPDATA%\com.musingsofmaksud.streamhub`, and downloads go to `Downloads\StreamHub`.
 If the app ever can't start, the error message points to `server.log` in the settings folder.

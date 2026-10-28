@@ -34,6 +34,27 @@ async function download(url) {
   return Buffer.from(await res.arrayBuffer());
 }
 
+/**
+ * Removes node.exe's Authenticode signature (Node's docs do the same with `signtool remove /s`). Injecting
+ * our code breaks it, and a program with a broken signature looks tampered with: Chrome and SmartScreen
+ * flag it as dangerous. Unsigned is honest. Zeroes the security directory entry and the checksum, and cuts
+ * the certificate table off the end of the file.
+ */
+function stripSignature(buf) {
+  const pe = buf.readUInt32LE(0x3c);
+  if (buf.toString('latin1', pe, pe + 4) !== 'PE\0\0') throw new Error('not a PE file');
+  const opt = pe + 24;
+  const dirs = opt + (buf.readUInt16LE(opt) === 0x20b ? 112 : 96);
+  const at = dirs + 4 * 8; // IMAGE_DIRECTORY_ENTRY_SECURITY
+  const off = buf.readUInt32LE(at), size = buf.readUInt32LE(at + 4);
+  buf.writeUInt32LE(0, at);
+  buf.writeUInt32LE(0, at + 4);
+  buf.writeUInt32LE(0, opt + 64); // CheckSum, which covered the signature
+  if (off && off + size >= buf.length - 8) return buf.subarray(0, off);
+  if (off) throw new Error('the certificate table is not at the end of node.exe');
+  return buf;
+}
+
 /** The official node.exe, checked against nodejs.org's published checksums. Cached in build/. */
 async function nodeExe() {
   const file = path.join(out, `node-${NODE_VERSION}-win-x64.exe`);
@@ -68,7 +89,7 @@ fs.writeFileSync(seaConfig, JSON.stringify({
 }));
 execFileSync(process.execPath, ['--experimental-sea-config', seaConfig], { stdio: 'inherit' });
 const server = path.join(bins, `mmtv-server-${TRIPLE}.exe`);
-fs.copyFileSync(await nodeExe(), server);
+fs.writeFileSync(server, stripSignature(fs.readFileSync(await nodeExe())));
 execFileSync(process.execPath, [
   path.join(root, 'node_modules', 'postject', 'dist', 'cli.js'),
   server, 'NODE_SEA_BLOB', path.join(out, 'server.blob'), '--sentinel-fuse', SEA_FUSE,
