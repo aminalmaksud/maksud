@@ -157,8 +157,9 @@ async function fillCard(card) {
   if (!m || !card.isConnected) return;
   const img = card.querySelector('img');
   const src = card.classList.contains('wide-art') ? m.backdrop || m.poster : m.poster;
-  if (img && src) { img.onload = () => img.classList.add('ok'); img.src = src; }
+  if (img && src && !card.dataset.still) { img.onload = () => img.classList.add('ok'); img.src = src; }
   // Clean title ("Oppenheimer" instead of "Oppenheimer 2023 2160p"); keep the raw name as a tooltip.
+  if (card.dataset.ep) return; // an episode folder keeps its episode title and still
   const title = m.show && m.episode != null ? null : m.matched || m.title;
   if (title && !card.classList.contains('tile')) {
     card.querySelector('.t').textContent = title;
@@ -413,7 +414,8 @@ function resetView(view) {
   $('folderHead').hidden = view === 'home' || view === 'settings';
   $('welcome').hidden = true;
   $('folderSyn').hidden = true; $('folderSyn').textContent = ''; $('folderResume').hidden = true;
-  $('seasonBar').hidden = true; $('moreIn').hidden = true; $('moreIn').innerHTML = ''; $('split').classList.remove('has-more');
+  $('folderCover').hidden = true; $('folderCover').innerHTML = ''; $('folderHead').classList.remove('has-cover'); coverBase = '';
+  $('seasonCover').hidden = true; $('seasonBar').hidden = true; $('moreIn').hidden = true; $('moreIn').innerHTML = ''; $('split').classList.remove('has-more');
   $('settingsPage').hidden = view !== 'settings';
   $('settingsBtn').classList.toggle('on', view === 'settings');
   if (view !== 'search') $('filter').value = ''; // a search left in the box must not hide a folder's contents
@@ -498,9 +500,21 @@ function showList() {
 /** The plot of a movie or series folder, under its title. Says what's missing when there's none. */
 async function showSynopsis(path) {
   const el = $('folderSyn');
+  setCover(lastSeg(path));
   const m = await meta(path);
   if (state.view !== 'folder' || state.path !== path) return;
+  if (m?.poster) { coverBase = m.poster; coverImage(m.poster); }
   el.hidden = false;
+  // A folder that holds one episode: that episode's title and plot, when TMDB has them
+  const name = lastSeg(path);
+  if (EP_DIR_RE.test(name) && !isTitleFolder(name.replace(EP_DIR_RE, ''))) {
+    const parent = parentPath(path.replace(/\/$/, '') + '/');
+    const season = Number(/\bS(\d{1,2}) ?E\d/i.exec(name)?.[1] ?? seasonNum(lastSeg(parent)) ?? 1);
+    const info = await api(`/api/episodes?path=${enc(path)}&season=${season}`).catch(() => null);
+    const e = info?.episodes.find((x) => x.episode === epNumber(name, 0));
+    if (state.view !== 'folder' || state.path !== path) return;
+    if (e) { $('folderTitle').textContent = `E${e.episode} · ${e.name}`; if (e.overview) { el.textContent = e.overview; el.classList.remove('none'); return; } }
+  }
   if (m?.overview) {
     el.textContent = m.overview; el.classList.remove('none');
     if (m.rating) $('folderSub').innerHTML += `  ·  <span class="star">★</span> ${m.rating}`;
@@ -508,6 +522,21 @@ async function showSynopsis(path) {
     el.classList.add('none');
     el.innerHTML = state.config?.tmdbKey ? 'No synopsis found for this title.' : 'No synopsis yet. <a href="#/settings">Add a free TMDB key in Settings</a> to see the plot of every movie and series.';
   }
+}
+/** The cover beside a title's name: a drawn jacket straight away, then the poster once it's known. */
+let coverBase = ''; // the series' (or movie's) own poster, for seasons that have none of their own
+function setCover(title, src) {
+  const el = $('folderCover');
+  el.innerHTML = `<div class="poster">${coverHtml(title)}<img alt=""></div>`;
+  el.hidden = false; $('folderHead').classList.add('has-cover');
+  if (src) coverImage(src);
+}
+function coverImage(src) {
+  const img = $('folderCover').querySelector('img');
+  if (!img) return;
+  img.classList.remove('ok');
+  img.onload = () => img.classList.add('ok');
+  img.src = src;
 }
 const lastSeg = (p) => { try { return decodeURIComponent(p.replace(/\/$/, '').split('/').pop()); } catch { return p; } };
 
@@ -531,7 +560,7 @@ async function showFolder(path, { refresh = false } = {}) {
     if (seasons) { showSynopsis(l.path); return showSeasons(l.path, seasons); }
     renderGrid(playable(l.items), { folder: l.path });
     showSiblingSeasons(l.path);
-    if (isTitleFolder(lastSeg(l.path)) || isEpisodeFolder(l.items.filter((i) => i.kind === 'video'))) showSynopsis(l.path);
+    if (isTitleFolder(lastSeg(l.path)) || EP_DIR_RE.test(lastSeg(l.path)) || isEpisodeFolder(l.items.filter((i) => i.kind === 'video'))) showSynopsis(l.path);
   }
 }
 
@@ -586,7 +615,7 @@ async function showSeasons(path, seasons) {
     if (state.view !== 'folder' || state.path !== path || $('seasonTabs').querySelector('.on')?.dataset.season !== d.path) return;
     $('status').textContent = '';
     renderGrid(playable(l.items), { folder: d.path });
-    $('seasonCount').textContent = seasonCountText(l.items.filter((i) => i.kind === 'video'));
+    $('seasonCount').textContent = seasonCountText(l.items.filter((i) => i.kind === 'video' || (i.isDir && EP_DIR_RE.test(i.name))));
   };
   showMoreIn(path);
   showResume(path, seasons);
@@ -628,7 +657,7 @@ async function showSiblingSeasons(path) {
   const norm = (p) => p.replace(/\/$/, '');
   $('seasonTabs').innerHTML = seasonTabsHtml(seasons, seasons.find((d) => norm(d.path) === norm(path))?.path);
   $('seasonTabs').onclick = (e) => { const b = e.target.closest('[data-season]'); if (b) go(b.dataset.season); };
-  $('seasonCount').textContent = seasonCountText(state.items.filter((i) => i.kind === 'video'));
+  $('seasonCount').textContent = seasonCountText(state.items.filter((i) => i.kind === 'video' || (i.isDir && EP_DIR_RE.test(i.name))));
   $('seasonBar').hidden = false;
   showMoreIn(parent);
 }
@@ -679,7 +708,9 @@ function renderGrid(items, { sub = null, folder = undefined } = {}) {
   const visible = items.filter((i) => !q || i.name.toLowerCase().includes(q));
   const videos = visible.filter((i) => i.kind === 'video');
   const episodes = state.view === 'folder' && !visible.some((i) => i.isDir) && isEpisodeFolder(videos);
-  grid.className = episodes ? 'list' : '';
+  // Servers that keep every episode in its own folder: a grid of episode stills instead of posters
+  const epDirs = state.view === 'folder' && visible.length > 0 && visible.every((i) => i.isDir && EP_DIR_RE.test(i.name));
+  grid.className = episodes ? 'list' : epDirs ? 'eps' : '';
   if (episodes) {
     grid.innerHTML = videos.map((v, i) => {
       const p = progressFor(v);
@@ -690,10 +721,30 @@ function renderGrid(items, { sub = null, folder = undefined } = {}) {
     }).join('');
     fillEpisodeInfo(gridFolder, videos);
   } else {
-    grid.innerHTML = visible.map((it) => cardHtml(it, { sub: sub ? sub(it) : '' })).join('');
+    grid.innerHTML = visible.map((it) => cardHtml(it, { sub: sub ? sub(it) : '', wideArt: epDirs })).join('');
+    if (epDirs) grid.querySelectorAll('.card').forEach((c) => { c.dataset.ep = '1'; });
     grid.querySelectorAll('.card').forEach((c) => lazy.observe(c));
+    if (epDirs) fillEpisodeFolders(gridFolder, visible);
   }
   if (state.view === 'folder') $('status').textContent = !visible.length ? (q ? 'Nothing here matches your search.' : 'This folder is empty.') : '';
+}
+const EP_DIR_RE = /\bS\d{1,2} ?E\d{1,3}\b|\b(?:ep|episode|e)[ ._-]?\d{1,3}\b/i;
+/** Episode folders: each card gets its episode's still, title and length from TMDB. */
+async function fillEpisodeFolders(folder, dirs) {
+  if (!folder) return;
+  const season = seasonNum(lastSeg(folder)) ?? Number(/\bS(\d{1,2}) ?E\d/i.exec(dirs[0].name)?.[1] ?? 1);
+  const key = `${folder}|${season}`;
+  if (!epInfo.has(key)) epInfo.set(key, api(`/api/episodes?path=${enc(folder)}&season=${season}`).then((r) => ({ poster: r.poster, byNum: new Map(r.episodes.map((e) => [e.episode, e])) }), () => ({ poster: null, byNum: new Map() })));
+  const { byNum } = await epInfo.get(key);
+  if (gridFolder !== folder) return;
+  dirs.forEach((d, i) => {
+    const e = byNum.get(epNumber(d.name, i)), card = [...$('grid').querySelectorAll('.card')].find((c) => c.dataset.path === d.path);
+    if (!e || !card) return;
+    if (e.still) { card.dataset.still = e.still; const img = card.querySelector('img'); img.onload = () => img.classList.add('ok'); img.src = e.still; }
+    if (e.name) { card.querySelector('.t').textContent = e.name; card.querySelector('.ph b').textContent = e.name; }
+    card.querySelector('.s').textContent = [`E${epNumber(d.name, i)}`, e.runtime && `${e.runtime} min`].filter(Boolean).join(' · ');
+    if (e.overview) card.title = `${e.name || d.name}\n\n${e.overview}`;
+  });
 }
 /** Episode titles and plots (TMDB) for the season on screen. The list shows first, the plots fill in. */
 const epInfo = new Map();
@@ -701,14 +752,20 @@ async function fillEpisodeInfo(folder, videos) {
   if (!folder || !videos.length) return;
   const season = seasonNum(lastSeg(folder)) ?? Number(/\bS(\d{1,2}) ?E\d/i.exec(videos[0].name)?.[1] ?? 1);
   const key = `${folder}|${season}`;
-  if (!epInfo.has(key)) epInfo.set(key, api(`/api/episodes?path=${enc(folder)}&season=${season}`).then((r) => new Map(r.episodes.map((e) => [e.episode, e])), () => new Map()));
-  const info = await epInfo.get(key);
-  if (!info.size || gridFolder !== folder) return;
+  if (!epInfo.has(key)) epInfo.set(key, api(`/api/episodes?path=${enc(folder)}&season=${season}`).then((r) => ({ poster: r.poster, byNum: new Map(r.episodes.map((e) => [e.episode, e])) }), () => ({ poster: null, byNum: new Map() })));
+  const { poster, byNum: info } = await epInfo.get(key);
+  if (gridFolder !== folder) return;
+  const sc = $('seasonCover');
+  sc.hidden = !poster || $('seasonBar').hidden; if (poster) sc.src = poster;
+  // On a Season folder's own page the big cover is the season's; on a series page it stays the series'.
+  if (!$('folderCover').hidden && seasonNum(lastSeg(state.path)) != null && (poster || coverBase)) coverImage(poster || coverBase);
+  if (!info.size) return;
   const rows = $('grid').querySelectorAll('.ep');
   videos.forEach((v, i) => {
     const e = info.get(epNumber(v.name, i)), row = rows[i];
     if (!e || !row || row.dataset.path !== v.path) return;
     if (e.overview) row.querySelector('.ep-syn').textContent = e.overview;
+    if (e.still) { const num = row.querySelector('.num'); num.style.setProperty('--still', `url("${e.still}")`); num.classList.add('has-still'); row.classList.add('has-still'); }
     // A real episode title replaces the generic "Episode 4", and the runtime joins the file name line
     if (e.name && /^Episode \d+$/.test(row.querySelector('.t').textContent)) row.querySelector('.t').textContent = e.name;
     if (e.runtime && !row.querySelector('.s').textContent.includes('left') && row.querySelector('.s').textContent !== 'Watched') row.querySelector('.s').textContent = `${e.runtime} min · ${row.querySelector('.s').textContent}`;

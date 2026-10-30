@@ -482,7 +482,8 @@ async function handleEpisodes(url, res) {
   if (!config.tmdbKey || !Number.isInteger(season) || season < 0 || season > 99) return json(res, 200, { episodes: [] });
   const m = await metaFor(rel, async (dir) => (await listDir(dir)).items, config.tmdbKey).catch(() => null);
   if (!m?.tmdbId || m.tmdbType !== 'tv') return json(res, 200, { episodes: [] });
-  json(res, 200, { episodes: (await seasonEpisodes(config.tmdbKey, m.tmdbId, season)) || [] });
+  const r = await seasonEpisodes(config.tmdbKey, m.tmdbId, season);
+  json(res, 200, { episodes: r?.episodes || [], poster: r?.poster || null });
 }
 
 /** Mac app downloads: POST {path} starts one, GET lists, DELETE ?id= cancels, DELETE ?name= removes a file. */
@@ -513,7 +514,7 @@ async function handleDownloads(req, url, res) {
 async function handleTmdbImage(req, url, res) {
   const m = /^\/tmdb\/(w\d+|original)\/([\w-]+\.(?:jpg|png))$/.exec(url.pathname);
   if (!m) throw httpError(404, 'Not found');
-  const up = await fetch(`https://image.tmdb.org/t/p/${m[1]}/${m[2]}`, { signal: AbortSignal.timeout(15000) });
+  const up = await fetch(`${process.env.TMDB_IMG || 'https://image.tmdb.org/t/p'}/${m[1]}/${m[2]}`, { signal: AbortSignal.timeout(15000) });
   if (!up.ok) throw httpError(up.status, 'Image not found');
   res.writeHead(200, { 'content-type': up.headers.get('content-type') || 'image/jpeg', 'cache-control': 'public, max-age=2592000' });
   Readable.fromWeb(up.body).on('error', () => res.destroy()).pipe(res);

@@ -15,7 +15,7 @@
 
 /* Hidden outside StreamHub, and the Mac-only bits hidden inside it */
 html:not(.streamhub) :is(#shFoot, .sh-mark, .sh-name, .sh-kbd, .sh-only) { display: none !important; }
-html.streamhub :is(.mh-only, .logo-mark, .logo-text, .logo-tv, .hint-x, .ph-mono, .ph-frame, .ph-ico) { display: none !important; }
+html.streamhub :is(.mh-only, .logo-mark, .logo-text, .logo-tv, .hint-x, .ph-frame, .ph-ico) { display: none !important; }
 
 /* ---------- tokens ---------- */
 html.streamhub {
@@ -461,3 +461,11 @@ html.streamhub #top .icon-btn.on, html.streamhub #settingsBtn.on { background: v
 html.streamhub .ep-syn { color: var(--muted); font-size: 12.5px; }
 html.streamhub #folderResume { margin-top: 14px; text-transform: none; letter-spacing: 0; font-family: var(--body); font-weight: 600; background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: none; }
 html.streamhub #folderResume:hover { background: var(--blue-hover); color: #fff; box-shadow: none; transform: none; }
+
+/* covers: a big initial for titles without a poster; the cover beside a title's name; episode stills */
+html.streamhub .ph-mono { top: 14%; transform: translateX(-50%); font: 700 58cqw/1 var(--display); -webkit-text-stroke: 0; color: rgba(255, 255, 255, .14); }
+html.streamhub .ph-mono::after { display: none; }
+html.streamhub #folderCover .poster { border: 0; border-radius: 8px; transform: none; box-shadow: none; width: 132px; }
+html.streamhub .ep .num.has-still { width: 124px; height: 70px; border-radius: 6px; background: var(--still) center / cover no-repeat, var(--raised); color: #fff; font: 600 12px var(--mono); place-items: end start; padding: 0 0 6px 8px; }
+html.streamhub .ep:has(.has-still) { grid-template-columns: 132px 1fr auto; }
+html.streamhub #seasonCover { border-radius: 4px; border-color: var(--line2); }

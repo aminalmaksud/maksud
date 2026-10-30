@@ -100,7 +100,7 @@ const tmdbFake = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://x');
   res.setHeader('content-type', 'application/json');
   if (u.pathname === '/search/tv') return res.end(JSON.stringify({ results: [{ id: 42, name: 'Some Show', overview: 'The show.', first_air_date: '2020-05-01' }] }));
-  if (u.pathname === '/tv/42/season/2') return res.end(JSON.stringify({ episodes: [{ episode_number: 1, name: 'Pilot', overview: 'It begins.', runtime: 44, air_date: '2021-01-01' }, { episode_number: 2, name: 'Two', overview: '' }] }));
+  if (u.pathname === '/tv/42/season/2') return res.end(JSON.stringify({ poster_path: '/season2.jpg', episodes: [{ episode_number: 1, name: 'Pilot', overview: 'It begins.', runtime: 44, air_date: '2021-01-01', still_path: '/pilot.jpg' }, { episode_number: 2, name: 'Two', overview: '' }] }));
   res.statusCode = 404; res.end('{}');
 });
 await new Promise((r) => tmdbFake.listen(0, '127.0.0.1', r));
@@ -289,6 +289,8 @@ assert.deepEqual(await (await get(`/api/episodes?path=${epPath}&season=2`)).json
 await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, tmdbKey: 'KEY' }) });
 const eps = (await (await get(`/api/episodes?path=${epPath}&season=2`)).json()).episodes;
 assert.deepEqual(eps.map((e) => [e.episode, e.name, e.overview, e.runtime]), [[1, 'Pilot', 'It begins.', 44], [2, 'Two', '', null]]);
+assert.deepEqual(eps.map((e) => e.still), ['/tmdb/w300/pilot.jpg', null], 'episode stills');
+assert.equal((await (await get(`/api/episodes?path=${epPath}&season=2`)).json()).poster, '/tmdb/w342/season2.jpg', 'season poster');
 assert.deepEqual((await (await get(`/api/episodes?path=${epPath}&season=9`)).json()).episodes, [], 'unknown season');
 assert.deepEqual((await (await get(`/api/episodes?path=${epPath}&season=abc`)).json()).episodes, []);
 assert.equal((await get('/api/episodes?path=0%2F..%2F..%2Fx%2F&season=1')).status, 400);

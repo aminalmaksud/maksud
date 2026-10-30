@@ -433,6 +433,21 @@ h2.row-title { cursor: default; }
 .ep-syn:empty { display: none; }
 .ep:hover .ep-syn, .ep:focus-visible .ep-syn { -webkit-line-clamp: unset; }
 
+#seasonCover { width: 36px; height: 54px; object-fit: cover; border-radius: 6px; border: 1px solid var(--edge); }
+#seasonCover[hidden] { display: none; }
+#grid.eps { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+#grid.eps .poster { aspect-ratio: 16 / 9; }
+#grid.eps .ph-mono { font-size: 30cqw; }
+/* the cover beside a movie's or series' name, and a still for each episode */
+#folderCover { display: none; }
+#folderHead.has-cover { display: grid; grid-template-columns: 132px minmax(0, 1fr); column-gap: 26px; align-items: start; }
+#folderHead.has-cover > #folderCover { display: block; grid-column: 1; grid-row: 1 / span 8; width: 132px; }
+#folderHead.has-cover > :not(#folderCover) { grid-column: 2; min-width: 0; }
+#folderHead.has-cover > #folderResume { justify-self: start; }
+#folderCover .poster { width: 132px; border: 2px solid var(--gold-2); border-radius: 12px; box-shadow: 0 14px 30px rgba(0, 0, 0, .45); transform: rotate(-2deg); }
+.ep .num.has-still { background: var(--still) center / cover no-repeat, linear-gradient(150deg, #8a2457, #3a0c24); color: #fff; -webkit-text-stroke: 0; font: 700 13px var(--body); place-items: end start; padding: 0 0 7px 9px; text-shadow: 0 1px 4px rgba(0, 0, 0, .9); }
+.ep .num.has-still::after { display: none; }
+
 /* ---------- series page: season tabs and "More in …" ---------- */
 #split { display: block; }
 #split.has-more { display: grid; grid-template-columns: minmax(0, 1fr) 376px; gap: 28px; align-items: start; }

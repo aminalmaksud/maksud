@@ -67,7 +67,7 @@ It passes the official Jellyfin SDK's sign-in, browse, playback-info, ranged-str
 Streamyfin or the other apps yet. Streamyfin's README says it has no music support, and I couldn't confirm an Android TV release of it,
 so the official Jellyfin app is the surer choice on a TV.
 
-**Synopsis:** with a free [TMDB](https://www.themoviedb.org/settings/api) key in Settings, every movie and series shows its plot: under the title on its page, in the details sheet, and when you hover a poster. Each episode of a series also shows its own title, plot and length. Without a key, the page says how to add one.
+**Synopsis:** with a free [TMDB](https://www.themoviedb.org/settings/api) key in Settings, every movie and series shows its plot: under the title on its page, in the details sheet, and when you hover a poster. Each episode of a series also shows its own title, plot, length and still, and a movie's or series' page has its cover beside the title (a season's own poster shows next to its tabs, or beside the title when you open a Season folder). Servers that keep every episode in its own folder get a grid of episode stills. Titles without a poster get a drawn cover in both looks. Without a key, the page says how to add one.
 
 **Online subtitles** (optional): to use **Search online…** in the player's subtitle menu (like VLC), add a free API key
 from [OpenSubtitles.com](https://www.opensubtitles.com/consumers), from [SubDL](https://subdl.com) (on your profile page), or from both.
