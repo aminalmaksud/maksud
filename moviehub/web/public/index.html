@@ -78,7 +78,7 @@
     <h1 id="folderTitle"></h1>
     <p id="folderSub"></p>
     <p id="folderSyn" hidden></p>
-    <button class="btn gold" id="folderResume" hidden></button>
+    <div class="fh-actions"><button class="btn gold" id="folderResume" hidden></button><button class="btn" id="folderShuffle" hidden></button></div>
   </div>
   <p id="status" role="status"></p>
   <div id="rows"></div>
@@ -188,6 +188,31 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- Book reader -->
+<div id="reader" tabindex="-1" hidden>
+  <div class="rd-bar">
+    <button class="icon-btn" id="rdClose" title="Close (Esc)"></button>
+    <div class="rd-title"><b id="rdTitle"></b><small id="rdSub"></small></div>
+    <div class="rd-ctl" id="rdCtl"></div>
+  </div>
+  <div class="rd-body" id="rdBody"></div>
+</div>
+
+<!-- Music: stays at the bottom while you browse -->
+<div id="audioBar" hidden>
+  <div class="ab-now"><div class="ab-art" id="abArt"></div><div class="ab-meta"><b id="abTitle"></b><small id="abSub"></small></div></div>
+  <div class="ab-ctl">
+    <button class="icon-btn" id="abShuffle" title="Shuffle"></button>
+    <button class="icon-btn" id="abPrev" title="Previous"></button>
+    <button class="icon-btn ab-play" id="abPlay" title="Play"></button>
+    <button class="icon-btn" id="abNext" title="Next"></button>
+    <button class="icon-btn" id="abRepeat" title="Repeat"></button>
+  </div>
+  <div class="ab-seek"><span id="abCur">0:00</span><input type="range" id="abSeek" min="0" max="1000" value="0" aria-label="Seek"><span id="abDur"></span></div>
+  <div class="ab-vol"><button class="icon-btn" id="abMute" title="Mute"></button><input type="range" id="abVol" min="0" max="100" aria-label="Volume"></div>
+  <button class="icon-btn" id="abClose" title="Stop and close"></button>
 </div>
 
 <!-- Player -->

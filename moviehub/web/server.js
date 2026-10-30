@@ -7,8 +7,9 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT } from './listing.js';
-import { hasFfmpeg, ffmpegVersion, probe, remux, extractSubtitle, keyframeBefore } from './media.js';
+import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT, mediaKind } from './listing.js';
+import { openZip } from './zip.js';
+import { hasFfmpeg, ffmpegVersion, probe, remux, extractSubtitle, keyframeBefore, audioAsMp3, embeddedArt } from './media.js';
 import { metaFor, seasonEpisodes } from './meta.js';
 import { createJellyfin } from './jellyfin.js';
 import { movieHash, searchSubtitles, fetchSubtitle } from './subsearch.js';
@@ -26,10 +27,12 @@ const BRAND = process.env.BRAND === 'streamhub' ? 'streamhub' : '';
 const started = Date.now();
 
 const MIME = {
-  html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8',
+  html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', mjs: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8',
   svg: 'image/svg+xml', json: 'application/json', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
   mp4: 'video/mp4', m4v: 'video/mp4', webm: 'video/webm', mkv: 'video/x-matroska', mov: 'video/quicktime',
   avi: 'video/x-msvideo', ts: 'video/mp2t', mpg: 'video/mpeg', mpeg: 'video/mpeg', wmv: 'video/x-ms-wmv', flv: 'video/x-flv',
+  mp3: 'audio/mpeg', flac: 'audio/flac', m4a: 'audio/mp4', aac: 'audio/aac', ogg: 'audio/ogg', oga: 'audio/ogg', opus: 'audio/ogg', wav: 'audio/wav', wma: 'audio/x-ms-wma', ape: 'audio/x-ape', aiff: 'audio/aiff', aif: 'audio/aiff', mka: 'audio/x-matroska',
+  pdf: 'application/pdf', epub: 'application/epub+zip', cbz: 'application/vnd.comicbook+zip', xhtml: 'application/xhtml+xml; charset=utf-8', htm: 'text/html; charset=utf-8', gif: 'image/gif', ncx: 'application/x-dtbncx+xml', opf: 'application/oebps-package+xml', otf: 'font/otf', ttf: 'font/ttf', woff: 'font/woff', woff2: 'font/woff2',
 };
 
 function splitServers(v) {
@@ -238,7 +241,7 @@ async function libraryRoot(idx) {
   if (libRoots.has(idx)) return libRoots.get(idx);
   let listing = await listDir(`${idx}/`);
   for (let depth = 0; depth < 3; depth++) {
-    const dirs = listing.items.filter((i) => i.isDir), files = listing.items.filter((i) => i.kind === 'video');
+    const dirs = listing.items.filter((i) => i.isDir), files = listing.items.filter((i) => i.kind === 'video' || i.kind === 'audio' || i.kind === 'book');
     // Only wrapper-style names ("DHAKA-FLIX-7", "data"): a lone "English Movies" is a real category.
     if (dirs.length !== 1 || files.length || /\s/.test(dirs[0].name)) break;
     listing = await listDir(dirs[0].path);
@@ -318,7 +321,7 @@ async function handleSearch(url, res) {
       if (u.origin !== base.origin || !path.startsWith(canonPath(base.pathname))) continue;
       const isDir = path.endsWith('/');
       const name = decodeURIComponent(path.replace(/\/$/, '').split('/').pop());
-      const kind = isDir ? 'dir' : VIDEO_EXT.has(extOf(name)) ? 'video' : null;
+      const kind = isDir ? 'dir' : mediaKind(name);
       if (kind) found.push({ name, path: relOf(idx, base, u), isDir, kind, library: serverNames()[idx] });
     }
     return found;
@@ -356,8 +359,8 @@ function searchLocal(base, idx, re) {
     walk = { at: Date.now(), entries };
     localWalks.set(base.href, walk);
   }
-  return walk.entries.filter((e) => re.test(e.name) && (e.isDir || VIDEO_EXT.has(extOf(e.name))))
-    .map((e) => ({ name: e.name, path: relOf(idx, base, e.u), isDir: e.isDir, kind: e.isDir ? 'dir' : 'video', library: serverNames()[idx] }));
+  return walk.entries.filter((e) => re.test(e.name) && (e.isDir || mediaKind(e.name)))
+    .map((e) => ({ name: e.name, path: relOf(idx, base, e.u), isDir: e.isDir, kind: e.isDir ? 'dir' : mediaKind(e.name), library: serverNames()[idx] }));
 }
 
 /** POST /api/pick-folder: the system's folder picker (Windows and Mac apps). Answers { path } or { path: '' } if cancelled. */
@@ -489,6 +492,119 @@ async function handleEpisodes(url, res) {
   if (!m?.tmdbId || m.tmdbType !== 'tv') return json(res, 200, { episodes: [] });
   const r = await seasonEpisodes(config.tmdbKey, m.tmdbId, season);
   json(res, 200, { episodes: r?.episodes || [], poster: r?.poster || null });
+}
+
+/* ---- books (EPUB and CBZ are zips) and audio ---- */
+const zipCache = new Map(); // path -> Promise<zip>, newest last; only a few are kept because each holds the whole file
+async function zipFor(rel) {
+  if (rel.startsWith('v:')) rel = decodeV(rel)?.[0] || '';
+  if (!zipCache.has(rel)) {
+    const job = (async () => {
+      const m = media(rel);
+      let buf;
+      if (m.local) buf = fs.readFileSync(m.src);
+      else {
+        const up = await fetch(m.src, { headers: upstreamHeaders(), signal: AbortSignal.timeout(180000) });
+        if (!up.ok) throw httpError(502, `Server answered ${up.status}`);
+        if (Number(up.headers.get('content-length') || 0) > 250e6) throw httpError(413, 'This file is too big to open here');
+        buf = Buffer.from(await up.arrayBuffer());
+      }
+      return openZip(buf);
+    })();
+    job.catch(() => zipCache.delete(rel));
+    zipCache.set(rel, job);
+    while (zipCache.size > 2) zipCache.delete(zipCache.keys().next().value);
+  } else { const j = zipCache.get(rel); zipCache.delete(rel); zipCache.set(rel, j); }
+  return zipCache.get(rel);
+}
+const attr = (tag, name) => new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, 'i').exec(tag)?.slice(1).find((x) => x !== undefined);
+const unent = (t) => String(t).replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'").replace(/\s+/g, ' ').trim();
+const zdecode = (p) => { try { return decodeURIComponent(p); } catch { return p; } };
+const joinZip = (dir, href) => { const out = []; for (const seg of (dir + href).split('/')) { if (seg === '..') out.pop(); else if (seg && seg !== '.') out.push(seg); } return out.join('/'); };
+const b64 = (s) => Buffer.from(s).toString('base64url');
+
+/** An EPUB's title, reading order and contents list. Chapters are then fetched from /epub/<id>/<file in the book>. */
+async function handleEpub(url, res) {
+  let rel = url.searchParams.get('path') || '';
+  if (!rel.startsWith('local/')) resolveUnderBase(rel.startsWith('v:') ? decodeV(rel)?.[0] || '' : rel);
+  const zip = await zipFor(rel);
+  const container = zip.read('META-INF/container.xml')?.toString('utf8');
+  const opfPath = container && attr(/<rootfile\b[^>]*>/i.exec(container)?.[0] || '', 'full-path');
+  const opf = opfPath && zip.read(opfPath)?.toString('utf8');
+  if (!opf) throw httpError(422, 'This EPUB can’t be read');
+  const dir = opfPath.replace(/[^/]*$/, '');
+  const manifest = new Map();
+  for (const t of opf.match(/<item\b[^>]*>/gi) || []) manifest.set(attr(t, 'id'), { href: joinZip(dir, zdecode(attr(t, 'href') || '')), type: attr(t, 'media-type') || '', props: attr(t, 'properties') || '' });
+  const spine = [...opf.matchAll(/<itemref\b[^>]*>/gi)].map((m) => manifest.get(attr(m[0], 'idref'))).filter((x) => x && /html/.test(x.type)).map((x) => x.href);
+  const toc = [];
+  const nav = [...manifest.values()].find((x) => /\bnav\b/.test(x.props));
+  const ncx = [...manifest.values()].find((x) => /ncx/.test(x.type));
+  const addLink = (base, href, title) => { if (title && href) { const [f, frag] = zdecode(href).split('#'); toc.push({ title, href: joinZip(base, f) + (frag ? `#${frag}` : '') }); } };
+  if (nav) {
+    const html = zip.read(nav.href)?.toString('utf8') || '', base = nav.href.replace(/[^/]*$/, '');
+    const tocNav = /<nav\b[^>]*epub:type\s*=\s*["'][^"']*toc[^"']*["'][\s\S]*?<\/nav>/i.exec(html)?.[0] || html;
+    for (const m of tocNav.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)) addLink(base, attr(m[1], 'href'), unent(m[2]));
+  } else if (ncx) {
+    const xml = zip.read(ncx.href)?.toString('utf8') || '', base = ncx.href.replace(/[^/]*$/, '');
+    for (const m of xml.matchAll(/<navPoint\b[\s\S]*?<text>([\s\S]*?)<\/text>[\s\S]*?<content\b([^>]*)\/?>/gi)) addLink(base, attr(m[2], 'src'), unent(m[1]));
+  }
+  const coverItem = [...manifest.values()].find((x) => /cover-image/.test(x.props)) || manifest.get('cover') || manifest.get('cover-image');
+  json(res, 200, {
+    title: unent(/<dc:title\b[^>]*>([\s\S]*?)<\/dc:title>/i.exec(opf)?.[1] || ''), author: unent(/<dc:creator\b[^>]*>([\s\S]*?)<\/dc:creator>/i.exec(opf)?.[1] || ''),
+    id: b64(rel), spine, toc, cover: coverItem && /image/.test(coverItem.type) ? coverItem.href : null,
+  });
+}
+function handleEpubFile(url, res) {
+  const m = /^\/epub\/([\w-]+)\/(.+)$/.exec(url.pathname);
+  const rel = m && Buffer.from(m[1], 'base64url').toString('utf8');
+  if (!rel) throw httpError(404, 'Not found');
+  return zipFor(rel).then((zip) => {
+    const name = zdecode(m[2]), data = zip.read(name);
+    if (!data) throw httpError(404, 'Not in this book');
+    const html = /\.x?html?$/i.test(name);
+    res.writeHead(200, {
+      'content-type': MIME[extOf(name)] || 'application/octet-stream', 'cache-control': 'private, max-age=3600',
+      // a book's own scripts never run
+      ...(html ? { 'content-security-policy': "default-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; media-src 'self'" } : {}),
+    });
+    res.end(data);
+  });
+}
+const IMG_RE = /\.(jpe?g|png|webp|gif)$/i;
+async function handleCbz(url, res) {
+  const rel = url.searchParams.get('path') || '';
+  if (!rel.startsWith('local/')) resolveUnderBase(rel.startsWith('v:') ? decodeV(rel)?.[0] || '' : rel);
+  const zip = await zipFor(rel);
+  const pages = [...zip.entries.keys()].filter((n) => IMG_RE.test(n) && !/(^|\/)(__MACOSX|\.)/.test(n)).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+  json(res, 200, { pages: pages.length });
+}
+async function handleCbzPage(url, res) {
+  const rel = url.searchParams.get('path') || '', i = Number(url.searchParams.get('i'));
+  if (!rel.startsWith('local/')) resolveUnderBase(rel.startsWith('v:') ? decodeV(rel)?.[0] || '' : rel);
+  const zip = await zipFor(rel);
+  const names = [...zip.entries.keys()].filter((n) => IMG_RE.test(n) && !/(^|\/)(__MACOSX|\.)/.test(n)).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+  const name = names[i];
+  if (!name) throw httpError(404, 'No such page');
+  res.writeHead(200, { 'content-type': MIME[extOf(name)] || 'image/jpeg', 'cache-control': 'private, max-age=3600' });
+  res.end(zip.read(name));
+}
+/** Audio the browser can't play, as MP3. */
+function handleAudio(req, url, res) {
+  if (!hasFfmpeg) throw httpError(501, 'ffmpeg is needed to play this format');
+  const m = media(url.searchParams.get('path'));
+  const p = audioAsMp3(m.src, m.auth);
+  res.writeHead(200, { 'content-type': 'audio/mpeg', 'cache-control': 'no-store' });
+  p.stdout.pipe(res);
+  res.on('close', () => p.kill('SIGKILL'));
+  p.on('error', () => res.destroy());
+}
+async function handleArt(url, res) {
+  if (!hasFfmpeg) throw httpError(404, 'No cover');
+  const m = media(url.searchParams.get('path'));
+  const jpg = await embeddedArt(m.src, m.auth);
+  if (!jpg) throw httpError(404, 'No cover');
+  res.writeHead(200, { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=86400' });
+  res.end(jpg);
 }
 
 /** Mac app downloads: POST {path} starts one, GET lists, DELETE ?id= cancels, DELETE ?name= removes a file. */
@@ -797,6 +913,12 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/pick-folder') return await handlePickFolder(req, res);
     if (p === '/api/meta') return await handleMeta(url, res);
     if (p === '/api/episodes') return await handleEpisodes(url, res);
+    if (p === '/api/epub') return await handleEpub(url, res);
+    if (p.startsWith('/epub/')) return await handleEpubFile(url, res);
+    if (p === '/api/cbz') return await handleCbz(url, res);
+    if (p === '/api/cbz-page') return await handleCbzPage(url, res);
+    if (p === '/api/audio') return handleAudio(req, url, res);
+    if (p === '/api/art') return await handleArt(url, res);
     if (p === '/api/probe') return await handleProbe(url, res);
     if (p === '/api/seek-point') return await handleSeekPoint(url, res);
     if (p === '/api/embedded-sub') return await handleEmbeddedSub(url, res);

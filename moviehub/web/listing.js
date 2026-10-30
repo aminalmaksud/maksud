@@ -2,6 +2,10 @@
 
 export const VIDEO_EXT = new Set(['mkv', 'mp4', 'm4v', 'avi', 'mov', 'webm', 'ts', 'wmv', 'flv', 'mpg', 'mpeg']);
 export const SUB_EXT = new Set(['srt', 'vtt']);
+export const AUDIO_EXT = new Set(['mp3', 'flac', 'm4a', 'aac', 'ogg', 'oga', 'opus', 'wav', 'wma', 'ape', 'aiff', 'aif', 'mka']);
+export const BOOK_EXT = new Set(['pdf', 'epub', 'cbz']);
+/** 'video', 'audio' or 'book' for a file name, else null. */
+export const mediaKind = (name) => { const e = extOf(name); return VIDEO_EXT.has(e) ? 'video' : AUDIO_EXT.has(e) ? 'audio' : BOOK_EXT.has(e) ? 'book' : null; };
 export const IMG_EXT = new Set(['jpg', 'jpeg', 'png', 'webp']);
 
 export function extOf(name) {
@@ -53,7 +57,7 @@ export function parseListing(html, dirUrl, baseUrl) {
     const name = decode(rel.replace(/\/$/, '').split('/').pop());
     if (!name || name.startsWith('.') || seen.has(rel)) continue;
     const ext = extOf(name);
-    const kind = isDir ? 'dir' : VIDEO_EXT.has(ext) ? 'video' : SUB_EXT.has(ext) ? 'sub' : IMG_EXT.has(ext) ? 'image' : 'other';
+    const kind = isDir ? 'dir' : mediaKind(name) || (SUB_EXT.has(ext) ? 'sub' : IMG_EXT.has(ext) ? 'image' : 'other');
     if (kind === 'other') continue;
     seen.add(rel);
     out.push({ name, path: rel, isDir, kind });
@@ -74,7 +78,7 @@ const JUNK = /\b(2160p|1080p|720p|576p|480p|4k|uhd|hdr|hdr10|dv|bluray|blu ray|b
 export function parseName(raw) {
   let s = raw;
   const ext = extOf(s);
-  if (VIDEO_EXT.has(ext) || SUB_EXT.has(ext) || IMG_EXT.has(ext)) s = s.slice(0, -(ext.length + 1));
+  if (VIDEO_EXT.has(ext) || SUB_EXT.has(ext) || IMG_EXT.has(ext) || AUDIO_EXT.has(ext) || BOOK_EXT.has(ext)) s = s.slice(0, -(ext.length + 1));
   s = s.replace(/[._]+/g, ' ').replace(/\[[^\]]*\]|\{[^}]*\}/g, ' ').replace(/\s+/g, ' ').trim();
   const out = { title: s, year: null, season: null, episode: null, generic: false };
   const ep = /\bS(\d{1,2}) ?E(\d{1,3})\b|\b(\d{1,2})x(\d{2,3})\b/i.exec(s);

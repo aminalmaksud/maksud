@@ -387,4 +387,41 @@ assert.equal((await auth({ Username: 'streamhub', Pw: 'sesame' })).status, 200);
 assert.equal((await (await get('/api/config')).json()).jellyfin.hasPassword, true);
 await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, jellyfin: false }) });
 await assert.rejects(fetch(J + '/System/Info/Public'), 'switching it off closes the port');
+
+// --- books and music: file kinds, EPUB and CBZ read from inside their zips, audio streamed with ranges
+const shelf = fs.mkdtempSync(path.join(os.tmpdir(), 'mh-shelf-'));
+fs.mkdirSync(path.join(shelf, 'Author'));
+fs.writeFileSync(path.join(shelf, 'Author', 'Tale.epub'), zipOf([
+  ['mimetype', 'application/epub+zip'],
+  ['META-INF/container.xml', '<container><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>'],
+  ['OEBPS/content.opf', '<package><metadata><dc:title>A Tale &amp; More</dc:title><dc:creator>Some Author</dc:creator></metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/><item id="c1" href="text/ch1.xhtml" media-type="application/xhtml+xml"/><item id="c2" href="text/ch%202.xhtml" media-type="application/xhtml+xml"/><item id="img" href="img/a.png" media-type="image/png"/></manifest><spine><itemref idref="c1"/><itemref idref="c2"/></spine></package>'],
+  ['OEBPS/nav.xhtml', '<html><body><nav epub:type="toc"><ol><li><a href="text/ch1.xhtml">One</a></li><li><a href="text/ch%202.xhtml#x">Two &amp; Three</a></li></ol></nav></body></html>'],
+  ['OEBPS/text/ch1.xhtml', '<html><body><p>Chapter one</p><img src="../img/a.png"/><script>alert(1)</script></body></html>'],
+  ['OEBPS/text/ch 2.xhtml', '<html><body><p>Chapter two</p></body></html>'],
+  ['OEBPS/img/a.png', 'PNGDATA'],
+]));
+fs.writeFileSync(path.join(shelf, 'Comic.cbz'), zipOf([['10.jpg', 'PAGE10'], ['2.jpg', 'PAGE2'], ['1.jpg', 'PAGE1'], ['readme.txt', 'x']]));
+fs.writeFileSync(path.join(shelf, 'Manual.pdf'), Buffer.from('%PDF-1.4 fake'));
+fs.writeFileSync(path.join(shelf, 'Song.mp3'), Buffer.alloc(500, 3));
+fs.writeFileSync(path.join(shelf, 'Old.wma'), Buffer.alloc(100, 1));
+const cfg = await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Shelf | ${shelf}`, jellyfin: false }) });
+assert.equal(cfg.status, 200);
+const top = await (await get(`/api/browse?path=0/`)).json();
+assert.deepEqual(top.items.map((i) => [i.name, i.kind]), [['Author', 'dir'], ['Comic.cbz', 'book'], ['Manual.pdf', 'book'], ['Old.wma', 'audio'], ['Song.mp3', 'audio']], 'books and audio are listed');
+const epub = await (await get(`/api/epub?path=${encodeURIComponent('0/Author/Tale.epub')}`)).json();
+assert.deepEqual([epub.title, epub.author, epub.spine, epub.toc.map((t) => [t.title, t.href])], ['A Tale & More', 'Some Author', ['OEBPS/text/ch1.xhtml', 'OEBPS/text/ch 2.xhtml'], [['One', 'OEBPS/text/ch1.xhtml'], ['Two & Three', 'OEBPS/text/ch 2.xhtml#x']]]);
+const chap = await get(`/epub/${epub.id}/OEBPS/text/ch1.xhtml`);
+assert.match(await chap.text(), /Chapter one/);
+assert.match(chap.headers.get('content-security-policy'), /default-src 'none'/, 'a book can’t run scripts');
+assert.equal(await (await get(`/epub/${epub.id}/OEBPS/img/a.png`)).text(), 'PNGDATA', 'images load relative to the chapter');
+assert.equal((await get(`/epub/${epub.id}/OEBPS/text/ch%202.xhtml`)).status, 200, 'names with spaces');
+assert.equal((await get(`/epub/${epub.id}/OEBPS/nope.xhtml`)).status, 404);
+assert.equal((await (await get(`/api/cbz?path=${encodeURIComponent('0/Comic.cbz')}`)).json()).pages, 3, 'image pages only');
+assert.deepEqual(await Promise.all([0, 1, 2].map(async (i) => (await get(`/api/cbz-page?path=${encodeURIComponent('0/Comic.cbz')}&i=${i}`)).text())), ['PAGE1', 'PAGE2', 'PAGE10'], 'pages in natural order');
+assert.equal((await get(`/api/cbz-page?path=${encodeURIComponent('0/Comic.cbz')}&i=9`)).status, 404);
+assert.equal((await get(`/api/epub?path=${encodeURIComponent('0/Comic.cbz')}`)).status, 422, 'not an EPUB');
+const mp3 = await get('/stream?path=0/Song.mp3', { range: 'bytes=10-19' });
+assert.deepEqual([mp3.status, mp3.headers.get('content-type'), (await mp3.arrayBuffer()).byteLength], [206, 'audio/mpeg', 10], 'music streams with ranges');
+assert.equal((await get('/stream?path=0/Manual.pdf')).headers.get('content-type'), 'application/pdf');
+fs.rmSync(shelf, { recursive: true, force: true });
 server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });

@@ -154,3 +154,21 @@ export function extractSubtitle(url, auth, index, from = 0, dur = 0) {
   }
   return subCache.get(key);
 }
+
+/** Audio the browser can't decode (WMA, APE...) as an MP3 stream. Not seekable, but it plays. */
+export function audioAsMp3(url, auth) {
+  return spawn(FFMPEG, ['-hide_banner', '-loglevel', 'error', ...headerArgs(auth), '-i', url, '-vn', '-map', '0:a:0', '-c:a', 'libmp3lame', '-q:a', '3', '-f', 'mp3', 'pipe:1'],
+    { stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true });
+}
+
+const artCache = new Map();
+/** The picture embedded in an audio file (album art) as JPEG, or null when it has none. */
+export function embeddedArt(url, auth) {
+  if (!artCache.has(url)) {
+    const job = run(FFMPEG, ['-hide_banner', '-loglevel', 'error', ...headerArgs(auth), '-i', url, '-an', '-map', '0:v:0', '-frames:v', '1', '-vf', 'scale=600:-2', '-f', 'mjpeg', 'pipe:1'], { timeoutMs: 20000 })
+      .then((b) => (b.length ? b : null), () => null);
+    artCache.set(url, job);
+    if (artCache.size > 300) artCache.delete(artCache.keys().next().value);
+  }
+  return artCache.get(url);
+}

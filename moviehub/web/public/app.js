@@ -1,4 +1,6 @@
 // MusingsofMaksudTV UI: library browser with posters, details sheet, and a player with audio/subtitle menus.
+import { createMusic } from './music.js';
+import { createReader } from './reader.js';
 const $ = (id) => document.getElementById(id);
 if (navigator.userAgent.includes('Electron')) document.documentElement.classList.add('electron');
 const WIN = navigator.userAgent.includes('Windows');
@@ -48,6 +50,9 @@ const I = {
   home: P('<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>'),
   monitor: P('<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>'),
   sun: P('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+  shuffle: P('<path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>'),
+  repeat: P('<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>'),
+  book: P('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5V21h16"/>'),
   moon: P('<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'),
 };
 const setIcon = (el, name) => { el.innerHTML = I[name]; };
@@ -68,7 +73,7 @@ const fmt = (s) => {
 // "Dune.Part.Two.2024.1080p.mkv" -> { title: "Dune Part Two", year: "2024", quality: "1080p" }
 const QUAL_RE = /\b(2160p|4k|1440p|1080p|720p|576p|480p)\b/i;
 function niceName(raw) {
-  const s = String(raw).replace(/\.(mkv|mp4|m4v|avi|mov|webm|ts|wmv|flv|mpg|mpeg)$/i, '').replace(/[._]+/g, ' ').trim();
+  const s = String(raw).replace(/\.(mkv|mp4|m4v|avi|mov|webm|ts|wmv|flv|mpg|mpeg|pdf|epub|cbz|mp3|flac|m4a|aac|ogg|opus|wav|wma)$/i, '').replace(/[._]+/g, ' ').trim();
   const year = (/\b(?:19|20)\d{2}\b/.exec(s) || [''])[0];
   const q = (QUAL_RE.exec(s) || ['', ''])[1];
   const title = s.replace(/\s*[([][^)\]]*\b(?:19|20)\d{2}\b.*$/, '').replace(/\s(?:19|20)\d{2}\b.*$/, '').replace(QUAL_RE, '').replace(/[\s\-–:([]+$/, '').trim();
@@ -104,6 +109,9 @@ const store = {
   get(k, d) { try { return JSON.parse(localStorage.getItem('mh.' + k)) ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem('mh.' + k, JSON.stringify(v)); } catch { /* private mode */ } },
 };
+// Music keeps playing while you browse; the reader opens books over the page (see music.js, reader.js)
+const music = createMusic({ I, $, esc, enc, fmt, api, pauseVideo: () => { const v = $('video'); if (v && !v.paused) v.pause(); } });
+const reader = createReader({ I, $, esc, enc, api, store });
 
 /* ---------------- watch history ---------------- */
 const history_ = store.get('history', {});
@@ -210,11 +218,11 @@ function listFolder(path, { refresh = false } = {}) {
 const isYearFolder = (n) => /^[([]?\s*(?:19|20)\d{2}(?:\s*[-–&,]\s*(?:19|20)?\d{2,4})?\s*[)\]]?(?:\s*(?:1080p|720p|480p|2160p|4k|hd))?\s*$/i.test(n.trim());
 const yearOf = (n) => Math.max(0, ...(n.match(/(?:19|20)\d{2}/g) || ['0']).map(Number));
 const isTitleFolder = (n) => (/\b(?:19|20)\d{2}\b/.test(n) && !isYearFolder(n)) || /\bS\d{1,2}\b|\bseason\b/i.test(n);
-const playable = (items) => items.filter((i) => i.kind === 'dir' || i.kind === 'video');
+const playable = (items) => items.filter((i) => i.kind === 'dir' || i.kind === 'video' || i.kind === 'book' || i.kind === 'audio');
 
 /** A folder of categories ("English Movies", "Hindi Movies", year folders…) is shown as rows; anything else as a grid. */
 function isCategoryFolder(items) {
-  const dirs = items.filter((i) => i.isDir), vids = items.filter((i) => i.kind === 'video');
+  const dirs = items.filter((i) => i.isDir), vids = items.filter((i) => i.kind === 'video' || i.kind === 'audio' || i.kind === 'book');
   if (!dirs.length || vids.length || dirs.length > 60) return false;
   return dirs.filter((d) => !isTitleFolder(d.name)).length >= dirs.length * 0.7;
 }
@@ -225,7 +233,7 @@ async function rowContent(dirPath) {
   const l = await listFolder(dirPath);
   let items = playable(l.items), note = '';
   const dirs = items.filter((i) => i.isDir);
-  if (dirs.length && dirs.every((d) => isYearFolder(d.name) || !isTitleFolder(d.name)) && !items.some((i) => i.kind === 'video')) {
+  if (dirs.length && dirs.every((d) => isYearFolder(d.name) || !isTitleFolder(d.name)) && !items.some((i) => i.kind === 'video' || i.kind === 'audio' || i.kind === 'book')) {
     const newest = dirs.some((d) => isYearFolder(d.name)) ? [...dirs].sort((a, b) => yearOf(b.name) - yearOf(a.name))[0] : dirs[0];
     items = playable((await listFolder(newest.path)).items);
     note = newest.name.replace(/[()[\]]/g, '').trim();
@@ -254,7 +262,7 @@ function cardHtml(it, { wideArt = false, sub = '', forgettable = false } = {}) {
   const quals = (it.versions || []).map((v) => v.quality).filter(Boolean);
   return `<button class="card${wideArt ? ' wide-art' : ''}" data-path="${esc(it.path)}" title="${esc(name)}"${sub ? ' data-keep-sub="1"' : ''}>
     <div class="poster">
-      ${coverHtml(name, { icon: isDir && !isTitleFolder(name) ? I.folder : I.film })}
+      ${coverHtml(name, { icon: isDir && !isTitleFolder(name) ? I.folder : it.kind === 'book' ? I.file : it.kind === 'audio' ? I.audio : I.film })}
       <img alt="" loading="lazy">
       ${quals.length > 1 ? `<span class="badge q">${esc(quals.join(' · '))}</span>` : ''}
       ${prog?.done ? `<span class="badge done">${I.check}Watched</span>` : ''}
@@ -280,7 +288,7 @@ const rowObserver = new IntersectionObserver((entries) => {
 const TILE_COLORS = ['#f08a1c', '#b3262d', '#1f8a5b', '#2f6fd1', '#8b3fd1', '#d4a33f', '#e23d6d', '#138a9e'];
 function rowIcon(title) {
   const t = title.toLowerCase();
-  const icon = isYearFolder(title) ? I.calendar : /anime|cartoon|animation/.test(t) ? I.spark : /series|tv|show|season|drama/.test(t) ? I.tv
+  const icon = isYearFolder(title) ? I.calendar : /music|audio|song|album|nasheed|gazal|ghazal/.test(t) ? I.audio : /\bbooks?\b|novel|comic|magazine|ebook|library|story|stories/.test(t) ? I.book : /anime|cartoon|animation/.test(t) ? I.spark : /series|tv|show|season|drama/.test(t) ? I.tv
     : /foreign|korean|hindi|bangla|tamil|telugu|english|chinese|japanese|dubbed/.test(t) ? I.globe : /top|imdb|best|award/.test(t) ? I.star : I.film;
   return `<span class="row-ico" style="--c:${TILE_COLORS[hue(title) % TILE_COLORS.length]}">${icon}</span>`;
 }
@@ -413,7 +421,7 @@ function resetView(view) {
   $('status').textContent = ''; $('status').className = '';
   $('folderHead').hidden = view === 'home' || view === 'settings';
   $('welcome').hidden = true;
-  $('folderSyn').hidden = true; $('folderSyn').textContent = ''; $('folderResume').hidden = true;
+  $('folderSyn').hidden = true; $('folderSyn').textContent = ''; $('folderResume').hidden = true; $('folderShuffle').hidden = true;
   $('folderCover').hidden = true; $('folderCover').innerHTML = ''; $('folderHead').classList.remove('has-cover'); coverBase = '';
   $('seasonCover').hidden = true; $('seasonBar').hidden = true; $('moreIn').hidden = true; $('moreIn').innerHTML = ''; $('split').classList.remove('has-more');
   $('settingsPage').hidden = view !== 'settings';
@@ -497,6 +505,25 @@ function showList() {
   $('status').textContent = myList.length ? '' : 'Nothing saved yet. Press + on any poster, or “My List” on a movie, to keep it here for later.';
 }
 
+/** An album or a shelf of books: its cover, and Play / Shuffle for music. */
+async function showAlbum(path, items) {
+  const audio = items.filter((i) => i.kind === 'audio');
+  if (!audio.length && items.filter((i) => i.kind === 'book').length !== 1) return; // a cover suits an album or a single book, not a whole shelf
+  setCover(lastSeg(path));
+  const m = await meta(path).catch(() => null);
+  if (state.view !== 'folder' || state.path !== path) return;
+  const first = audio[0];
+  if (m?.poster) coverImage(m.poster); else if (first) coverImage(`/api/art?path=${enc(first.path)}`);
+  if (!audio.length) return;
+  const go = (shuffle) => {
+    const list = audio;
+    const i = shuffle ? Math.floor(Math.random() * list.length) : 0;
+    if (shuffle !== music.shuffleOn()) music.setShuffle(shuffle);
+    music.play(list, i);
+  };
+  $('folderResume').innerHTML = `${I.play}Play`; $('folderResume').onclick = () => go(false); $('folderResume').hidden = false;
+  $('folderShuffle').innerHTML = `${I.shuffle}Shuffle`; $('folderShuffle').onclick = () => go(true); $('folderShuffle').hidden = false;
+}
 /** The plot of a movie or series folder, under its title. Says what's missing when there's none. */
 async function showSynopsis(path) {
   const el = $('folderSyn');
@@ -560,7 +587,9 @@ async function showFolder(path, { refresh = false } = {}) {
     if (seasons) { showSynopsis(l.path); return showSeasons(l.path, seasons); }
     renderGrid(playable(l.items), { folder: l.path });
     showSiblingSeasons(l.path);
-    if (isTitleFolder(lastSeg(l.path)) || EP_DIR_RE.test(lastSeg(l.path)) || isEpisodeFolder(l.items.filter((i) => i.kind === 'video'))) showSynopsis(l.path);
+    const bookish = l.items.some((i) => i.kind === 'audio' || i.kind === 'book');
+    if (bookish) showAlbum(l.path, l.items);
+    else if (isTitleFolder(lastSeg(l.path)) || EP_DIR_RE.test(lastSeg(l.path)) || isEpisodeFolder(l.items.filter((i) => i.kind === 'video'))) showSynopsis(l.path);
   }
 }
 
@@ -710,7 +739,15 @@ function renderGrid(items, { sub = null, folder = undefined } = {}) {
   const episodes = state.view === 'folder' && !visible.some((i) => i.isDir) && isEpisodeFolder(videos);
   // Servers that keep every episode in its own folder: a grid of episode stills instead of posters
   const epDirs = state.view === 'folder' && visible.length > 0 && visible.every((i) => i.isDir && EP_DIR_RE.test(i.name));
-  grid.className = episodes ? 'list' : epDirs ? 'eps' : '';
+  const audio = state.view === 'folder' ? visible.filter((i) => i.kind === 'audio') : [];
+  grid.className = audio.length ? 'album' : episodes ? 'list' : epDirs ? 'eps' : '';
+  if (audio.length) {
+    const others = visible.filter((i) => i.kind !== 'audio');
+    grid.innerHTML = (others.length ? `<div class="grid-sub">${others.map((it) => cardHtml(it, { sub: sub ? sub(it) : '' })).join('')}</div>` : '') + music.renderTracks(audio);
+    grid.querySelectorAll('.card').forEach((c) => lazy.observe(c));
+    music.markNow?.();
+    return;
+  }
   if (episodes) {
     grid.innerHTML = videos.map((v, i) => {
       const p = progressFor(v);
@@ -785,7 +822,7 @@ function renderNav() {
 /** StreamHub's sidebar: the same places as the Mac app's tabs, with icons, plus the Server page. */
 function renderSideNav(cur) {
   const item = (on, attrs, icon, label, extra = '') => `<a ${attrs} class="${on ? 'on' : ''}" title="${esc(label)}">${icon}<span>${esc(label)}</span>${extra}</a>`;
-  const sectionIcon = (name) => (/anime|cartoon|animation/i.test(name) ? I.spark : /series|tv|show|season|drama/i.test(name) ? I.tv : I.film);
+  const sectionIcon = (name) => (/music|audio|song|album/i.test(name) ? I.audio : /\bbooks?\b|novel|comic|magazine|ebook|library/i.test(name) ? I.book : /anime|cartoon|animation/i.test(name) ? I.spark : /series|tv|show|season|drama/i.test(name) ? I.tv : I.film);
   $('nav').innerHTML = item(cur === -1, 'href="#/"', I.home, 'Home') +
     state.groups.map((g, i) => item(cur === i, `data-go="${esc(g.root)}"`, sectionIcon(g.name), g.name)).join('') +
     item(state.view === 'list', 'href="#/list"', I.bookmark, 'My List') +
@@ -828,8 +865,9 @@ function renderHead() {
   $('crumbs').innerHTML = crumbs.slice(0, -1).map(([l, p]) => (p ? `<a data-go="${esc(p)}">${esc(l)}</a>` : `<a href="#/">${esc(l)}</a>`)).join('<span>›</span>');
   $('folderTitle').textContent = crumbs[crumbs.length - 1][0];
   $('folderHead').style.setProperty('--panel', PANELS[Math.max(0, idx) % PANELS.length]);
-  const dirs = state.items.filter((i) => i.isDir).length, vids = state.items.filter((i) => i.kind === 'video').length;
-  $('folderSub').textContent = [dirs && `${dirs} folder${dirs > 1 ? 's' : ''}`, vids && `${vids} video${vids > 1 ? 's' : ''}`].filter(Boolean).join(' · ');
+  const count = (k) => state.items.filter((i) => i.kind === k).length, dirs = count('dir'), vids = count('video'), tracks = count('audio'), books = count('book');
+  const n = (c, one, many) => c && `${c} ${c > 1 ? many : one}`;
+  $('folderSub').textContent = [n(dirs, 'folder', 'folders'), n(vids, 'video', 'videos'), n(tracks, 'track', 'tracks'), n(books, 'book', 'books')].filter(Boolean).join(' · ');
   $('backBtn').hidden = false;
 }
 
@@ -868,6 +906,8 @@ $('filter').addEventListener('keydown', (e) => {
 
 /** Click on a card: folders open; a folder holding just a movie opens that movie's details directly. */
 async function activate(item, { play = false } = {}) {
+  if (item.kind === 'book') return reader.open(item);
+  if (item.kind === 'audio') return music.play([item], 0);
   if (!item.isDir) return play ? startPlayback(item) : showDetails(item);
   let l = null;
   try { l = await listFolder(item.path); } catch { /* open it anyway and show the error there */ }
@@ -1257,7 +1297,7 @@ function toast(msg, ms = 1400) {
 function banner(html) { $('pBanner').innerHTML = html || ''; $('pBanner').hidden = !html; }
 
 async function startPlayback(item, { from } = {}) {
-  closeMenu();
+  closeMenu(); music.pause();
   S.item = item;
   S.folder = []; S.list = [];
   S.probe = null; S.duration = 0; S.offset = 0; S.pendingSeek = null;
@@ -2013,5 +2053,6 @@ if (SH) {
   document.querySelector('#welcome h1').innerHTML = 'Stream<span>Hub</span>';
   document.querySelector('#welcome .w-lead').textContent = 'Every movie, series and anime on your ISP’s BDIX servers, ready to play on this PC.';
 }
+music.init(); reader.init();
 route();
 window.addEventListener('scroll', () => document.body.classList.toggle('scrolled', window.scrollY > 30), { passive: true });

@@ -57,6 +57,15 @@ sections, search, resume and the full player. Name a folder library the same as 
 Contemporary. Each look has its own themes: Parchment / Night, or System / Light / Dark. Both looks bring their fonts
 with them, so they look the same offline. The Vintage design sources are in `design/vintage/`, and the Contemporary ones in `windows/design/`.
 
+**Books and music:** add a folder of books or music like any other library (for example `Music | G:\Music` and `Books | G:\Book`), and
+files show up next to your films.
+- **Music** (mp3, flac, m4a, aac, ogg, opus, wav; wma and ape are converted on the fly): an album folder shows its tracks, with Play and Shuffle. A bar
+  at the bottom keeps playing while you browse, with previous/next, shuffle, repeat, seek, volume, the album cover, and your keyboard's media keys.
+  Track and album names come from the file and folder names, and the cover from a picture in the folder or inside the file.
+- **Books** (pdf, epub, cbz comics): a book opens full screen. PDFs use the bundled pdf.js (so it works offline), EPUBs open chapter by chapter with a
+  contents list and text size, and comics page by page (click the sides or use the arrow keys). The app remembers your place in each book.
+  Not supported yet: CBR comics, DRM-protected books, and book or music tags (titles come from names).
+
 **Jellyfin apps (preview):** Settings → **Let Jellyfin apps connect** makes the app answer like a Jellyfin server on port 8096, so
 Jellyfin apps on phones, tablets and TVs can browse and play your libraries while this computer is on. In the app, add a server at
 `http://<this computer's IP>:8096` and sign in as `streamhub` (no password unless you set one in Settings). It's off until you
