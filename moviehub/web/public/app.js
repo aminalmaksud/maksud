@@ -164,6 +164,11 @@ async function fillCard(card) {
     card.querySelector('.t').textContent = title;
     card.querySelector('.ph b').textContent = title;
   }
+  if (m.overview) {
+    card.querySelector('.syn').textContent = m.overview;
+    card.classList.add('has-syn');
+    card.title = `${m.matched || m.title || card.title}\n\n${m.overview}`;
+  }
   const s = card.querySelector('.s');
   if (s && !card.dataset.keepSub) {
     const bits = [];
@@ -253,6 +258,7 @@ function cardHtml(it, { wideArt = false, sub = '', forgettable = false } = {}) {
       ${quals.length > 1 ? `<span class="badge q">${esc(quals.join(' · '))}</span>` : ''}
       ${prog?.done ? `<span class="badge done">${I.check}Watched</span>` : ''}
       ${pct ? `<div class="progress"><i style="width:${pct}%"></i></div>` : ''}
+      <div class="syn"></div>
       <div class="hover-play"><span>${I.play}</span></div>
       ${forgettable ? `<span class="card-act x" role="button" data-forget="${esc(it.path)}" title="Remove from Continue watching">${I.close}</span>` : listButton(it)}
     </div>
@@ -406,6 +412,7 @@ function resetView(view) {
   $('status').textContent = ''; $('status').className = '';
   $('folderHead').hidden = view === 'home' || view === 'settings';
   $('welcome').hidden = true;
+  $('folderSyn').hidden = true; $('folderSyn').textContent = '';
   $('seasonBar').hidden = true; $('moreIn').hidden = true; $('moreIn').innerHTML = ''; $('split').classList.remove('has-more');
   $('settingsPage').hidden = view !== 'settings';
   $('settingsBtn').classList.toggle('on', view === 'settings');
@@ -488,6 +495,22 @@ function showList() {
   $('status').textContent = myList.length ? '' : 'Nothing saved yet. Press + on any poster, or “My List” on a movie, to keep it here for later.';
 }
 
+/** The plot of a movie or series folder, under its title. Says what's missing when there's none. */
+async function showSynopsis(path) {
+  const el = $('folderSyn');
+  const m = await meta(path);
+  if (state.view !== 'folder' || state.path !== path) return;
+  el.hidden = false;
+  if (m?.overview) {
+    el.textContent = m.overview; el.classList.remove('none');
+    if (m.rating) $('folderSub').innerHTML += `  ·  <span class="star">★</span> ${m.rating}`;
+  } else {
+    el.classList.add('none');
+    el.innerHTML = state.config?.tmdbKey ? 'No synopsis found for this title.' : 'No synopsis yet. <a href="#/settings">Add a free TMDB key in Settings</a> to see the plot of every movie and series.';
+  }
+}
+const lastSeg = (p) => { try { return decodeURIComponent(p.replace(/\/$/, '').split('/').pop()); } catch { return p; } };
+
 async function showFolder(path, { refresh = false } = {}) {
   resetView('folder');
   $('status').textContent = 'Loading…';
@@ -505,9 +528,10 @@ async function showFolder(path, { refresh = false } = {}) {
     $('rows').querySelectorAll('.row[data-row]').forEach((r) => rowObserver.observe(r));
   } else {
     const seasons = seasonsOf(l.items);
-    if (seasons) return showSeasons(l.path, seasons);
+    if (seasons) { showSynopsis(l.path); return showSeasons(l.path, seasons); }
     renderGrid(playable(l.items));
     showSiblingSeasons(l.path);
+    if (isTitleFolder(lastSeg(l.path)) || isEpisodeFolder(l.items.filter((i) => i.kind === 'video'))) showSynopsis(l.path);
   }
 }
 
@@ -716,7 +740,7 @@ function route({ refresh = false } = {}) {
   if (h.startsWith('search/')) return showSearch(decodeURIComponent(h.slice(7)));
   if (h === 'downloads') return showDownloads();
   if (h === 'list') return showList();
-  if (h === 'settings' && !SH) return showSettings();
+  if (h === 'settings') return showSettings();
   if (h === 'server' && SH) return showServer();
   return showHome();
 }
@@ -901,6 +925,12 @@ function renderDetailsActions() {
   $('dList').classList.toggle('on', inList(listIt.path));
   $('dFile').textContent = item.name;
 }
+function setOverview(text) {
+  const el = $('dOverview');
+  el.classList.toggle('none', !text);
+  if (text) el.textContent = text;
+  else el.innerHTML = state.config?.tmdbKey ? 'No synopsis found for this title.' : 'No synopsis yet. <a href="#/settings" data-close>Add a free TMDB key in Settings</a> to see plots.';
+}
 async function showDetails(item, { metaPath = item.path, folder = null } = {}) {
   detailsItem = item; detailsFolder = folder;
   // Start on the version last watched, else the best one.
@@ -919,10 +949,11 @@ async function showDetails(item, { metaPath = item.path, folder = null } = {}) {
   $('details').hidden = false;
   $('dPlay').focus();
   const m = await meta(metaPath);
-  if (!m || detailsItem !== item) return;
+  if (detailsItem !== item) return;
+  if (!m) { setOverview(''); return; }
   $('dTitle').textContent = m.matched || m.title;
   $('dMeta').innerHTML = [m.year, m.rating && `<span class="star">★</span> ${m.rating}`, m.show && esc(m.show), esc(libraryName(item.path))].filter(Boolean).join('  ·  ');
-  $('dOverview').textContent = m.overview || '';
+  setOverview(m.overview);
   if (m.backdrop) $('dHero').style.backgroundImage = `url("${m.backdrop}")`;
   if (m.poster) {
     $('dPoster').innerHTML = `<img src="${esc(m.poster)}" alt="">`;
@@ -955,18 +986,17 @@ const DHAKAFLIX = [
 ].join('\n');
 
 let settingsReturn = '#/';
-/** Vintage shows Settings as a page (#/settings), Contemporary as a dialog. */
+/** Settings is a page (#/settings) in both looks. */
 async function openSettings() {
-  if (SH) return fillSettings(true);
   if (location.hash !== '#/settings') { settingsReturn = location.hash || '#/'; location.hash = '#/settings'; } else showSettings();
 }
 async function showSettings() {
   resetView('settings');
   renderNav();
-  await fillSettings(false);
+  await fillSettings();
 }
-const closeSettings = () => { if (SH) $('settings').close(); else location.hash = settingsReturn === '#/settings' ? '#/' : settingsReturn; };
-async function fillSettings(modal) {
+const closeSettings = () => { location.hash = settingsReturn === '#/settings' ? '#/' : settingsReturn; };
+async function fillSettings() {
   const c = await api('/api/config');
   state.config = c;
   const f = $('settingsForm');
@@ -980,7 +1010,6 @@ async function fillSettings(modal) {
   $('ffmpegNote').innerHTML = c.ffmpeg
     ? '✓ Sound &amp; format fix is on — every file plays with sound, and you can switch audio tracks and built-in subtitles.'
     : `⚠ ffmpeg was not found, so some files may play without sound and audio-track switching is off. Install it with ${INSTALL_FFMPEG} (the Mac and Windows apps include it).`;
-  if (modal && !$('settings').open) $('settings').showModal();
 }
 async function saveConfig(body) {
   await api('/api/config', { method: 'POST', body: JSON.stringify(body) });
@@ -1068,7 +1097,6 @@ $('settingsForm').onsubmit = async (e) => {
       shareTv: f.shareTv.checked,
       keepOpensubsPass: !f.opensubsPass.value && state.config?.hasOpensubsPass && f.opensubsUser.value === state.config.opensubsUser, subdlKey: f.subdlKey.value,
     });
-    if (SH) $('settings').close();
   } catch (err) { alert(err.message); }
 };
 
@@ -1854,8 +1882,6 @@ document.addEventListener('keydown', (e) => {
 window.__mh = { now: () => now(), state: () => ({ mode: S.mode, offset: S.offset, adelay: S.adelay, sdelay: S.subs.delay, src: video.src, mini: player.classList.contains('mini'), playing: !video.paused }) };
 
 /* ----- boot ----- */
-// Vintage shows Settings as a page; the form moves out of the dialog (Contemporary keeps the dialog).
-if (!SH) $('settingsPage').append($('settingsForm'));
 if (!location.hash) history.replaceState(null, '', '#/');
 api('/api/config').then((c) => { state.config = c; renderNav(); }).catch(() => {});
 document.title = SH ? 'StreamHub' : 'MusingsofMaksudTV';

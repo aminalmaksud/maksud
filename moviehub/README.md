@@ -57,6 +57,8 @@ sections, search, resume and the full player. Name a folder library the same as 
 Contemporary. Each look has its own themes: Parchment / Night, or System / Light / Dark. Both looks bring their fonts
 with them, so they look the same offline. The Vintage design sources are in `design/vintage/`, and the Contemporary ones in `windows/design/`.
 
+**Synopsis:** with a free [TMDB](https://www.themoviedb.org/settings/api) key in Settings, every movie and series shows its plot: under the title on its page, in the details sheet, and when you hover a poster. Without a key, the page says how to add one.
+
 **Online subtitles** (optional): to use **Search online…** in the player's subtitle menu (like VLC), add a free API key
 from [OpenSubtitles.com](https://www.opensubtitles.com/consumers), from [SubDL](https://subdl.com) (on your profile page), or from both.
 Signing in with your OpenSubtitles account allows more downloads a day. Results that match the exact file come first,

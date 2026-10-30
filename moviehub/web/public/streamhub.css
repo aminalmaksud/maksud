@@ -32,6 +32,10 @@ html.streamhub {
   /* the Mac palette's accent names, pointed at StreamHub's colours so shared rules follow along */
   --maroon: var(--accText); --maroon-2: var(--blue); --gold: var(--blue); --gold-2: var(--accText); --pink: var(--blue-400);
   --crimson: var(--surface);
+  /* Vintage's newer tokens, pointed at StreamHub's colours so shared rules follow along */
+  --acc-fill: var(--blue); --acc-fill-hover: var(--blue-hover); --acc-fill-press: var(--blue-hover); --acc-fill-text: #fff;
+  --edge: var(--line2); --surface-bg: var(--surface); --sunk: var(--raised); --brand: var(--strong); --sel-bg: var(--sel); --gold-ink: var(--accText);
+  --shadow: none; --shadow-sm: none; --ring: 0 0 0 2px var(--blue); --panel-text: var(--strong); --panel-dim: var(--muted); --scrim: rgba(8, 12, 20, .6);
 }
 html.streamhub[data-theme="sh-dark"] {
   --bg: #080C14; --surface: #0F1521; --raised: #182030; --hover: #263041; --line: #182030; --line2: #263041;
@@ -432,3 +436,25 @@ html.streamhub .more-grid { display: grid; grid-template-columns: repeat(3, 1fr)
 html.streamhub .more-grid .cap .s, html.streamhub .more-grid .badge, html.streamhub .more-grid .card-act { display: none; }
 @media (max-width: 1100px) { html.streamhub #split.has-more { display: block; } html.streamhub #moreIn { margin-top: 24px; } }
 html.streamhub #moreIn .more-head::before { background-color: var(--raised); border-radius: 6px; width: 28px; height: 28px; }
+
+/* synopsis */
+html.streamhub .syn { background: linear-gradient(transparent, rgba(8, 12, 20, .94) 40%); color: #E9EDF3; font: 400 11.5px/1.4 var(--body); }
+html.streamhub #folderSyn { color: var(--muted); font-size: 14px; }
+html.streamhub #folderSyn a, html.streamhub .d-overview a { color: var(--accText); }
+html.streamhub .d-overview.none { color: var(--subtle); }
+
+/* Settings page */
+html.streamhub #settingsPage { max-width: 1100px; }
+html.streamhub #settingsPage h2 { font: 600 28px var(--display); text-transform: none; letter-spacing: -.01em; color: var(--strong); margin: 0 0 18px; }
+html.streamhub #settingsPage .s-card { border-radius: 12px; padding: 20px 22px 8px; background: var(--surface); }
+html.streamhub #settingsPage .s-card > h3, html.streamhub #settingsPage .subkeys legend, html.streamhub #settingsPage .s-row .flabel { font: 600 15px var(--display); text-transform: none; letter-spacing: 0; color: var(--strong); }
+html.streamhub #settingsPage label, html.streamhub #settingsPage .field { font-weight: 500; font-size: 13px; color: var(--text); }
+html.streamhub #settingsPage label small { color: var(--subtle); font-weight: 400; }
+html.streamhub #settingsPage :is(input, textarea) { border-radius: 8px; border-color: var(--line2); background: var(--bg); font: 13px/1.55 var(--mono); color: var(--text); }
+html.streamhub #settingsPage :is(input, textarea):focus { border-color: var(--blue); box-shadow: none; }
+html.streamhub #settingsPage code { background: var(--raised); border: 0; font-size: 12px; }
+html.streamhub #settingsPage .s-card, html.streamhub #settingsPage .s-card > h3 { box-shadow: none; }
+html.streamhub #settingsPage .look-pick { border-radius: 8px; }
+html.streamhub #settingsPage .look-pick.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+html.streamhub #settingsPage label.check input { accent-color: var(--blue); }
+html.streamhub #top .icon-btn.on, html.streamhub #settingsBtn.on { background: var(--sel); color: var(--selText); }

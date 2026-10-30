@@ -28,7 +28,7 @@ function pickImage(entries, stem) {
 }
 
 async function tmdb(key, path, params) {
-  const u = new URL(`https://api.themoviedb.org/3${path}`);
+  const u = new URL(`${process.env.TMDB_API || 'https://api.themoviedb.org/3'}${path}`);
   for (const [k, v] of Object.entries(params)) if (v != null) u.searchParams.set(k, v);
   const headers = { accept: 'application/json' };
   if (key.length > 40) headers.authorization = `Bearer ${key}`; else u.searchParams.set('api_key', key);
