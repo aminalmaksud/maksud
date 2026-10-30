@@ -19,7 +19,7 @@ assert.deepEqual(items.map((i) => [i.name, i.kind, i.path]), [
 const apache = '<a href="/movies/Action/Fast.mp4">Fast.mp4</a><a href="/movies/">Parent Directory</a><a href="/other/x.mp4">x</a>';
 assert.deepEqual(parseListing(apache, 'http://isp.test/movies/Action/', 'http://isp.test/movies/').map((i) => i.path), ['Action/Fast.mp4']);
 for (const [raw, title, year] of [['Panchayat (TV Series 2020- ) 1080p', 'Panchayat', 2020], ['Severance (TV Series 2022– ) 1080p', 'Severance', 2022],
-  ['The Office (2005-2013)', 'The Office', 2005], ['Dune.Part.Two.2024.1080p.mkv', 'Dune Part Two', 2024], ['Blade Runner 2049 (2017)', 'Blade Runner 2049', 2017]]) {
+  ['The Office (2005-2013)', 'The Office', 2005], ['Blade.Runner.2049.2017.1080p.mkv', 'Blade Runner 2049', 2017], ['1917.2019.1080p.mkv', '1917', 2019], ['Dune.Part.Two.2024.1080p.mkv', 'Dune Part Two', 2024], ['Blade Runner 2049 (2017)', 'Blade Runner 2049', 2017]]) {
   assert.deepEqual([parseName(raw).title, parseName(raw).year], [title, year], raw);
 }
 assert.match(srtToVtt('1\r\n00:00:01,500 --> 00:00:02,000\r\nHi'), /^WEBVTT\n\n1\n00:00:01\.500 --> 00:00:02\.000\nHi/);
@@ -28,6 +28,10 @@ const FILE = Buffer.alloc(1000, 7);
 const isp = http.createServer((req, res) => {
   const u = decodeURIComponent(req.url);
   if (u === '/movies/' || u === '/movies/Action/') { res.setHeader('content-type', 'text/html'); return res.end(u === '/movies/' ? nginx : apache); }
+  const dirList = (t, names) => `<html><head><title>Index of ${t}</title></head><body><h1>Index of ${t}</h1><hr><pre><a href="../">../</a>\n${names.map((n) => `<a href="${encodeURIComponent(n).replace(/%2F/g, '/')}">${n}</a>  01-Jan-2024 10:00  ${n.endsWith('/') ? '-' : '1G'}`).join('\n')}</pre></body></html>`;
+  const tv = { '/tv/': ['Some Show (2020) 1080p/'], '/tv/Some Show (2020) 1080p/': ['Season 1/', 'Season 2/'],
+    '/tv/Some Show (2020) 1080p/Season 1/': ['Some.Show.S01E01.1080p.mkv', 'Some.Show.S01E02.1080p.mkv', 'Some.Show.S01E01.1080p.en.srt'], '/tv/Some Show (2020) 1080p/Season 2/': ['Some.Show.S02E01.1080p.mkv'] };
+  if (tv[u]) { res.setHeader('content-type', 'text/html'); return res.end(dirList(u, tv[u])); }
   if (u === '/h5/Films/') return res.end('<html><script src="/_h5ai/public/js/scripts.js"></script></html>');
   if (u === '/_h5ai/public/index.php') {
     let b = ''; req.on('data', (c) => (b += c));
@@ -300,7 +304,7 @@ tmdbFake.close();
 await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, jellyfin: false }) });
 const jfPort = async () => { for (let i = 0; i < 50; i++) { const j = (await (await get('/api/config')).json()).jellyfin; if (j.running && j.port) return j.port; await new Promise((r) => setTimeout(r, 50)); } throw new Error('Jellyfin API did not start'); };
 assert.equal((await (await get('/api/config')).json()).jellyfin.running, false, 'off by default');
-await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, jellyfin: true }) });
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Clips | ${movies}`, jellyfin: true }) });
 const J = `http://127.0.0.1:${await jfPort()}`;
 const jget = (p, token, h = {}) => fetch(J + p, { headers: { ...(token ? { 'x-emby-token': token } : {}), ...h } });
 const pub = await (await jget('/System/Info/Public')).json();
@@ -338,8 +342,46 @@ await fetch(`${J}/UserPlayedItems/${film.Id}`, { method: 'POST', headers: { 'x-e
 assert.equal((await (await jget('/UserItems/Resume', T)).json()).Items.length, 0);
 assert.equal((await (await jget(`/Items/${film.Id}`, T)).json()).UserData.Played, true);
 assert.equal((await jget('/Shows/NextUp', T).then((r) => r.json())).TotalRecordCount, 0);
+// typed items: a section named like movies lists Movie items (with the subtitle file beside each as an external track),
+// and one named like series lists Series, Seasons and Episodes, with Next Up after you finish an episode
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Films | ${movies}\nTV Shows | http://127.0.0.1:${isp.address().port}/tv/`, jellyfin: true }) });
+await new Promise((r) => setTimeout(r, 100));
+const tviews = (await (await jget('/UserViews', T)).json()).Items;
+assert.deepEqual(tviews.map((v) => [v.Name, v.CollectionType]), [['Films', 'movies'], ['TV Shows', 'tvshows']]);
+const jq = async (p) => (await jget(p, T)).json();
+const movs = (await jq(`/Items?ParentId=${tviews[0].Id}&IncludeItemTypes=Movie&Recursive=true&SortBy=SortName`)).Items;
+assert.deepEqual(movs.map((m) => [m.Name, m.Type, m.ProductionYear ?? null]), [['Big Film', 'Movie', 2020], ['Fast', 'Movie', null]]);
+assert.equal((await jq(`/Items?ParentId=${tviews[0].Id}&IncludeItemTypes=Series&Recursive=true`)).Items.length, 0, 'no series in a movie section');
+assert.deepEqual((await jq(`/Items?SearchTerm=fast&IncludeItemTypes=Movie,Series&Recursive=true`)).Items.map((m) => m.Name), ['Fast'], 'search across sections');
+const mpbi = await (await fetch(`${J}/Items/${movs[0].Id}/PlaybackInfo`, { method: 'POST', headers: { 'x-emby-token': T, 'content-type': 'application/json' }, body: '{}' })).json();
+const msrc = mpbi.MediaSources[0];
+const ext = msrc.MediaStreams.find((s) => s.IsExternal);
+assert.ok(ext && ext.Type === 'Subtitle' && ext.DeliveryMethod === 'External' && ext.IsTextSubtitleStream, 'the .srt beside the film is an external subtitle track');
+assert.match(msrc.DirectStreamUrl, new RegExp(`^/Videos/${movs[0].Id}/stream\\?static=true&mediaSourceId=${msrc.Id}&api_key=`));
+assert.match(await (await jget(ext.DeliveryUrl.replace(/^\//, '/'))).text(), /Hello/, 'serves the subtitle as SRT');
+const vtt = await jget(ext.DeliveryUrl.replace('.srt', '.vtt'));
+assert.match(vtt.headers.get('content-type'), /text\/vtt/); assert.match(await vtt.text(), /^WEBVTT/, 'and as WebVTT');
+assert.equal((await jget(`/Videos/${movs[0].Id}/${msrc.Id}/Subtitles/${ext.Index}/0/Stream.srt`)).status, 401, 'subtitle files need a token too');
+const detail = await jq(`/Items/${movs[0].Id}`);
+assert.equal(detail.Type, 'Movie');
+const shows = (await jq(`/Items?ParentId=${tviews[1].Id}&IncludeItemTypes=Series&Recursive=true`)).Items;
+assert.deepEqual(shows.map((x) => [x.Name, x.Type, x.ProductionYear, x.ChildCount]), [['Some Show', 'Series', 2020, 2]]);
+const seasons = (await jq(`/Shows/${shows[0].Id}/Seasons`)).Items;
+assert.deepEqual(seasons.map((x) => [x.Name, x.Type, x.IndexNumber, x.SeriesName]), [['Season 1', 'Season', 1, 'Some Show'], ['Season 2', 'Season', 2, 'Some Show']]);
+const eps1 = (await jq(`/Shows/${shows[0].Id}/Episodes?seasonId=${seasons[0].Id}`)).Items;
+assert.deepEqual(eps1.map((x) => [x.Name, x.Type, x.IndexNumber, x.ParentIndexNumber, x.SeriesName, x.SeasonName]), [['Episode 1', 'Episode', 1, 1, 'Some Show', 'Season 1'], ['Episode 2', 'Episode', 2, 1, 'Some Show', 'Season 1']]);
+assert.equal((await jq(`/Items?ParentId=${seasons[1].Id}`)).Items.length, 1, 'opens a season');
+assert.equal((await jq(`/Items?ParentId=${shows[0].Id}&IncludeItemTypes=Episode&Recursive=true`)).Items.length, 3, 'all episodes of a series');
+const epPart = await jget(`/Videos/${eps1[0].Id}/stream?static=true&api_key=${T}`, null, { range: 'bytes=0-9' });
+assert.equal(epPart.status, 206, 'an episode streams');
+assert.equal((await jq('/Shows/NextUp')).Items.length, 0, 'nothing watched yet');
+await fetch(`${J}/UserPlayedItems/${eps1[0].Id}`, { method: 'POST', headers: { 'x-emby-token': T } });
+assert.deepEqual((await jq('/Shows/NextUp')).Items.map((x) => [x.Name, x.IndexNumber]), [['Episode 2', 2]], 'Next Up is the episode after the last one finished');
+assert.equal((await jq(`/Shows/${shows[0].Id}/Seasons`)).Items.length, 2);
+assert.equal((await jq(`/Items/${shows[0].Id}`)).Type, 'Series');
+
 // optional password: wrong one is refused, the right one signs in
-await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, jellyfin: true, jellyfinPass: 'sesame' }) });
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Clips | ${movies}`, jellyfin: true, jellyfinPass: 'sesame' }) });
 assert.equal((await auth({ Username: 'streamhub', Pw: 'nope' })).status, 401);
 assert.equal((await auth({ Username: 'streamhub', Pw: 'sesame' })).status, 200);
 assert.equal((await (await get('/api/config')).json()).jellyfin.hasPassword, true);

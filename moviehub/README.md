@@ -61,9 +61,13 @@ with them, so they look the same offline. The Vintage design sources are in `des
 Jellyfin apps on phones, tablets and TVs can browse and play your libraries while this computer is on. In the app, add a server at
 `http://<this computer's IP>:8096` and sign in as `streamhub` (no password unless you set one in Settings). It's off until you
 switch it on, and only devices on your home network get answers. Windows may ask once to allow incoming connections (choose Allow, private networks).
-Version 1 shows each section as a library of folders and plays every file directly, without converting it, so a player has to handle the
-file's own video and audio formats. There's no music, no books, no live TV, and no typed Movie/Series items yet.
-It passes the official Jellyfin SDK's sign-in, browse, playback-info, ranged-stream and progress calls, but it hasn't been tried in
+A section named like movies (Movies, Films…) shows as a Movies library, and one named like series (TV, Series, Web, Anime…) as a TV Shows library
+with Series, Seasons and Episodes. Anything else shows as a library of folders. The titles are found by reading your folders in the
+background (Season folders, S01E02 names, a folder per film), so a big server may show fewer titles the first time you open it. With a TMDB
+key, plots, posters, episode titles and stills come along too. Every file plays directly, without converting it, so a player has to handle
+the file's own video and audio formats. mpv-based apps (Streamyfin) get what they need for that: the real track numbers, the video's `.srt`/`.vtt`
+files offered as subtitle tracks, and a direct stream URL. There's no music, no books, no live TV, and no "Recently added" row yet.
+It passes the official Jellyfin SDK's sign-in, browse, series/season/episode, playback-info, ranged-stream, Next Up and progress calls, but it hasn't been tried in
 Streamyfin or the other apps yet. Streamyfin's README says it has no music support, and I couldn't confirm an Android TV release of it,
 so the official Jellyfin app is the surer choice on a TV.
 

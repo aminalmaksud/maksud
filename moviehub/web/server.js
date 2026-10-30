@@ -396,8 +396,9 @@ async function proxy(req, res, target, { cache } = {}) {
   Readable.fromWeb(up.body).on('error', () => res.destroy()).pipe(res);
 }
 
-async function handleSubs(url, res) {
-  const m = media(url.searchParams.get('path'));
+/** A subtitle file's text and type (old SRTs are often Windows-1252, so those are re-read as Latin-1). */
+async function subtitleText(rel) {
+  const m = media(rel);
   let buf;
   if (m.local) buf = fs.readFileSync(m.src);
   else {
@@ -406,9 +407,13 @@ async function handleSubs(url, res) {
     buf = Buffer.from(await up.arrayBuffer());
   }
   let text = buf.toString('utf8');
-  if (text.includes('�')) text = buf.toString('latin1'); // old SRTs are often Windows-1252
+  if (text.includes('�')) text = buf.toString('latin1');
+  return { text: text.replace(/^﻿/, ''), ext: m.ext };
+}
+async function handleSubs(url, res) {
+  const { text, ext } = await subtitleText(url.searchParams.get('path'));
   res.writeHead(200, { 'content-type': 'text/vtt; charset=utf-8' });
-  res.end(m.ext === 'srt' ? srtToVtt(text) : text);
+  res.end(ext === 'srt' ? srtToVtt(text) : text);
 }
 
 async function handleProbe(url, res) {
@@ -542,7 +547,7 @@ async function handleConfig(req, res) {
       jellyfin: b.jellyfin === undefined ? config.jellyfin : !!b.jellyfin,
       jellyfinPass: b.jellyfinPass === undefined ? config.jellyfinPass : String(b.jellyfinPass),
     };
-    listCache.clear(); libRoots.clear(); localWalks.clear();
+    listCache.clear(); libRoots.clear(); localWalks.clear(); jf.reset();
     updateShare(); updateJellyfin();
     fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
@@ -733,6 +738,13 @@ const firstReal = (rel) => (String(rel).startsWith('v:') ? decodeV(rel)?.[0] || 
 const jf = createJellyfin({
   stateFile: path.join(path.dirname(CONFIG_FILE), 'jellyfin-state.json'),
   password: () => config.jellyfinPass,
+  hasTmdb: () => !!config.tmdbKey,
+  subtitle: (rel) => subtitleText(firstReal(rel)),
+  tmdbSeason: async (rel, n) => {
+    if (!config.tmdbKey || String(rel).startsWith('local/')) return null;
+    const m = await metaFor(firstReal(rel), async (dir) => (await listDir(dir)).items, config.tmdbKey).catch(() => null);
+    return m?.tmdbType === 'tv' && m.tmdbId ? seasonEpisodes(config.tmdbKey, m.tmdbId, n) : null;
+  },
   views: viewsList,
   children: childrenOf,
   media: (rel) => media(firstReal(rel)),

@@ -86,7 +86,9 @@ export function parseName(raw) {
   // A dash may follow the year ("Show (TV Series 2020– )", "Show (2005-2013)"), and a year in brackets wins,
   // so "Blade Runner 2049 (2017)" keeps its title.
   const years = [...s.matchAll(/(?:^|[\s(])((?:19|20)\d{2})(?=[\s)\-–]|$)/g)].filter((m) => m.index > 0);
-  const yr = years.find((m) => m[0][0] === '(') || years[0];
+  // Otherwise the last year that can be a release year: "Blade.Runner.2049.2017" is the 2017 film.
+  const soon = new Date().getFullYear() + 1;
+  const yr = years.find((m) => m[0][0] === '(') || [...years].reverse().find((m) => Number(m[1]) <= soon) || years[0];
   if (yr) { out.year = Number(yr[1]); s = s.slice(0, yr.index).replace(/\(?\s*(?:TV|Web|Mini)[\s-]*(?:Series|Show)\s*$/i, ''); }
   const junk = JUNK.exec(s);
   if (junk && junk.index > 0) s = s.slice(0, junk.index);

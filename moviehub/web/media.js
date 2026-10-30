@@ -54,15 +54,15 @@ export function probe(url, auth) {
         const streams = j.streams || [];
         const v = streams.find((s) => s.codec_type === 'video' && !s.disposition?.attached_pic);
         const audio = streams.filter((s) => s.codec_type === 'audio').map((s, i) => ({
-          index: i, codec: s.codec_name, channels: s.channels || 0, label: trackLabel(s, i), lang: lang(s),
+          index: i, gi: s.index, codec: s.codec_name, channels: s.channels || 0, label: trackLabel(s, i), lang: lang(s),
           default: !!s.disposition?.default,
         }));
         const subs = streams.filter((s) => s.codec_type === 'subtitle').map((s, i) => ({
-          index: i, codec: s.codec_name, label: trackLabel(s, i), lang: lang(s), text: TEXT_SUBS.has(s.codec_name),
+          index: i, gi: s.index, codec: s.codec_name, label: trackLabel(s, i), lang: lang(s), text: TEXT_SUBS.has(s.codec_name),
           forced: !!s.disposition?.forced,
         }));
         const tenBit = /10/.test(v?.profile || '') || /10le|10be/.test(v?.pix_fmt || '');
-        const video = v ? { codec: v.codec_name, width: v.width, height: v.height, transcode: !PLAYABLE_VIDEO.has(v.codec_name) || (v.codec_name === 'h264' && tenBit) } : null;
+        const video = v ? { gi: v.index, codec: v.codec_name, width: v.width, height: v.height, transcode: !PLAYABLE_VIDEO.has(v.codec_name) || (v.codec_name === 'h264' && tenBit) } : null;
         const container = extOf(/^https?:/i.test(url) ? new URL(url).pathname : url); // URL or downloaded file path
         const direct = ['mp4', 'm4v', 'webm', 'mov'].includes(container) && !!video && !video.transcode
           && audio.length <= 1 && (!audio.length || PLAYABLE_AUDIO.has(audio[0].codec));
