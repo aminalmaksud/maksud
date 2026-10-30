@@ -109,3 +109,16 @@ export async function metaFor(rel, list, tmdbKey) {
   job.catch(() => cache.delete(key));
   return job;
 }
+
+const seasonCache = new Map();
+/** The episodes of one TMDB season: number, title, plot, runtime and air date. Null when TMDB doesn't know the season. */
+export function seasonEpisodes(key, tvId, season) {
+  const ck = `${tvId}|${season}`;
+  if (!seasonCache.has(ck)) {
+    seasonCache.set(ck, tmdbLimit(() => tmdb(key, `/tv/${tvId}/season/${season}`, {})).then(
+      (j) => (j.episodes || []).map((e) => ({ episode: e.episode_number, name: e.name || '', overview: e.overview || '', runtime: e.runtime || null, air: e.air_date || null })),
+      () => { seasonCache.delete(ck); return null; },
+    ));
+  }
+  return seasonCache.get(ck);
+}

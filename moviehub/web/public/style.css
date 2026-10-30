@@ -427,6 +427,10 @@ h2.row-title { cursor: default; }
 .d-overview.none { color: var(--faint); font-style: italic; }
 .d-overview a { color: var(--maroon); }
 
+.ep-syn { margin: 3px 0 5px; font-size: 13px; line-height: 1.45; color: var(--dim); max-width: 72ch; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ep-syn:empty { display: none; }
+.ep:hover .ep-syn, .ep:focus-visible .ep-syn { -webkit-line-clamp: unset; }
+
 /* ---------- series page: season tabs and "More in …" ---------- */
 #split { display: block; }
 #split.has-more { display: grid; grid-template-columns: minmax(0, 1fr) 376px; gap: 28px; align-items: start; }

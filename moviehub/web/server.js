@@ -9,7 +9,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT } from './listing.js';
 import { hasFfmpeg, ffmpegVersion, probe, remux, extractSubtitle, keyframeBefore } from './media.js';
-import { metaFor } from './meta.js';
+import { metaFor, seasonEpisodes } from './meta.js';
 import { movieHash, searchSubtitles, fetchSubtitle } from './subsearch.js';
 import { groupKey, mergeListings, encodeV, decodeV } from './merge.js';
 import { downloadsEnabled, startDownload, cancelDownload, deleteDownloaded, listDownloads, localEntries, localFile } from './downloads.js';
@@ -471,6 +471,18 @@ async function handleMeta(url, res) {
   json(res, 200, m);
 }
 
+/** Plots and titles for the episodes of one season of a series (TMDB). `path` is the season folder or one of its files. */
+async function handleEpisodes(url, res) {
+  let rel = url.searchParams.get('path') || '';
+  const season = Number(url.searchParams.get('season'));
+  if (rel.startsWith('v:')) rel = decodeV(rel)?.[0] || '';
+  if (!rel.startsWith('local/')) resolveUnderBase(rel);
+  if (!config.tmdbKey || !Number.isInteger(season) || season < 0 || season > 99) return json(res, 200, { episodes: [] });
+  const m = await metaFor(rel, async (dir) => (await listDir(dir)).items, config.tmdbKey).catch(() => null);
+  if (!m?.tmdbId || m.tmdbType !== 'tv') return json(res, 200, { episodes: [] });
+  json(res, 200, { episodes: (await seasonEpisodes(config.tmdbKey, m.tmdbId, season)) || [] });
+}
+
 /** Mac app downloads: POST {path} starts one, GET lists, DELETE ?id= cancels, DELETE ?name= removes a file. */
 async function handleDownloads(req, url, res) {
   if (!downloadsEnabled()) throw httpError(404, 'Downloads are available in the Mac app');
@@ -712,6 +724,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/subget') return await handleSubGet(url, res);
     if (p === '/api/pick-folder') return await handlePickFolder(req, res);
     if (p === '/api/meta') return await handleMeta(url, res);
+    if (p === '/api/episodes') return await handleEpisodes(url, res);
     if (p === '/api/probe') return await handleProbe(url, res);
     if (p === '/api/seek-point') return await handleSeekPoint(url, res);
     if (p === '/api/embedded-sub') return await handleEmbeddedSub(url, res);

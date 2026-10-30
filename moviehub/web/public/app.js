@@ -529,7 +529,7 @@ async function showFolder(path, { refresh = false } = {}) {
   } else {
     const seasons = seasonsOf(l.items);
     if (seasons) { showSynopsis(l.path); return showSeasons(l.path, seasons); }
-    renderGrid(playable(l.items));
+    renderGrid(playable(l.items), { folder: l.path });
     showSiblingSeasons(l.path);
     if (isTitleFolder(lastSeg(l.path)) || isEpisodeFolder(l.items.filter((i) => i.kind === 'video'))) showSynopsis(l.path);
   }
@@ -585,7 +585,7 @@ async function showSeasons(path, seasons) {
     try { l = await listFolder(d.path); } catch (e) { if (state.view === 'folder') { $('status').textContent = e.message; $('status').className = 'error'; } return; }
     if (state.view !== 'folder' || state.path !== path || $('seasonTabs').querySelector('.on')?.dataset.season !== d.path) return;
     $('status').textContent = '';
-    renderGrid(playable(l.items));
+    renderGrid(playable(l.items), { folder: d.path });
     $('seasonCount').textContent = seasonCountText(l.items.filter((i) => i.kind === 'video'));
   };
   showMoreIn(path);
@@ -646,9 +646,10 @@ function epTitle(name, i) {
   return rest && rest.length > 2 ? rest : `Episode ${epNumber(name, i)}`;
 }
 
-let gridItems = [], gridSub = null;
-function renderGrid(items, { sub = null } = {}) {
+let gridItems = [], gridSub = null, gridFolder = '';
+function renderGrid(items, { sub = null, folder = undefined } = {}) {
   gridItems = items; gridSub = sub;
+  if (folder !== undefined) gridFolder = folder;
   const grid = $('grid');
   const q = state.view === 'folder' ? $('filter').value.trim().toLowerCase() : '';
   const visible = items.filter((i) => !q || i.name.toLowerCase().includes(q));
@@ -660,14 +661,34 @@ function renderGrid(items, { sub = null } = {}) {
       const p = progressFor(v);
       const pct = p && !p.done && p.dur ? (p.pos / p.dur) * 100 : 0;
       return `<button class="ep" data-path="${esc(v.path)}"><span class="num">${epNumber(v.name, i)}</span>
-        <span><div class="t">${esc(epTitle(v.name, i))}</div><div class="s">${p?.done ? 'Watched' : pct ? `${fmt(p.dur - p.pos)} left` : esc(stem(v.name))}</div></span>
+        <span><div class="t">${esc(epTitle(v.name, i))}</div><div class="ep-syn"></div><div class="s">${p?.done ? 'Watched' : pct ? `${fmt(p.dur - p.pos)} left` : esc(stem(v.name))}</div></span>
         <span class="ep-end">${p?.done ? `<span class="check">${I.check}</span>` : pct ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}${p ? `<span class="ep-x" role="button" data-forget="${esc(p.path)}" title="${p.done ? 'Mark as unwatched' : 'Remove progress'}">${I.undo}</span>` : ''}</span></button>`;
     }).join('');
+    fillEpisodeInfo(gridFolder, videos);
   } else {
     grid.innerHTML = visible.map((it) => cardHtml(it, { sub: sub ? sub(it) : '' })).join('');
     grid.querySelectorAll('.card').forEach((c) => lazy.observe(c));
   }
   if (state.view === 'folder') $('status').textContent = !visible.length ? (q ? 'Nothing here matches your search.' : 'This folder is empty.') : '';
+}
+/** Episode titles and plots (TMDB) for the season on screen. The list shows first, the plots fill in. */
+const epInfo = new Map();
+async function fillEpisodeInfo(folder, videos) {
+  if (!folder || !videos.length) return;
+  const season = seasonNum(lastSeg(folder)) ?? Number(/\bS(\d{1,2}) ?E\d/i.exec(videos[0].name)?.[1] ?? 1);
+  const key = `${folder}|${season}`;
+  if (!epInfo.has(key)) epInfo.set(key, api(`/api/episodes?path=${enc(folder)}&season=${season}`).then((r) => new Map(r.episodes.map((e) => [e.episode, e])), () => new Map()));
+  const info = await epInfo.get(key);
+  if (!info.size || gridFolder !== folder) return;
+  const rows = $('grid').querySelectorAll('.ep');
+  videos.forEach((v, i) => {
+    const e = info.get(epNumber(v.name, i)), row = rows[i];
+    if (!e || !row || row.dataset.path !== v.path) return;
+    if (e.overview) row.querySelector('.ep-syn').textContent = e.overview;
+    // A real episode title replaces the generic "Episode 4", and the runtime joins the file name line
+    if (e.name && /^Episode \d+$/.test(row.querySelector('.t').textContent)) row.querySelector('.t').textContent = e.name;
+    if (e.runtime && !row.querySelector('.s').textContent.includes('left') && row.querySelector('.s').textContent !== 'Watched') row.querySelector('.s').textContent = `${e.runtime} min · ${row.querySelector('.s').textContent}`;
+  });
 }
 const render = () => { if (state.view === 'folder' || state.view === 'search') renderGrid(gridItems, { sub: gridSub }); };
 

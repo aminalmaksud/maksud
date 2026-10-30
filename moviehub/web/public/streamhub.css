@@ -458,3 +458,4 @@ html.streamhub #settingsPage .look-pick { border-radius: 8px; }
 html.streamhub #settingsPage .look-pick.on { background: var(--blue); border-color: var(--blue); color: #fff; }
 html.streamhub #settingsPage label.check input { accent-color: var(--blue); }
 html.streamhub #top .icon-btn.on, html.streamhub #settingsBtn.on { background: var(--sel); color: var(--selText); }
+html.streamhub .ep-syn { color: var(--muted); font-size: 12.5px; }

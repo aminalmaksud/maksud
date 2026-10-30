@@ -95,6 +95,16 @@ const hashBuf = Buffer.from(Array.from({ length: 200000 }, (_, i) => (i * 7 + 3)
 assert.equal(await movieHash(hashBuf.length, async (a, b) => hashBuf.subarray(a, b + 1)), 'e6ed0e283146465f', 'OpenSubtitles hash');
 assert.deepEqual(unzip(zipOf([['x/a.srt', 'hello']])).map((f) => [f.name, f.data.toString()]), [['x/a.srt', 'hello']]);
 
+// A fake TMDB for the episode plots
+const tmdbFake = http.createServer((req, res) => {
+  const u = new URL(req.url, 'http://x');
+  res.setHeader('content-type', 'application/json');
+  if (u.pathname === '/search/tv') return res.end(JSON.stringify({ results: [{ id: 42, name: 'Some Show', overview: 'The show.', first_air_date: '2020-05-01' }] }));
+  if (u.pathname === '/tv/42/season/2') return res.end(JSON.stringify({ episodes: [{ episode_number: 1, name: 'Pilot', overview: 'It begins.', runtime: 44, air_date: '2021-01-01' }, { episode_number: 2, name: 'Two', overview: '' }] }));
+  res.statusCode = 404; res.end('{}');
+});
+await new Promise((r) => tmdbFake.listen(0, '127.0.0.1', r));
+process.env.TMDB_API = `http://127.0.0.1:${tmdbFake.address().port}`;
 process.env.SERVER_URL = `http://127.0.0.1:${isp.address().port}/movies/`;
 process.env.PORT = '0';
 process.env.CONFIG_FILE = path.join(os.tmpdir(), `moviehub-test-${process.pid}.json`);
@@ -272,4 +282,14 @@ await new Promise((res) => setTimeout(res, 200));
 assert.equal((await (await get('/api/config')).json()).share.running, false, 'switching it off stops the share');
 fs.rmSync(lib, { recursive: true, force: true });
 console.log('all tests passed');
+// Episode plots: a season's titles and plots come from TMDB; no key, a movie, or a bad season gives an empty list
+const epPath = encodeURIComponent('0/Some%20Show/Season%202/');
+assert.deepEqual(await (await get(`/api/episodes?path=${epPath}&season=2`)).json(), { episodes: [] }, 'no TMDB key yet');
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, tmdbKey: 'KEY' }) });
+const eps = (await (await get(`/api/episodes?path=${epPath}&season=2`)).json()).episodes;
+assert.deepEqual(eps.map((e) => [e.episode, e.name, e.overview, e.runtime]), [[1, 'Pilot', 'It begins.', 44], [2, 'Two', '', null]]);
+assert.deepEqual((await (await get(`/api/episodes?path=${epPath}&season=9`)).json()).episodes, [], 'unknown season');
+assert.deepEqual((await (await get(`/api/episodes?path=${epPath}&season=abc`)).json()).episodes, []);
+assert.equal((await get('/api/episodes?path=0%2F..%2F..%2Fx%2F&season=1')).status, 400);
+tmdbFake.close();
 server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });

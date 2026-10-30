@@ -27,4 +27,4 @@ The Vintage look is `web/public/style.css`, shared by the Mac and Windows apps (
 | Settings as a full page with cards | Done (`#/settings`, the gear is highlighted while it's open). Contemporary has the same page in its own colours |
 | Fonts | Bundled (Oswald, Plus Jakarta Sans, Hind Siliguri, Cinzel, Fraunces), so nothing loads from Google Fonts |
 | Drifting specks | Kept, and they stop for people who turn on reduced motion |
-| Synopsis | Not in the mockups, added in both looks: on a title's page under its name, in the details sheet, and on a card when you hover it. It comes from TMDB, so it needs the free key in Settings; without one the page says how to add it |
+| Synopsis | Not in the mockups, added in both looks: on a title's page under its name, in the details sheet, on a card when you hover it, and for each episode (its title, plot and length) in the episode list. It comes from TMDB, so it needs the free key in Settings; without one the page says how to add it |
