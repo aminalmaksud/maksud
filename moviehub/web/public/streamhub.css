@@ -219,6 +219,17 @@ html.streamhub #welcome { max-width: 640px; margin: 12vh auto 0; padding: 40px; 
 html.streamhub #welcome h1 { font: 700 40px/1.1 var(--display); text-transform: none; letter-spacing: -.02em; margin: 10px 0 10px; color: var(--strong); }
 html.streamhub #welcome h1 span { color: var(--blue); }
 html.streamhub #welcome p { color: var(--muted); font-size: 15px; }
+html.streamhub #welcome :is(.eyebrow, .w-lead) { display: block; }
+html.streamhub #welcome .eyebrow { display: inline-flex; }
+html.streamhub .w-opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+html.streamhub .w-opt { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 6px; border: 1px solid var(--line); color: var(--text); font: 600 14px var(--body); }
+html.streamhub .w-opt.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+html.streamhub .w-opt:hover { border-color: var(--blue); }
+html.streamhub .w-opt :is(span, small) { display: none; }
+html.streamhub .w-opt b { font: inherit; text-transform: none; letter-spacing: 0; color: inherit; }
+html.streamhub .w-opt i { display: grid; width: 18px; height: 18px; margin: 0; border-radius: 0; background: none; color: inherit; }
+html.streamhub .w-opt i svg { width: 18px; height: 18px; }
+html.streamhub .w-note { color: var(--muted); font-size: 13px; margin: 14px 0 0; }
 html.streamhub #welcome .d-actions { justify-content: flex-start; }
 html.streamhub #welcome .btn:not(.primary) { background: var(--raised); color: var(--strong); border-color: transparent; }
 html.streamhub #welcome .btn.primary { background: var(--blue); color: #fff; }

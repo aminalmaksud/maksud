@@ -75,11 +75,13 @@ function niceName(raw) {
   return { title: title || s, year: title ? year : '', quality: q.toLowerCase() === '4k' ? '4K' : q.toLowerCase() };
 }
 
-/** Cover for a title without a poster: a palette from the website, a pattern, a big serif initial and a gold frame. */
+/** Cover for a title without a poster: a book jacket (design: moviehub/design/vintage/VintageJacket.dc.html), in one of
+ *  these deep jewel-tone palettes, with a gold initial, frame and tags. Contemporary uses the first colour only. */
 const PALETTES = [
-  ['#a3242f', '#2a070b', '#f5cf5b'], ['#127052', '#06231a', '#f5cf5b'], ['#2f4fb0', '#0d1330', '#f0c94e'],
-  ['#6d2bb0', '#1c0a2c', '#ffc9e0'], ['#c06a1c', '#3a1708', '#ffe2a8'], ['#0e7c8c', '#05262c', '#ffd27a'],
-  ['#b0285f', '#2c0716', '#ffd0e0'], ['#7a6a16', '#1c1806', '#f5e6a0'], ['#c23b22', '#350d06', '#ffd38a'],
+  ['#8a2457', '#3a0c24', '#f5cf5b'], ['#1f5a3e', '#0d2a1e', '#f5cf5b'], ['#0f5560', '#082a33', '#f5cf5b'],
+  ['#23338f', '#101a4e', '#f5cf5b'], ['#6b5a14', '#2e2608', '#f5cf5b'], ['#9a4a12', '#3f1a06', '#f5cf5b'],
+  ['#4b3a8a', '#1d1640', '#f5cf5b'], ['#7a1820', '#2e080b', '#f5cf5b'], ['#1a3a5c', '#0a1828', '#f5cf5b'],
+  ['#5c2a14', '#241006', '#f5cf5b'], ['#3b4a55', '#151d24', '#f5cf5b'], ['#2f6b2a', '#11300f', '#f5cf5b'],
 ];
 function coverHtml(name, { icon = I.film, cls = '' } = {}) {
   const n = niceName(name);
@@ -923,16 +925,19 @@ document.querySelectorAll('[data-look]').forEach((b) => {
 $('settingsBtn').onclick = openSettings;
 $('cancelBtn').onclick = () => $('settings').close();
 $('dhakaflixBtn').onclick = () => { $('settingsForm').servers.value = DHAKAFLIX; };
-// Local folders: the system's folder picker (Mac and Windows apps), else type the path.
-$('addFolderBtn').onclick = async () => {
-  const ta = $('settingsForm').servers;
+// Local folders: the system's folder picker (Mac and Windows apps), else type the path. Gives a "Name | path" line.
+async function pickFolderLine() {
   let picked = '';
   try { picked = (await api('/api/pick-folder', { method: 'POST' })).path; } catch {
     picked = prompt('Folder with movies or series (for example G:\\Movie or /Users/you/Movies):') || '';
   }
-  if (!picked) return;
+  if (!picked) return '';
   const name = picked.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || picked;
-  ta.value = `${ta.value.replace(/\s+$/, '')}${ta.value.trim() ? '\n' : ''}${name} | ${picked}`;
+  return `${name} | ${picked}`;
+}
+$('addFolderBtn').onclick = async () => {
+  const ta = $('settingsForm').servers, line = await pickFolderLine();
+  if (line) ta.value = `${ta.value.replace(/\s+$/, '')}${ta.value.trim() ? '\n' : ''}${line}`;
 };
 /** The lines to type into the TV app's Settings, one per shared folder. */
 function tvLinesHtml(sh) {
@@ -953,6 +958,11 @@ $('settingsForm').shareTv.onchange = (e) => { if (!e.target.checked) renderTvLin
 /** Downloads make no sense for files that are already on this computer. */
 const canDownload = (p) => !String(p).startsWith('local/') && !(state.config?.localLibs || []).includes(Number(realPath(p).split('/')[0]));
 $('welcomeOwn').onclick = openSettings;
+$('welcomeFolder').onclick = async () => {
+  const line = await pickFolderLine();
+  if (line) saveConfig({ servers: line, keepPassword: true }).catch((e) => alert(e.message));
+};
+document.querySelectorAll('#welcome [data-ico]').forEach((i) => { i.innerHTML = I[i.dataset.ico]; });
 $('welcomeDhakaflix').onclick = () => saveConfig({ servers: DHAKAFLIX, keepPassword: true }).catch((e) => alert(e.message));
 $('settingsForm').onsubmit = async (e) => {
   e.preventDefault();
@@ -1762,7 +1772,7 @@ if (SH) {
   document.querySelector('#hero .eyebrow').textContent = 'Featured';
   document.querySelector('#welcome .eyebrow').textContent = 'Welcome';
   document.querySelector('#welcome h1').innerHTML = 'Stream<span>Hub</span>';
-  document.querySelector('#welcome p').textContent = 'Every movie, series and anime on your ISP’s BDIX servers, ready to play on this PC.';
+  document.querySelector('#welcome .w-lead').textContent = 'Every movie, series and anime on your ISP’s BDIX servers, ready to play on this PC.';
 }
 route();
 window.addEventListener('scroll', () => document.body.classList.toggle('scrolled', window.scrollY > 30), { passive: true });

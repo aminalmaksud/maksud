@@ -1,5 +1,7 @@
 # Vintage look: design brief for Claude Design
 
+> **Status:** the resulting design is in [`vintage/`](vintage/) and is built into the app (`web/public/style.css`). See `vintage/README.md` for what's done.
+
 Paste this into Claude Design to refine the **Vintage** look of StreamHub / Musings of Maksud TV. Vintage is one of the
 app's two looks; the other, **Contemporary**, already has its own design (`moviehub/windows/design/`). People switch
 between them in **Settings → Look**, on both the Mac and the Windows app. The result gets built into the shared

@@ -54,7 +54,8 @@ sections, search, resume and the full player. Name a folder library the same as 
 
 **Look:** Settings → **Look** switches between **Vintage** (parchment and maroon, the original) and **Contemporary**
 (StreamHub: sidebar, flat and modern) on both the Mac and Windows apps. The Mac app starts in Vintage and the Windows app in
-Contemporary. Each look has its own themes: Parchment / Night, or System / Light / Dark.
+Contemporary. Each look has its own themes: Parchment / Night, or System / Light / Dark. Both looks bring their fonts
+with them, so they look the same offline. The Vintage design sources are in `design/vintage/`, and the Contemporary ones in `windows/design/`.
 
 **Online subtitles** (optional): to use **Search online…** in the player's subtitle menu (like VLC), add a free API key
 from [OpenSubtitles.com](https://www.opensubtitles.com/consumers), from [SubDL](https://subdl.com) (on your profile page), or from both.

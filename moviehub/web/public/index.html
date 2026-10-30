@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MusingsofMaksudTV</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Cinzel:wght@600;700&display=swap">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="streamhub.css">
@@ -29,7 +26,7 @@
 <body>
 <header id="top">
   <button id="backBtn" class="icon-btn" title="Back (⌘[)" hidden></button>
-  <a id="logo" href="#/"><img class="sh-mark" src="assets/streamhub-mark.svg" alt=""><span class="sh-name">StreamHub</span><img class="logo-mark" src="logo.svg" alt=""><span class="logo-text"><b>Musings of Maksud</b><small>মুসিংস অব মাকসুদ • টিভি</small></span><span class="logo-tv">TV</span></a>
+  <a id="logo" href="#/"><img class="sh-mark" src="assets/streamhub-mark.svg" alt=""><span class="sh-name">StreamHub</span><img class="logo-mark" src="logo.svg" alt=""><span class="logo-text"><b>StreamHub</b><small>মুসিংস অব মাকসুদ • টিভি</small></span></a>
   <nav id="nav"></nav>
   <div class="search">
     <span class="search-ico"></span>
@@ -62,10 +59,18 @@
 
 <main id="main">
   <div id="welcome" hidden>
+    <img class="w-mark mh-only" src="logo.svg" alt="">
     <span class="eyebrow">✦ মুসিংস অব মাকসুদ • টিভি</span>
-    <h1>Musings of Maksud <span>TV</span></h1>
-    <p>Every movie, series and anime on your ISP’s BDIX servers — beautifully arranged, with subtitles and sound that just work.</p>
-    <div class="d-actions"><button class="btn primary big" id="welcomeDhakaflix">Use DhakaFlix servers</button><button class="btn big" id="welcomeOwn">Add my own server</button></div>
+    <h1>StreamHub</h1>
+    <p class="w-byline mh-only"><span>Musings of Maksud · মুসিংস অব মাকসুদ</span></p>
+    <p class="w-lead">Every movie, series and anime on your ISP’s BDIX servers — beautifully arranged, with subtitles and sound that just work.</p>
+    <h2 class="w-ask mh-only">Where should we find your films?<small>আপনার সিনেমা কোথায় খুঁজবো?</small></h2>
+    <div class="w-opts">
+      <button class="w-opt on" id="welcomeDhakaflix"><i data-ico="globe"></i><b>Use DhakaFlix servers</b><span>Browse the BDIX servers your ISP already gives you. Nothing to set up.</span><small>✦ Recommended on BDIX</small></button>
+      <button class="w-opt" id="welcomeOwn"><i data-ico="server"></i><b>Add my own server</b><span>Point the app at any “Index of /” or h5ai address on your network.</span><small>FTP-style or h5ai</small></button>
+      <button class="w-opt" id="welcomeFolder"><i data-ico="folder"></i><b>Add a folder from this computer</b><span>Play films and series stored on this computer, even when you’re offline.</span><small>Works offline</small></button>
+    </div>
+    <p class="w-note">You can change this later in Settings → Libraries.</p>
   </div>
   <div id="folderHead" hidden>
     <nav id="crumbs"></nav>
