@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import zlib from 'node:zlib';
-import { parseListing, srtToVtt } from './listing.js';
+import { parseListing, parseName, srtToVtt } from './listing.js';
 
 const nginx = `<html><head><title>Index of /movies/</title></head><body><h1>Index of /movies/</h1><hr><pre><a href="../">../</a>
 <a href="Action/">Action/</a>                 01-Jan-2024 10:00  -
@@ -18,6 +18,10 @@ assert.deepEqual(items.map((i) => [i.name, i.kind, i.path]), [
   ['Action', 'dir', 'Action/'], ['Big Film (2020).mkv', 'video', 'Big%20Film%20(2020).mkv'], ['Big Film (2020).srt', 'sub', 'Big%20Film%20(2020).srt']]);
 const apache = '<a href="/movies/Action/Fast.mp4">Fast.mp4</a><a href="/movies/">Parent Directory</a><a href="/other/x.mp4">x</a>';
 assert.deepEqual(parseListing(apache, 'http://isp.test/movies/Action/', 'http://isp.test/movies/').map((i) => i.path), ['Action/Fast.mp4']);
+for (const [raw, title, year] of [['Panchayat (TV Series 2020- ) 1080p', 'Panchayat', 2020], ['Severance (TV Series 2022– ) 1080p', 'Severance', 2022],
+  ['The Office (2005-2013)', 'The Office', 2005], ['Dune.Part.Two.2024.1080p.mkv', 'Dune Part Two', 2024], ['Blade Runner 2049 (2017)', 'Blade Runner 2049', 2017]]) {
+  assert.deepEqual([parseName(raw).title, parseName(raw).year], [title, year], raw);
+}
 assert.match(srtToVtt('1\r\n00:00:01,500 --> 00:00:02,000\r\nHi'), /^WEBVTT\n\n1\n00:00:01\.500 --> 00:00:02\.000\nHi/);
 
 const FILE = Buffer.alloc(1000, 7);

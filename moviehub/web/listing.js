@@ -83,8 +83,11 @@ export function parseName(raw) {
   else if (anime) { out.episode = Number(anime[1]); s = s.slice(0, anime.index); }
   const season = /^(?:season|s) ?(\d{1,2})$/i.exec(s);
   if (season) { out.season = Number(season[1]); out.generic = true; }
-  const yr = [...s.matchAll(/(?:^|[\s(])((?:19|20)\d{2})(?=[\s)]|$)/g)].find((m) => m.index > 0);
-  if (yr) { out.year = Number(yr[1]); s = s.slice(0, yr.index); }
+  // A dash may follow the year ("Show (TV Series 2020– )", "Show (2005-2013)"), and a year in brackets wins,
+  // so "Blade Runner 2049 (2017)" keeps its title.
+  const years = [...s.matchAll(/(?:^|[\s(])((?:19|20)\d{2})(?=[\s)\-–]|$)/g)].filter((m) => m.index > 0);
+  const yr = years.find((m) => m[0][0] === '(') || years[0];
+  if (yr) { out.year = Number(yr[1]); s = s.slice(0, yr.index).replace(/\(?\s*(?:TV|Web|Mini)[\s-]*(?:Series|Show)\s*$/i, ''); }
   const junk = JUNK.exec(s);
   if (junk && junk.index > 0) s = s.slice(0, junk.index);
   s = s.replace(/[\s\-–(]+$/, '').replace(/^[\s\-–]+/, '').trim();
