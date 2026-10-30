@@ -419,6 +419,8 @@ h2.row-title { cursor: default; }
 .syn:empty, .wide-art .syn, .more-grid .syn { display: none; }
 .card:hover .syn, .card:focus-visible .syn { opacity: 1; }
 .card.has-syn .hover-play { align-items: start; padding-top: 18%; background: none; }
+#folderResume { margin-top: 16px; text-transform: uppercase; letter-spacing: .06em; font-family: var(--display); font-weight: 600; }
+#folderResume[hidden] { display: none; }
 #folderSyn { margin: 12px 0 0; max-width: 78ch; font-size: 14.5px; line-height: 1.55; color: var(--panel-dim); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 #folderSyn:hover { -webkit-line-clamp: unset; }
 #folderSyn.none { font-style: italic; opacity: .9; }
@@ -668,6 +670,28 @@ dialog code, #settingsPage code { background: var(--raised); padding: 1px 6px; b
 .menu .ss-go { all: unset; cursor: pointer; padding: 8px 14px; border-radius: 10px; background: rgba(255, 255, 255, .12); font-weight: 700; font-size: 13px; }
 .menu .ss-go:hover { background: rgba(255, 255, 255, .2); }
 .menu .chips + .opt, .menu .chips + .hint { margin-top: 8px; }
+/* Parchment: the audio and subtitle menus are light cards over the dark video (design: Player, Parchment) */
+html[data-theme="parchment"] .menu { background: rgba(255, 252, 247, .98); border-color: var(--line); color: var(--text); box-shadow: 0 24px 60px rgba(20, 4, 2, .5); }
+html[data-theme="parchment"] .menu h4 { color: var(--gold-ink); }
+html[data-theme="parchment"] .menu .opt:hover { background: var(--raised); }
+html[data-theme="parchment"] .menu .opt:focus-visible { box-shadow: inset 0 0 0 2px var(--maroon); }
+html[data-theme="parchment"] .menu .opt.on .lbl, html[data-theme="parchment"] .menu .opt .tick { color: var(--maroon); }
+html[data-theme="parchment"] .menu .opt .lbl small, html[data-theme="parchment"] .menu .hint, html[data-theme="parchment"] .menu .stepper output { color: var(--dim); }
+html[data-theme="parchment"] .menu .tabs { background: var(--sunk); }
+html[data-theme="parchment"] .menu .tabs button { color: var(--text); }
+html[data-theme="parchment"] .menu .tabs button.on { background: var(--acc-fill); color: var(--acc-fill-text); }
+html[data-theme="parchment"] .menu .chip { border-color: var(--edge); color: var(--text); }
+html[data-theme="parchment"] .menu .chip:hover { border-color: var(--maroon); color: var(--maroon); }
+html[data-theme="parchment"] .menu .chip.on { border-color: var(--gold-ink); background: var(--gold-soft); color: var(--text); }
+html[data-theme="parchment"] .menu .swatch { border-color: var(--edge); }
+html[data-theme="parchment"] .menu .swatch.on { border-color: var(--maroon); box-shadow: 0 0 0 3px rgba(122, 24, 32, .25); }
+html[data-theme="parchment"] .menu :is(.sync, .stepper) button, html[data-theme="parchment"] .menu .ss-go { background: var(--sunk); color: var(--text); }
+html[data-theme="parchment"] .menu :is(.sync, .stepper) button:hover, html[data-theme="parchment"] .menu .ss-go:hover { background: var(--line); }
+html[data-theme="parchment"] .menu .sync output { color: var(--maroon); }
+html[data-theme="parchment"] .menu .hint a { color: var(--maroon); }
+html[data-theme="parchment"] .menu .ss-form input { background: var(--surface); border-color: var(--edge); color: var(--text); }
+html[data-theme="parchment"] .menu .ss-form input:focus { border-color: var(--maroon); box-shadow: var(--ring); }
+
 #settingsPage label.check, dialog label.check { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 #settingsPage label.check input, dialog label.check input { display: inline-block; width: auto; margin: 0; accent-color: var(--maroon); }
 #settingsPage label.check small, dialog label.check small { flex-basis: 100%; margin: 0 0 0 26px; }

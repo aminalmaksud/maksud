@@ -459,3 +459,5 @@ html.streamhub #settingsPage .look-pick.on { background: var(--blue); border-col
 html.streamhub #settingsPage label.check input { accent-color: var(--blue); }
 html.streamhub #top .icon-btn.on, html.streamhub #settingsBtn.on { background: var(--sel); color: var(--selText); }
 html.streamhub .ep-syn { color: var(--muted); font-size: 12.5px; }
+html.streamhub #folderResume { margin-top: 14px; text-transform: none; letter-spacing: 0; font-family: var(--body); font-weight: 600; background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: none; }
+html.streamhub #folderResume:hover { background: var(--blue-hover); color: #fff; box-shadow: none; transform: none; }

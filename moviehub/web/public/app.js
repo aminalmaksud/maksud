@@ -412,7 +412,7 @@ function resetView(view) {
   $('status').textContent = ''; $('status').className = '';
   $('folderHead').hidden = view === 'home' || view === 'settings';
   $('welcome').hidden = true;
-  $('folderSyn').hidden = true; $('folderSyn').textContent = '';
+  $('folderSyn').hidden = true; $('folderSyn').textContent = ''; $('folderResume').hidden = true;
   $('seasonBar').hidden = true; $('moreIn').hidden = true; $('moreIn').innerHTML = ''; $('split').classList.remove('has-more');
   $('settingsPage').hidden = view !== 'settings';
   $('settingsBtn').classList.toggle('on', view === 'settings');
@@ -589,7 +589,31 @@ async function showSeasons(path, seasons) {
     $('seasonCount').textContent = seasonCountText(l.items.filter((i) => i.kind === 'video'));
   };
   showMoreIn(path);
+  showResume(path, seasons);
   await pick(active);
+}
+/** "Resume S2 · E5" in a series' header: the episode you were last watching, else the first episode. */
+async function showResume(path, seasons) {
+  const btn = $('folderResume');
+  const last = Object.values(history_).filter((h) => h.path.startsWith(path)).sort((a, b) => b.at - a.at)[0];
+  let item = null, label = '';
+  if (last && !last.done && last.pos > 30) {
+    item = known.get(last.path) || { path: last.path, name: last.name, kind: 'video' };
+    const m = /\bS(\d{1,2}) ?E(\d{1,3})\b/i.exec(last.name);
+    label = `Resume${m ? ` S${Number(m[1])} · E${Number(m[2])}` : ''}`;
+  } else {
+    let l;
+    try { l = await listFolder(seasons[0].path); } catch { return; }
+    const first = l.items.filter((i) => i.kind === 'video')[0];
+    if (!first) return;
+    item = first;
+    const m = /\bS(\d{1,2}) ?E(\d{1,3})\b/i.exec(first.name);
+    label = `${last ? 'Start over' : 'Play'}${m ? ` S${Number(m[1])} · E${Number(m[2])}` : ''}`;
+  }
+  if (state.view !== 'folder' || state.path !== path) return;
+  btn.innerHTML = `${I.play}${esc(label)}`;
+  btn.onclick = () => startPlayback(item);
+  btn.hidden = false;
 }
 /** Opened on a Season folder itself (from search or Continue watching): tabs for its sibling seasons, which open that folder. */
 async function showSiblingSeasons(path) {
