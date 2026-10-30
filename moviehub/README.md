@@ -62,8 +62,10 @@ files show up next to your films.
 - **Music** (mp3, flac, m4a, aac, ogg, opus, wav; wma and ape are converted on the fly): an album folder shows its tracks, with Play and Shuffle. A bar
   at the bottom keeps playing while you browse, with previous/next, shuffle, repeat, seek, volume, the album cover, and your keyboard's media keys.
   Track and album names come from the file and folder names, and the cover from a picture in the folder or inside the file.
-- **Books** (pdf, epub, cbz comics): a book opens full screen. PDFs use the bundled pdf.js (so it works offline), EPUBs open chapter by chapter with a
-  contents list and text size, and comics page by page (click the sides or use the arrow keys). The app remembers your place in each book.
+- **Books** (pdf, epub, cbz comics): a book opens full screen. PDFs and comics open as a **flipbook**: a cover, then two-page spreads whose pages turn like paper
+  (click a page's edge, drag a corner, use the arrow keys or the buttons). A button in the top bar switches to a plain single-page view and back, and
+  remembers your choice. PDFs use the bundled pdf.js and the flipbook uses StPageFlip (both bundled, so it works offline). EPUBs open chapter by chapter with a
+  contents list and text size (no page turning yet, because their text reflows). The app remembers your place in each book.
   Not supported yet: CBR comics, DRM-protected books, and book or music tags (titles come from names).
 
 **Jellyfin apps (preview):** Settings → **Let Jellyfin apps connect** makes the app answer like a Jellyfin server on port 8096, so
