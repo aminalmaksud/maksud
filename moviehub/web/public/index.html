@@ -79,7 +79,14 @@
   </div>
   <p id="status" role="status"></p>
   <div id="rows"></div>
-  <div id="grid"></div>
+  <div id="split">
+    <div id="splitMain">
+      <div id="seasonBar" hidden><div id="seasonTabs" role="tablist"></div><span id="seasonCount"></span></div>
+      <div id="grid"></div>
+    </div>
+    <aside id="moreIn" hidden></aside>
+  </div>
+  <section id="settingsPage" hidden></section>
 </main>
 
 <!-- Movie details -->
@@ -168,47 +175,63 @@
 <dialog id="settings">
   <form method="dialog" id="settingsForm">
     <h2>Settings</h2>
-    <label>Libraries <small>One per line, with a name: <code>TV Series | http://172.16.50.12/</code> or a folder on this computer: <code>Movie | G:\Movie</code></small>
-      <textarea name="servers" rows="5" spellcheck="false" placeholder="Movies | http://172.16.50.7/&#10;TV Series | http://172.16.50.12/" required></textarea></label>
-    <div class="lib-btns"><button type="button" class="btn" id="dhakaflixBtn">Fill in DhakaFlix servers</button><button type="button" class="btn" id="addFolderBtn">Add folder…</button></div>
-    <label class="check"><input type="checkbox" name="shareTv"> Share my folders with my TV
-      <small>Your Android TV app can then play the folders on this computer (when it's on), next to the ISP servers. Only devices on your home network can see them.</small></label>
-    <div class="tv-lines" id="tvLines" hidden></div>
-    <div class="two">
-      <label>Username <small>if the server asks</small><input name="username" autocomplete="off"></label>
-      <label>Password<input name="password" type="password" autocomplete="off"></label>
+    <div class="s-cols">
+      <div class="s-col">
+        <section class="s-card">
+          <h3>Libraries</h3>
+          <label><span class="lbl">Libraries</span> <small>One per line, with a name: <code>TV Series | http://172.16.50.12/</code> or a folder on this computer: <code>Movie | G:\Movie</code></small>
+            <textarea name="servers" rows="5" spellcheck="false" placeholder="Movies | http://172.16.50.7/&#10;TV Series | http://172.16.50.12/" required></textarea></label>
+          <div class="lib-btns"><button type="button" class="btn" id="addFolderBtn">Add folder…</button><button type="button" class="btn" id="dhakaflixBtn">Fill in DhakaFlix servers</button></div>
+          <label class="check"><input type="checkbox" name="shareTv"> Share my folders with my TV
+            <small>Your Android TV app can then play the folders on this computer (when it's on), next to the ISP servers. Only devices on your home network can see them.</small></label>
+          <div class="tv-lines" id="tvLines" hidden></div>
+        </section>
+        <section class="s-card">
+          <h3>Accounts</h3>
+          <div class="two">
+            <label>Username <small>if the server asks</small><input name="username" autocomplete="off"></label>
+            <label>Password<input name="password" type="password" autocomplete="off"></label>
+          </div>
+          <label>TMDB API key <small>recommended — adds posters, backdrops, ratings and plot summaries. Free at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a></small>
+            <input name="tmdbKey" autocomplete="off" spellcheck="false" placeholder="paste API key or read access token"></label>
+        </section>
+      </div>
+      <div class="s-col">
+        <section class="s-card">
+          <fieldset class="subkeys"><legend>Online subtitles <small>for “Search online…” in the player's subtitle menu. Add either one, or both.</small></legend>
+            <label>OpenSubtitles API key <small>free at <a href="https://www.opensubtitles.com/consumers" target="_blank" rel="noopener">opensubtitles.com/consumers</a>. Signing in below allows more downloads a day.</small>
+              <input name="opensubsKey" autocomplete="off" spellcheck="false"></label>
+            <div class="two">
+              <label>OpenSubtitles username<input name="opensubsUser" autocomplete="off" placeholder="optional"></label>
+              <label>Password<input name="opensubsPass" type="password" autocomplete="off"></label>
+            </div>
+            <label>SubDL API key <small>free on your profile page at <a href="https://subdl.com" target="_blank" rel="noopener">subdl.com</a></small>
+              <input name="subdlKey" autocomplete="off" spellcheck="false"></label>
+          </fieldset>
+        </section>
+        <section class="s-card">
+          <div class="field s-row"><span class="flabel">Look</span>
+            <div class="looks">
+              <button type="button" class="look-pick" data-look="vintage"><i></i><span>Vintage<small>Parchment and maroon, the original</small></span></button>
+              <button type="button" class="look-pick" data-look="contemporary"><i></i><span>Contemporary<small>StreamHub: sidebar, flat and modern</small></span></button>
+            </div>
+          </div>
+          <div class="field s-row"><span class="flabel">Theme</span>
+            <div class="themes mh-only">
+              <button type="button" class="theme-pick" data-theme-pick="parchment"><i></i>Parchment</button>
+              <button type="button" class="theme-pick" data-theme-pick="night"><i></i>Night</button>
+            </div>
+            <div class="sh-seg sh-only">
+              <button type="button" data-sh-theme="system">System</button>
+              <button type="button" data-sh-theme="light">Light</button>
+              <button type="button" data-sh-theme="dark">Dark</button>
+            </div>
+          </div>
+        </section>
+        <p class="note" id="ffmpegNote"></p>
+        <div class="actions"><button type="button" class="btn" id="cancelBtn">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+      </div>
     </div>
-    <label>TMDB API key <small>recommended — adds posters, backdrops, ratings and plot summaries. Free at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a></small>
-      <input name="tmdbKey" autocomplete="off" spellcheck="false" placeholder="paste API key or read access token"></label>
-    <fieldset class="subkeys"><legend>Online subtitles <small>for “Search online…” in the player's subtitle menu. Add either one, or both.</small></legend>
-      <label>OpenSubtitles API key <small>free at <a href="https://www.opensubtitles.com/consumers" target="_blank" rel="noopener">opensubtitles.com/consumers</a>. Signing in below allows more downloads a day.</small>
-        <input name="opensubsKey" autocomplete="off" spellcheck="false"></label>
-      <div class="two">
-        <label>OpenSubtitles username<input name="opensubsUser" autocomplete="off" placeholder="optional"></label>
-        <label>Password<input name="opensubsPass" type="password" autocomplete="off"></label>
-      </div>
-      <label>SubDL API key <small>free on your profile page at <a href="https://subdl.com" target="_blank" rel="noopener">subdl.com</a></small>
-        <input name="subdlKey" autocomplete="off" spellcheck="false"></label>
-    </fieldset>
-    <div class="field"><span class="flabel">Look</span>
-      <div class="looks">
-        <button type="button" class="look-pick" data-look="vintage"><i></i><span>Vintage<small>Parchment and maroon, the original</small></span></button>
-        <button type="button" class="look-pick" data-look="contemporary"><i></i><span>Contemporary<small>StreamHub: sidebar, flat and modern</small></span></button>
-      </div>
-    </div>
-    <div class="field"><span class="flabel">Theme</span>
-      <div class="themes mh-only">
-        <button type="button" class="theme-pick" data-theme-pick="parchment"><i></i>Parchment</button>
-        <button type="button" class="theme-pick" data-theme-pick="night"><i></i>Night</button>
-      </div>
-      <div class="sh-seg sh-only">
-        <button type="button" data-sh-theme="system">System</button>
-        <button type="button" data-sh-theme="light">Light</button>
-        <button type="button" data-sh-theme="dark">Dark</button>
-      </div>
-    </div>
-    <p class="note" id="ffmpegNote"></p>
-    <div class="actions"><button type="button" class="btn" id="cancelBtn">Cancel</button><button type="submit" class="btn primary">Save</button></div>
   </form>
 </dialog>
 <script src="app.js" type="module"></script>

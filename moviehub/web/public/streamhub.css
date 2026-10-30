@@ -202,9 +202,12 @@ html.streamhub .cap .s { font: 400 12px var(--body); color: var(--subtle); }
 html.streamhub .star { color: var(--warn); }
 
 /* episode list */
-html.streamhub .ep { border-radius: 8px; background: var(--surface); border: 1px solid var(--line); box-shadow: none; padding: 12px 16px; transform: none; }
+html.streamhub #grid.list { gap: 8px; background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
+html.streamhub .ep { grid-template-columns: 60px 1fr auto; border-bottom: 1px solid var(--line); border-radius: 8px; background: var(--surface); border: 1px solid var(--line); box-shadow: none; padding: 12px 16px; transform: none; }
 html.streamhub .ep:hover, html.streamhub .ep:focus-visible { transform: none; border-color: var(--blue); box-shadow: none; background: var(--raised); }
-html.streamhub .ep .num { font: 600 15px var(--mono); width: 44px; height: 44px; border-radius: 6px; background: var(--raised); color: var(--strong); }
+html.streamhub .ep:last-child { border-bottom: 1px solid var(--line); }
+html.streamhub .ep .num { font: 600 15px var(--mono); width: 44px; height: 44px; border-radius: 6px; background: var(--raised); color: var(--strong); -webkit-text-stroke: 0; box-shadow: none; }
+html.streamhub .ep .num::after { display: none; }
 html.streamhub .ep:hover .num { background: var(--blue); color: #fff; }
 html.streamhub .ep .t { font-weight: 600; color: var(--strong); }
 html.streamhub .ep .s { color: var(--subtle); font-size: 12.5px; }
@@ -415,3 +418,17 @@ html.streamhub dialog label.check input { accent-color: var(--blue); }
 html.streamhub .tv-lines { border-radius: 8px; background: var(--raised); border-color: var(--line2); color: var(--muted); }
 html.streamhub .tv-lines pre { border-radius: 6px; border-color: var(--line2); background: var(--bg); font-family: var(--mono); }
 html.streamhub .sv-card .tv-lines { background: none; border: 0; padding: 0; }
+
+/* series page: season tabs and "More in …" */
+html.streamhub #split.has-more { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+html.streamhub #seasonBar { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; flex-wrap: wrap; }
+html.streamhub #seasonTabs { display: flex; gap: 6px; flex-wrap: wrap; }
+html.streamhub .stab { all: unset; cursor: pointer; padding: 7px 14px; border-radius: 6px; border: 1px solid var(--line); color: var(--text); font: 600 13px var(--body); }
+html.streamhub .stab:hover { border-color: var(--blue); }
+html.streamhub .stab.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+html.streamhub #seasonCount { margin-left: auto; color: var(--muted); font-size: 13px; }
+html.streamhub #moreIn .more-head { margin: 0 0 12px; font: 600 16px var(--display); color: var(--strong); }
+html.streamhub .more-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 10px; }
+html.streamhub .more-grid .cap .s, html.streamhub .more-grid .badge, html.streamhub .more-grid .card-act { display: none; }
+@media (max-width: 1100px) { html.streamhub #split.has-more { display: block; } html.streamhub #moreIn { margin-top: 24px; } }
+html.streamhub #moreIn .more-head::before { background-color: var(--raised); border-radius: 6px; width: 28px; height: 28px; }

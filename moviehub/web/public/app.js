@@ -404,8 +404,11 @@ function resetView(view) {
   state.view = view;
   $('rows').innerHTML = ''; $('grid').innerHTML = ''; $('grid').className = '';
   $('status').textContent = ''; $('status').className = '';
-  $('folderHead').hidden = view === 'home';
+  $('folderHead').hidden = view === 'home' || view === 'settings';
   $('welcome').hidden = true;
+  $('seasonBar').hidden = true; $('moreIn').hidden = true; $('moreIn').innerHTML = ''; $('split').classList.remove('has-more');
+  $('settingsPage').hidden = view !== 'settings';
+  $('settingsBtn').classList.toggle('on', view === 'settings');
   if (view !== 'search') $('filter').value = ''; // a search left in the box must not hide a folder's contents
   hideHero();
   window.scrollTo({ top: 0 });
@@ -501,8 +504,85 @@ async function showFolder(path, { refresh = false } = {}) {
     $('rows').innerHTML = sortCategories(l.items.filter((x) => x.isDir)).map((d) => rowShell({ title: d.name, path: d.path })).join('');
     $('rows').querySelectorAll('.row[data-row]').forEach((r) => rowObserver.observe(r));
   } else {
+    const seasons = seasonsOf(l.items);
+    if (seasons) return showSeasons(l.path, seasons);
     renderGrid(playable(l.items));
+    showSiblingSeasons(l.path);
   }
+}
+
+/* ----- series page: season tabs, and "More in …" beside the episodes ----- */
+const SEASON_RE = /^(?:(?:season|series|s)[ ._-]*\d{1,2}\b|specials?\b)/i;
+const seasonNum = (n) => { const m = /^(?:season|series|s)[ ._-]*(\d{1,2})\b/i.exec(n.trim()); return m ? Number(m[1]) : null; };
+const seasonLabel = (n) => { const k = seasonNum(n); return k != null ? `Season ${k}` : n.replace(/\s*\b(?:1080p|720p|2160p|4k)\b.*$/i, '').trim() || n; };
+function seasonsOf(items) {
+  const dirs = items.filter((i) => i.isDir);
+  if (!dirs.length || dirs.length > 40 || items.some((i) => i.kind === 'video')) return null;
+  const name = (d) => d.name.replace(/\/$/, '');
+  if (!dirs.every((d) => SEASON_RE.test(name(d).trim()))) return null;
+  return dirs.slice().sort((a, b) => (seasonNum(name(a)) ?? 999) - (seasonNum(name(b)) ?? 999));
+}
+const parentPath = (p) => p.replace(/[^/]+\/?$/, '');
+function seasonTabsHtml(seasons, active) {
+  return seasons.map((d) => `<button role="tab" class="stab${d.path === active ? ' on' : ''}" aria-selected="${d.path === active}" data-season="${esc(d.path)}">${esc(seasonLabel(d.name.replace(/\/$/, '')))}</button>`).join('');
+}
+function seasonCountText(videos) {
+  const watched = videos.filter((v) => progressFor(v)?.done).length;
+  return `${videos.length} episode${videos.length === 1 ? '' : 's'}${watched ? ` · ${watched} watched` : ''}`;
+}
+/** "More in TV & Web Series": the other titles in the folder this series sits in. */
+async function showMoreIn(path) {
+  const parent = parentPath(path.replace(/\/$/, '') + '/');
+  if (!parent || parent === path) return;
+  let l;
+  try { l = await listFolder(parent); } catch { return; }
+  if (state.view !== 'folder' || state.path !== path && !state.path.startsWith(path)) return;
+  const norm = (p) => p.replace(/\/$/, '');
+  const more = l.items.filter((i) => i.isDir && norm(i.path) !== norm(path) && isTitleFolder(i.name)).slice(0, 6);
+  if (!more.length) return;
+  const name = trail.get(parent)?.name || state.groups.find((g) => g.root === parent)?.name || 'this library';
+  $('moreIn').innerHTML = `<h3 class="more-head">More in ${esc(name)}</h3><div class="more-grid">${more.map((it) => cardHtml(it)).join('')}</div>`;
+  $('moreIn').querySelectorAll('.card').forEach((c) => lazy.observe(c));
+  $('moreIn').hidden = false; $('split').classList.add('has-more');
+}
+/** A series folder holding Season folders: tabs on top, the chosen season's episodes below. */
+async function showSeasons(path, seasons) {
+  const watched = (d) => Math.max(0, ...Object.values(history_).filter((h) => h.path.startsWith(d.path)).map((h) => h.at));
+  const start = seasons.slice().sort((a, b) => watched(b) - watched(a))[0];
+  const active = watched(start) ? start : seasons[0];
+  const n = niceName(decodeURIComponent(path.replace(/\/$/, '').split('/').pop()));
+  if (n.title) $('folderTitle').textContent = n.title;
+  $('folderSub').textContent = [n.year && `${n.year}${/series|show/i.test(path) ? '–' : ''}`, `${seasons.length} season${seasons.length === 1 ? '' : 's'}`].filter(Boolean).join(' · ');
+  const pick = async (d) => {
+    $('seasonTabs').innerHTML = seasonTabsHtml(seasons, d.path); $('seasonBar').hidden = false;
+    $('seasonTabs').onclick = (e) => { const b = e.target.closest('[data-season]'); if (b) pick(seasons.find((x) => x.path === b.dataset.season)); };
+    $('status').textContent = 'Loading…'; $('seasonCount').textContent = '';
+    let l;
+    try { l = await listFolder(d.path); } catch (e) { if (state.view === 'folder') { $('status').textContent = e.message; $('status').className = 'error'; } return; }
+    if (state.view !== 'folder' || state.path !== path || $('seasonTabs').querySelector('.on')?.dataset.season !== d.path) return;
+    $('status').textContent = '';
+    renderGrid(playable(l.items));
+    $('seasonCount').textContent = seasonCountText(l.items.filter((i) => i.kind === 'video'));
+  };
+  showMoreIn(path);
+  await pick(active);
+}
+/** Opened on a Season folder itself (from search or Continue watching): tabs for its sibling seasons, which open that folder. */
+async function showSiblingSeasons(path) {
+  const last = path.replace(/\/$/, '').split('/').pop();
+  if (!SEASON_RE.test(decodeURIComponent(last).trim())) return;
+  const parent = parentPath(path.replace(/\/$/, '') + '/');
+  let l;
+  try { l = await listFolder(parent); } catch { return; }
+  if (state.view !== 'folder' || state.path !== path) return;
+  const seasons = seasonsOf(l.items);
+  if (!seasons || seasons.length < 2) return;
+  const norm = (p) => p.replace(/\/$/, '');
+  $('seasonTabs').innerHTML = seasonTabsHtml(seasons, seasons.find((d) => norm(d.path) === norm(path))?.path);
+  $('seasonTabs').onclick = (e) => { const b = e.target.closest('[data-season]'); if (b) go(b.dataset.season); };
+  $('seasonCount').textContent = seasonCountText(state.items.filter((i) => i.kind === 'video'));
+  $('seasonBar').hidden = false;
+  showMoreIn(parent);
 }
 
 async function showSearch(q) {
@@ -636,6 +716,7 @@ function route({ refresh = false } = {}) {
   if (h.startsWith('search/')) return showSearch(decodeURIComponent(h.slice(7)));
   if (h === 'downloads') return showDownloads();
   if (h === 'list') return showList();
+  if (h === 'settings' && !SH) return showSettings();
   if (h === 'server' && SH) return showServer();
   return showHome();
 }
@@ -873,7 +954,19 @@ const DHAKAFLIX = [
   'Anime & Cartoons | http://172.16.50.10/DHAKA-FLIX-10/',
 ].join('\n');
 
+let settingsReturn = '#/';
+/** Vintage shows Settings as a page (#/settings), Contemporary as a dialog. */
 async function openSettings() {
+  if (SH) return fillSettings(true);
+  if (location.hash !== '#/settings') { settingsReturn = location.hash || '#/'; location.hash = '#/settings'; } else showSettings();
+}
+async function showSettings() {
+  resetView('settings');
+  renderNav();
+  await fillSettings(false);
+}
+const closeSettings = () => { if (SH) $('settings').close(); else location.hash = settingsReturn === '#/settings' ? '#/' : settingsReturn; };
+async function fillSettings(modal) {
   const c = await api('/api/config');
   state.config = c;
   const f = $('settingsForm');
@@ -887,7 +980,7 @@ async function openSettings() {
   $('ffmpegNote').innerHTML = c.ffmpeg
     ? '✓ Sound &amp; format fix is on — every file plays with sound, and you can switch audio tracks and built-in subtitles.'
     : `⚠ ffmpeg was not found, so some files may play without sound and audio-track switching is off. Install it with ${INSTALL_FFMPEG} (the Mac and Windows apps include it).`;
-  if (!$('settings').open) $('settings').showModal();
+  if (modal && !$('settings').open) $('settings').showModal();
 }
 async function saveConfig(body) {
   await api('/api/config', { method: 'POST', body: JSON.stringify(body) });
@@ -923,7 +1016,7 @@ document.querySelectorAll('[data-look]').forEach((b) => {
   b.onclick = () => { if ((b.dataset.look === 'contemporary') === SH) return; prefs.look = b.dataset.look; savePrefs(); location.reload(); };
 });
 $('settingsBtn').onclick = openSettings;
-$('cancelBtn').onclick = () => $('settings').close();
+$('cancelBtn').onclick = closeSettings;
 $('dhakaflixBtn').onclick = () => { $('settingsForm').servers.value = DHAKAFLIX; };
 // Local folders: the system's folder picker (Mac and Windows apps), else type the path. Gives a "Name | path" line.
 async function pickFolderLine() {
@@ -975,7 +1068,7 @@ $('settingsForm').onsubmit = async (e) => {
       shareTv: f.shareTv.checked,
       keepOpensubsPass: !f.opensubsPass.value && state.config?.hasOpensubsPass && f.opensubsUser.value === state.config.opensubsUser, subdlKey: f.subdlKey.value,
     });
-    $('settings').close();
+    if (SH) $('settings').close();
   } catch (err) { alert(err.message); }
 };
 
@@ -1761,6 +1854,8 @@ document.addEventListener('keydown', (e) => {
 window.__mh = { now: () => now(), state: () => ({ mode: S.mode, offset: S.offset, adelay: S.adelay, sdelay: S.subs.delay, src: video.src, mini: player.classList.contains('mini'), playing: !video.paused }) };
 
 /* ----- boot ----- */
+// Vintage shows Settings as a page; the form moves out of the dialog (Contemporary keeps the dialog).
+if (!SH) $('settingsPage').append($('settingsForm'));
 if (!location.hash) history.replaceState(null, '', '#/');
 api('/api/config').then((c) => { state.config = c; renderNav(); }).catch(() => {});
 document.title = SH ? 'StreamHub' : 'MusingsofMaksudTV';

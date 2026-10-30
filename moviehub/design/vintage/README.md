@@ -21,9 +21,9 @@ The Vintage look is `web/public/style.css`, shared by the Mac and Windows apps (
 | Welcome: three choices, including "Add a folder from this computer" | Done. Each card acts straight away (no separate Continue button) |
 | Home, section page, details, downloads | Done (restyled) |
 | Episode list with jacket-style episode tiles | Done |
-| Section page: season tabs and a "More in…" side panel | Not yet. Seasons stay as folders |
+| Section page: season tabs and a "More in…" side panel | Done for series folders that hold Season folders (the tabs show the season you last watched; a Season folder opened directly gets the tabs too). Contemporary gets the same tabs and panel |
 | Player: gold pills, seek bar, time tooltip | Done |
 | Player menus | Done in the design's Night style for both themes, since the player is always dark |
-| Settings as a full page with cards | Not yet. Settings stays a dialog, restyled |
+| Settings as a full page with cards | Done in Vintage (`#/settings`, the gear turns maroon). Contemporary keeps its dialog |
 | Fonts | Bundled (Oswald, Plus Jakarta Sans, Hind Siliguri, Cinzel, Fraunces), so nothing loads from Google Fonts |
 | Drifting specks | Kept, and they stop for people who turn on reduced motion |
