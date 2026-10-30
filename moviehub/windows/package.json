@@ -1,7 +1,7 @@
 {
   "name": "streamhub-windows",
   "productName": "StreamHub",
-  "version": "1.0.1",
+  "version": "1.0.5",
   "description": "StreamHub, the Windows version of MusingsofMaksudTV: the web/ app in a Tauri window, with its server and ffmpeg built in",
   "private": true,
   "scripts": {

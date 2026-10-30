@@ -5,7 +5,7 @@ import zlib from 'node:zlib';
 const OS_API = process.env.OPENSUBTITLES_API || 'https://api.opensubtitles.com/api/v1';
 const SD_API = process.env.SUBDL_API || 'https://api.subdl.com/api/v1';
 const SD_DL = process.env.SUBDL_DL || 'https://dl.subdl.com';
-const UA = 'StreamHub v1.0.1';
+const UA = 'StreamHub v1.0.5';
 const TIMEOUT = 15000;
 
 /** OpenSubtitles' movie hash: file size plus the 64-bit sums of the first and last 64 KB. `read(start, end)` gives bytes. */

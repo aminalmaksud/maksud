@@ -149,7 +149,7 @@ look: sidebar navigation, light and dark themes that follow Windows, and a Serve
 runs the same server as the Mac app in the background, with ffmpeg included. You never have to start anything yourself.
 
 ### Install
-1. On GitHub, open **Releases** and download `StreamHub_1.0.1_x64-setup.exe` from the newest **StreamHub** pre-release.
+1. On GitHub, open **Releases** and download `StreamHub_1.0.5_x64-setup.exe` from the newest **StreamHub** pre-release.
    Every build is published there. It's also in **Actions → StreamHub Windows app** as the zipped
    **StreamHub-windows-x64** artifact.
 2. Run the setup. It installs for your user only, so you don't need admin rights.

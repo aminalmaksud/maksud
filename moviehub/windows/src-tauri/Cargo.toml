@@ -1,6 +1,6 @@
 [package]
 name = "streamhub"
-version = "1.0.1"
+version = "1.0.5"
 description = "StreamHub: MusingsofMaksudTV for Windows"
 edition = "2021"
 
