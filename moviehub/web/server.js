@@ -10,6 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT } from './listing.js';
 import { hasFfmpeg, ffmpegVersion, probe, remux, extractSubtitle, keyframeBefore } from './media.js';
 import { metaFor, seasonEpisodes } from './meta.js';
+import { createJellyfin } from './jellyfin.js';
 import { movieHash, searchSubtitles, fetchSubtitle } from './subsearch.js';
 import { groupKey, mergeListings, encodeV, decodeV } from './merge.js';
 import { downloadsEnabled, startDownload, cancelDownload, deleteDownloaded, listDownloads, localEntries, localFile } from './downloads.js';
@@ -46,6 +47,7 @@ function loadConfig() {
     // online subtitles (see subsearch.js)
     opensubsKey: c.opensubsKey ?? '', opensubsUser: c.opensubsUser ?? '', opensubsPass: c.opensubsPass ?? '', subdlKey: c.subdlKey ?? '',
     shareTv: !!c.shareTv, // share local folders with the Android TV app (see shareServer)
+    jellyfin: !!c.jellyfin, jellyfinPass: c.jellyfinPass ?? '', // Jellyfin-compatible API for Jellyfin apps (see jellyfin.js)
   };
 }
 let config = loadConfig();
@@ -536,13 +538,15 @@ async function handleConfig(req, res) {
       opensubsPass: b.keepOpensubsPass || b.opensubsPass === undefined ? config.opensubsPass : String(b.opensubsPass),
       subdlKey: b.subdlKey === undefined ? config.subdlKey : String(b.subdlKey).trim(),
       shareTv: b.shareTv === undefined ? config.shareTv : !!b.shareTv,
+      jellyfin: b.jellyfin === undefined ? config.jellyfin : !!b.jellyfin,
+      jellyfinPass: b.jellyfinPass === undefined ? config.jellyfinPass : String(b.jellyfinPass),
     };
     listCache.clear(); libRoots.clear(); localWalks.clear();
-    updateShare();
+    updateShare(); updateJellyfin();
     fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
-  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND, localLibs: localLibs(), share: shareInfo(),
+  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND, localLibs: localLibs(), share: shareInfo(), jellyfin: jellyfinInfo(),
     opensubsKey: config.opensubsKey, opensubsUser: config.opensubsUser, hasOpensubsPass: !!config.opensubsPass, subdlKey: config.subdlKey });
 }
 
@@ -712,6 +716,61 @@ function updateShare() {
   }
 }
 
+/* ---- Jellyfin-compatible API (jellyfin.js), on its own port for home-network apps ---- */
+const JELLYFIN_PORT = process.env.JELLYFIN_PORT === undefined ? 8096 : Number(process.env.JELLYFIN_PORT);
+let jellyfinServer = null, jellyfinPort = 0;
+const viewsList = async () => {
+  const all = bases();
+  const roots = await Promise.all(all.map((_, i) => libraryRoot(i).then((l) => l.path, () => `${i}/`)));
+  return groups().map((g) => ({ name: g.name, rel: groupRoot(g, roots) }));
+};
+const childrenOf = async (rel) => {
+  if (rel.startsWith('v:')) return (await listVirtual(rel)).items;
+  return (/^\d+\/$/.test(rel) ? await libraryRoot(Number(rel.slice(0, -1))) : await listDir(rel)).items;
+};
+const firstReal = (rel) => (String(rel).startsWith('v:') ? decodeV(rel)?.[0] || '' : rel);
+const jf = createJellyfin({
+  stateFile: path.join(path.dirname(CONFIG_FILE), 'jellyfin-state.json'),
+  password: () => config.jellyfinPass,
+  views: viewsList,
+  children: childrenOf,
+  media: (rel) => media(firstReal(rel)),
+  probe: async (rel) => { if (!hasFfmpeg) return null; const m = media(rel); return probe(m.src, m.auth); },
+  metaFor: (rel) => (rel.startsWith('local/') ? null : metaFor(firstReal(rel), async (dir) => (await listDir(dir)).items, config.tmdbKey)),
+  stream: async (req, res, rel) => { const m = media(rel); return m.local ? serveFile(req, res, m.src) : proxy(req, res, m.src); },
+  image: async (req, res, src) => {
+    if (src.startsWith('/tmdb/')) return handleTmdbImage(req, new URL(src, 'http://x'), res);
+    const rel = new URL(src, 'http://x').searchParams.get('path');
+    const m = media(rel);
+    return m.local ? serveFile(req, res, m.src) : proxy(req, res, m.src, { cache: true });
+  },
+});
+function jellyfinInfo() {
+  return {
+    enabled: config.jellyfin, running: !!jellyfinServer, port: jellyfinPort || JELLYFIN_PORT, addresses: lanAddresses(),
+    user: jf.userName, hasPassword: !!config.jellyfinPass,
+  };
+}
+function updateJellyfin() {
+  if (config.jellyfin && !jellyfinServer) {
+    const srv = http.createServer(async (req, res) => {
+      try {
+        // Only devices on the home network (a private address) get answers, like the TV share.
+        if (!isPrivateIp(req.socket.remoteAddress)) return json(res, 403, { error: 'Home network only' });
+        await jf.handle(req, res);
+      } catch (e) {
+        if (res.headersSent) return res.destroy();
+        json(res, e.status || 500, { error: e.message });
+      }
+    });
+    srv.on('error', (e) => { console.error('Jellyfin API:', e.message); if (jellyfinServer === srv) { jellyfinServer = null; jellyfinPort = 0; } });
+    srv.listen(JELLYFIN_PORT, '0.0.0.0', () => { jellyfinPort = srv.address().port; });
+    jellyfinServer = srv;
+  } else if (!config.jellyfin && jellyfinServer) {
+    jellyfinServer.close(); jellyfinServer.closeAllConnections?.(); jellyfinServer = null; jellyfinPort = 0;
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
@@ -748,8 +807,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.on('listening', updateShare);
-server.on('close', () => { if (shareServer) { shareServer.close(); shareServer = null; } });
+server.on('listening', () => { updateShare(); updateJellyfin(); });
+server.on('close', () => { if (shareServer) { shareServer.close(); shareServer = null; } if (jellyfinServer) { jellyfinServer.close(); jellyfinServer = null; } jf.close(); });
 const start = () => server.listen(PORT, HOST, () => console.log(`MusingsofMaksudTV running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`));
 // import.meta.url is empty in the Windows app's bundle, which calls start() from serve.js instead.
 if (import.meta.url && process.argv[1] === fileURLToPath(import.meta.url)) start();

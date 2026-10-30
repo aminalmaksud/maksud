@@ -455,6 +455,8 @@ h2.row-title { cursor: default; }
 .more-grid .badge, .more-grid .card-act { display: none; }
 @media (max-width: 1100px) { #split.has-more { display: block; } #moreIn { margin-top: 30px; } .more-grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); } }
 
+#settingsPage .jf-box { margin: 4px 0 12px; }
+#settingsPage .jf-box .tv-lines p { margin: 8px 0; }
 /* the Contemporary dialog has no cards: its form keeps the old flat layout */
 dialog .s-card > h3 { display: none; }
 /* ---------- settings page (Vintage; Contemporary keeps the dialog) ---------- */

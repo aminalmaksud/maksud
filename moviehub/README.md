@@ -57,6 +57,16 @@ sections, search, resume and the full player. Name a folder library the same as 
 Contemporary. Each look has its own themes: Parchment / Night, or System / Light / Dark. Both looks bring their fonts
 with them, so they look the same offline. The Vintage design sources are in `design/vintage/`, and the Contemporary ones in `windows/design/`.
 
+**Jellyfin apps (preview):** Settings → **Let Jellyfin apps connect** makes the app answer like a Jellyfin server on port 8096, so
+Jellyfin apps on phones, tablets and TVs can browse and play your libraries while this computer is on. In the app, add a server at
+`http://<this computer's IP>:8096` and sign in as `streamhub` (no password unless you set one in Settings). It's off until you
+switch it on, and only devices on your home network get answers. Windows may ask once to allow incoming connections (choose Allow, private networks).
+Version 1 shows each section as a library of folders and plays every file directly, without converting it, so a player has to handle the
+file's own video and audio formats. There's no music, no books, no live TV, and no typed Movie/Series items yet.
+It passes the official Jellyfin SDK's sign-in, browse, playback-info, ranged-stream and progress calls, but it hasn't been tried in
+Streamyfin or the other apps yet. Streamyfin's README says it has no music support, and I couldn't confirm an Android TV release of it,
+so the official Jellyfin app is the surer choice on a TV.
+
 **Synopsis:** with a free [TMDB](https://www.themoviedb.org/settings/api) key in Settings, every movie and series shows its plot: under the title on its page, in the details sheet, and when you hover a poster. Each episode of a series also shows its own title, plot and length. Without a key, the page says how to add one.
 
 **Online subtitles** (optional): to use **Search online…** in the player's subtitle menu (like VLC), add a free API key

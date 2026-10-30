@@ -103,6 +103,16 @@
           <div class="tv-lines" id="tvLines" hidden></div>
         </section>
         <section class="s-card">
+          <h3>Jellyfin apps</h3>
+          <label class="check"><input type="checkbox" name="jellyfin"> Let Jellyfin apps connect
+            <small>Apps like Streamyfin or the official Jellyfin apps can then browse and play your libraries from this computer (when it's on). Only devices on your home network can connect.</small></label>
+          <div class="jf-box" id="jfBox" hidden>
+            <label class="check"><input type="checkbox" name="jellyfinNoPass" checked> Don't ask for a password</label>
+            <label id="jfPassRow" hidden>Password for the apps <small>optional; leave empty to keep the saved one</small><input name="jellyfinPass" type="password" autocomplete="new-password"></label>
+            <div class="tv-lines" id="jfLines"></div>
+          </div>
+        </section>
+        <section class="s-card">
           <h3>Accounts</h3>
           <div class="two">
             <label>Username <small>if the server asks</small><input name="username" autocomplete="off"></label>

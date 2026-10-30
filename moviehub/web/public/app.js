@@ -1051,6 +1051,8 @@ async function fillSettings() {
   f.opensubsPass.placeholder = c.hasOpensubsPass ? '•••••• (saved)' : 'optional';
   f.shareTv.checked = !!c.share?.enabled;
   renderTvLines(c.share);
+  f.jellyfin.checked = !!c.jellyfin?.enabled; f.jellyfinNoPass.checked = !c.jellyfin?.hasPassword; f.jellyfinPass.value = '';
+  renderJellyfin(c.jellyfin);
   markTheme(); markLook();
   $('ffmpegNote').innerHTML = c.ffmpeg
     ? '✓ Sound &amp; format fix is on — every file plays with sound, and you can switch audio tracks and built-in subtitles.'
@@ -1121,6 +1123,19 @@ document.addEventListener('click', (e) => {
   if (!b) return;
   navigator.clipboard?.writeText(b.previousElementSibling.textContent).then(() => { b.textContent = 'Copied'; }, () => {});
 });
+/** Where to point a Jellyfin app: this computer's address on the home network, and the user name. */
+function renderJellyfin(j) {
+  const f = $('settingsForm');
+  $('jfBox').hidden = !f.jellyfin.checked;
+  $('jfPassRow').hidden = f.jellyfinNoPass.checked;
+  if (!j) return;
+  const addr = (j.addresses || []).map((a) => `http://${a}:${j.port}`);
+  $('jfLines').innerHTML = j.enabled
+    ? `<p>${j.running ? 'Ready.' : 'Starting…'} In the app, add a server at ${addr.length ? addr.map((a) => `<b>${esc(a)}</b>`).join(' or ') : `<b>http://&lt;this computer’s IP&gt;:${j.port}</b>`}.<br>User name: <b>${esc(j.user)}</b>${j.hasPassword ? ', and the password above' : ' (no password)'}.</p>
+      <p>Each section shows as a library of folders. Windows or macOS may ask once to allow incoming connections: choose Allow (private networks).</p>`
+    : '<p>Save to start it.</p>';
+}
+$('settingsForm').jellyfin.onchange = $('settingsForm').jellyfinNoPass.onchange = () => renderJellyfin(null);
 $('settingsForm').shareTv.onchange = (e) => { if (!e.target.checked) renderTvLines(null); else renderTvLines({ ...(state.config?.share || {}), enabled: true, lines: state.config?.share?.lines || [] }); };
 /** Downloads make no sense for files that are already on this computer. */
 const canDownload = (p) => !String(p).startsWith('local/') && !(state.config?.localLibs || []).includes(Number(realPath(p).split('/')[0]));
@@ -1140,6 +1155,7 @@ $('settingsForm').onsubmit = async (e) => {
       servers: f.servers.value, username: f.username.value, password: f.password.value, keepPassword: keepPw, tmdbKey: f.tmdbKey.value,
       opensubsKey: f.opensubsKey.value, opensubsUser: f.opensubsUser.value, opensubsPass: f.opensubsPass.value,
       shareTv: f.shareTv.checked,
+      jellyfin: f.jellyfin.checked, jellyfinPass: f.jellyfinNoPass.checked ? '' : (f.jellyfinPass.value || undefined),
       keepOpensubsPass: !f.opensubsPass.value && state.config?.hasOpensubsPass && f.opensubsUser.value === state.config.opensubsUser, subdlKey: f.subdlKey.value,
     });
   } catch (err) { alert(err.message); }

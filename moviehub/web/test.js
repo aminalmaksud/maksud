@@ -109,6 +109,7 @@ process.env.SERVER_URL = `http://127.0.0.1:${isp.address().port}/movies/`;
 process.env.PORT = '0';
 process.env.CONFIG_FILE = path.join(os.tmpdir(), `moviehub-test-${process.pid}.json`);
 process.env.SHARE_PORT = '0'; // any free port for the TV share
+process.env.JELLYFIN_PORT = '0'; // and for the Jellyfin API
 const { server } = await import('./server.js');
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${server.address().port}`;
@@ -292,4 +293,54 @@ assert.deepEqual((await (await get(`/api/episodes?path=${epPath}&season=9`)).jso
 assert.deepEqual((await (await get(`/api/episodes?path=${epPath}&season=abc`)).json()).episodes, []);
 assert.equal((await get('/api/episodes?path=0%2F..%2F..%2Fx%2F&season=1')).status, 400);
 tmdbFake.close();
+
+// --- Jellyfin-compatible API: sign in, browse the library as folders, play with byte ranges, keep resume positions
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, jellyfin: false }) });
+const jfPort = async () => { for (let i = 0; i < 50; i++) { const j = (await (await get('/api/config')).json()).jellyfin; if (j.running && j.port) return j.port; await new Promise((r) => setTimeout(r, 50)); } throw new Error('Jellyfin API did not start'); };
+assert.equal((await (await get('/api/config')).json()).jellyfin.running, false, 'off by default');
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, jellyfin: true }) });
+const J = `http://127.0.0.1:${await jfPort()}`;
+const jget = (p, token, h = {}) => fetch(J + p, { headers: { ...(token ? { 'x-emby-token': token } : {}), ...h } });
+const pub = await (await jget('/System/Info/Public')).json();
+assert.deepEqual([pub.ProductName, pub.StartupWizardCompleted, /^[0-9a-f]{32}$/.test(pub.Id)], ['Jellyfin Server', true, true]);
+assert.equal((await jget('/UserViews')).status, 401, 'needs a token');
+const auth = (body) => fetch(J + '/Users/AuthenticateByName', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+let login = await (await auth({ Username: 'anything', Pw: '' })).json();
+const T = login.AccessToken;
+assert.ok(T && login.User.Name === 'streamhub' && login.ServerId === pub.Id, 'signs in without a password');
+assert.equal((await jget('/Users/Me', T)).status, 200);
+assert.equal((await jget('/UserViews', 'bad-token')).status, 401);
+const views = (await (await jget('/UserViews', T)).json()).Items;
+assert.ok(views.length >= 1 && views[0].Type === 'CollectionFolder' && views[0].CollectionType === 'homevideos', 'one library per section');
+const kids = (await (await jget(`/Items?ParentId=${views[0].Id}&SortBy=SortName`, T)).json());
+assert.deepEqual(kids.Items.map((i) => [i.Name, i.Type]), [['Action', 'Folder'], ['Big Film (2020)', 'Video']], 'folders first, then videos');
+const film = kids.Items.find((i) => i.Type === 'Video');
+assert.equal(film.IsFolder, false);
+assert.equal((await (await jget(`/Items/${film.Id}`, T)).json()).Id, film.Id);
+assert.equal((await (await jget(`/Items?ParentId=${views[0].Id}&IncludeItemTypes=Audio`, T)).json()).Items.length, 0, 'types we have none of');
+const inAction = (await (await jget(`/Items?ParentId=${kids.Items[0].Id}`, T)).json()).Items;
+assert.deepEqual(inAction.map((i) => i.Name), ["Fast"], "opens a folder");
+const pbi = await (await fetch(`${J}/Items/${film.Id}/PlaybackInfo`, { method: 'POST', headers: { 'x-emby-token': T, 'content-type': 'application/json' }, body: '{}' })).json();
+assert.equal(pbi.MediaSources.length, 1);
+assert.deepEqual([pbi.MediaSources[0].SupportsDirectPlay, pbi.MediaSources[0].SupportsTranscoding, pbi.MediaSources[0].Container], [true, false, 'mkv']);
+const part = await jget(`/Videos/${film.Id}/stream?static=true&mediaSourceId=${pbi.MediaSources[0].Id}&api_key=${T}`, null, { range: 'bytes=100-199' });
+assert.equal(part.status, 206);
+assert.equal((await part.arrayBuffer()).byteLength, 100, 'ranges pass through for seeking');
+assert.equal((await jget(`/Videos/${film.Id}/stream`)).status, 401, 'streams need a token too');
+// resume: a report of progress puts it under Continue watching, and finishing it takes it out
+const report = (kind, ticks) => fetch(`${J}/Sessions/Playing${kind}`, { method: 'POST', headers: { 'x-emby-token': T, 'content-type': 'application/json' }, body: JSON.stringify({ ItemId: film.Id, PositionTicks: ticks }) });
+assert.equal((await report('/Progress', 600 * 1e7)).status, 204);
+const resume = (await (await jget('/UserItems/Resume', T)).json()).Items;
+assert.deepEqual(resume.map((i) => [i.Id, i.UserData.PlaybackPositionTicks]), [[film.Id, 600 * 1e7]]);
+await fetch(`${J}/UserPlayedItems/${film.Id}`, { method: 'POST', headers: { 'x-emby-token': T } });
+assert.equal((await (await jget('/UserItems/Resume', T)).json()).Items.length, 0);
+assert.equal((await (await jget(`/Items/${film.Id}`, T)).json()).UserData.Played, true);
+assert.equal((await jget('/Shows/NextUp', T).then((r) => r.json())).TotalRecordCount, 0);
+// optional password: wrong one is refused, the right one signs in
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, jellyfin: true, jellyfinPass: 'sesame' }) });
+assert.equal((await auth({ Username: 'streamhub', Pw: 'nope' })).status, 401);
+assert.equal((await auth({ Username: 'streamhub', Pw: 'sesame' })).status, 200);
+assert.equal((await (await get('/api/config')).json()).jellyfin.hasPassword, true);
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, jellyfin: false }) });
+await assert.rejects(fetch(J + '/System/Info/Public'), 'switching it off closes the port');
 server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });
