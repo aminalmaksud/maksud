@@ -772,7 +772,9 @@ function reveal(dir) {
 const SHARE_PORT = Number(process.env.SHARE_PORT ?? 8090);
 let shareServer = null, sharePort = 0;
 const isPrivateIp = (ip) => /^(?:::ffff:)?(?:127\.|10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.|169\.254\.)|^::1$|^f[cd]|^fe80:/i.test(ip || '');
-const lanAddresses = () => Object.values(os.networkInterfaces()).flat()
+// Virtual adapters (WSL, Hyper-V, Docker, VPN, VMs) have addresses a phone or TV can't reach, so they're left out.
+const VIRTUAL_NIC = /vethernet|wsl|hyper-v|docker|vmware|virtualbox|vbox|loopback|tailscale|zerotier|tap-|tun\d|utun|vpn|bridge|veth|br-/i;
+const lanAddresses = () => Object.entries(os.networkInterfaces()).filter(([name]) => !VIRTUAL_NIC.test(name)).flatMap(([, list]) => list || [])
   .filter((n) => n && n.family === 'IPv4' && !n.internal && isPrivateIp(n.address)).map((n) => n.address);
 /** URL segment for each local library, by its name ("My Movies" -> "My%20Movies"), unique. */
 function sharedLibs() {
@@ -840,7 +842,7 @@ function updateShare() {
 
 /* ---- Jellyfin-compatible API (jellyfin.js), on its own port for home-network apps ---- */
 const JELLYFIN_PORT = process.env.JELLYFIN_PORT === undefined ? 8096 : Number(process.env.JELLYFIN_PORT);
-let jellyfinServer = null, jellyfinPort = 0;
+let jellyfinServer = null, jellyfinPort = 0, jellyfinNote = '', jellyfinError = '';
 const viewsList = async () => {
   const all = bases();
   const roots = await Promise.all(all.map((_, i) => libraryRoot(i).then((l) => l.path, () => `${i}/`)));
@@ -876,7 +878,7 @@ const jf = createJellyfin({
 });
 function jellyfinInfo() {
   return {
-    enabled: config.jellyfin, running: !!jellyfinServer, port: jellyfinPort || JELLYFIN_PORT, addresses: lanAddresses(),
+    enabled: config.jellyfin, running: !!jellyfinPort, port: jellyfinPort || JELLYFIN_PORT, addresses: lanAddresses(), note: jellyfinNote, error: jellyfinError,
     user: jf.userName, hasPassword: !!config.jellyfinPass,
   };
 }
@@ -892,11 +894,25 @@ function updateJellyfin() {
         json(res, e.status || 500, { error: e.message });
       }
     });
-    srv.on('error', (e) => { console.error('Jellyfin API:', e.message); if (jellyfinServer === srv) { jellyfinServer = null; jellyfinPort = 0; } });
-    srv.listen(JELLYFIN_PORT, '0.0.0.0', () => { jellyfinPort = srv.address().port; });
+    jellyfinNote = ''; jellyfinError = '';
     jellyfinServer = srv;
+    // Port 8096 is the real Jellyfin's. When something already has it, take the next free port and say so.
+    const listenOn = (port, tries) => {
+      const fail = (e) => {
+        if (jellyfinServer !== srv) return;
+        if (e.code === 'EADDRINUSE' && JELLYFIN_PORT !== 0 && tries < 20) {
+          jellyfinNote = `Port ${JELLYFIN_PORT} is already in use (probably another Jellyfin server), so StreamHub uses ${port + 1}.`;
+          return listenOn(port + 1, tries + 1);
+        }
+        console.error('Jellyfin API:', e.message);
+        jellyfinError = e.message; jellyfinServer = null; jellyfinPort = 0;
+      };
+      srv.once('error', fail);
+      srv.listen(port, '0.0.0.0', () => { srv.off('error', fail); srv.on('error', (e) => console.error('Jellyfin API:', e.message)); jellyfinPort = srv.address().port; });
+    };
+    listenOn(JELLYFIN_PORT, 0);
   } else if (!config.jellyfin && jellyfinServer) {
-    jellyfinServer.close(); jellyfinServer.closeAllConnections?.(); jellyfinServer = null; jellyfinPort = 0;
+    jellyfinServer.close(); jellyfinServer.closeAllConnections?.(); jellyfinServer = null; jellyfinPort = 0; jellyfinNote = ''; jellyfinError = '';
   }
 }
 

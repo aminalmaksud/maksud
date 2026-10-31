@@ -117,8 +117,11 @@ body::before {
 }
 @keyframes drift { to { transform: translate3d(0, -26px, 0); } }
 @media (prefers-reduced-motion: reduce) {
+  /* Only the decorative motion stops. Animations that drive the app (the hero timer that moves the slideshow on, spinners) must keep running. */
   body::before { animation: none; }
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  .hero-slide.on, .hero-poster, .hero-text:not(.out) :is(h1, .hero-meta, .hero-overview), #player.mini, .sheet-card, .sheet-backdrop { animation: none !important; }
+  .card .poster, .btn, .hero-text { transition: none !important; }
+  html { scroll-behavior: auto; }
 }
 body > * { position: relative; z-index: 1; }
 button { font: inherit; color: inherit; cursor: pointer; }
@@ -555,6 +558,7 @@ html.electron .rd-bar { padding-left: 92px; }
 
 #settingsPage .jf-box { margin: 4px 0 12px; }
 #settingsPage .jf-box .tv-lines p { margin: 8px 0; }
+.tv-lines .bad { color: var(--maroon); font-weight: 700; }
 /* the Contemporary dialog has no cards: its form keeps the old flat layout */
 dialog .s-card > h3 { display: none; }
 /* ---------- settings page (Vintage; Contemporary keeps the dialog) ---------- */

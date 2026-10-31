@@ -1227,9 +1227,10 @@ function renderJellyfin(j) {
   $('jfPassRow').hidden = f.jellyfinNoPass.checked;
   if (!j) return;
   const addr = (j.addresses || []).map((a) => `http://${a}:${j.port}`);
-  $('jfLines').innerHTML = j.enabled
+  $('jfLines').innerHTML = j.error ? `<p class="bad">Couldn’t start: ${esc(j.error)}</p>` : j.enabled
     ? `<p>${j.running ? 'Ready.' : 'Starting…'} In the app, add a server at ${addr.length ? addr.map((a) => `<b>${esc(a)}</b>`).join(' or ') : `<b>http://&lt;this computer’s IP&gt;:${j.port}</b>`}.<br>User name: <b>${esc(j.user)}</b>${j.hasPassword ? ', and the password above' : ' (no password)'}.</p>
-      <p>Each section shows as a library of folders. Windows or macOS may ask once to allow incoming connections: choose Allow (private networks).</p>`
+      ${j.note ? `<p>${esc(j.note)}</p>` : ''}
+      <p>Windows or macOS may ask once to allow incoming connections: choose Allow (private networks).</p>`
     : '<p>Save to start it.</p>';
 }
 $('settingsForm').jellyfin.onchange = $('settingsForm').jellyfinNoPass.onchange = () => renderJellyfin(null);
