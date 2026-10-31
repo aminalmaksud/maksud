@@ -458,9 +458,9 @@ async function handleIptv(url, res) {
 }
 /** A live channel as one continuous stream the browser can play (Matroska, or MP4 for engines that need it). Not seekable. */
 async function handleLive(url, res) {
-  if (!hasFfmpeg) throw httpError(501, 'Live TV needs ffmpeg');
   const ch = (await channelsOf(false)).channels.find((c) => c.id === url.searchParams.get('id'));
   if (!ch) throw httpError(404, 'Unknown channel');
+  if (!hasFfmpeg) throw httpError(501, 'Live TV needs ffmpeg');
   // What's in the stream decides whether the picture can be copied. If the channel won't say, assume the usual H.264 and AAC.
   const info = await probe(ch.url, '').catch(() => ({ video: { transcode: false }, audio: [{}], duration: 0 }));
   const mp4 = url.searchParams.get('fmt') === 'mp4';
