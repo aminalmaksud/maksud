@@ -97,7 +97,9 @@
         <section class="s-card">
           <h3>Libraries</h3>
           <label><span class="lbl">Libraries</span> <small>One per line, with a name: <code>TV Series | http://172.16.50.12/</code> or a folder on this computer: <code>Movie | G:\Movie</code>. Add what it holds at the end (<code>movies</code>, <code>shows</code>, <code>music</code> or <code>books</code>): <code>Serial | G:\Serial | shows</code></small>
-            <textarea name="servers" rows="5" spellcheck="false" placeholder="Movies | http://172.16.50.7/&#10;TV Series | http://172.16.50.12/" required></textarea></label>
+            <textarea name="servers" rows="5" spellcheck="false" placeholder="Movies | http://172.16.50.7/&#10;TV Series | http://172.16.50.12/"></textarea></label>
+          <label><span class="lbl">Live TV</span> <small>M3U playlists, one per line: <code>My channels | https://example.com/list.m3u</code> or a file on this computer</small>
+            <textarea name="playlists" rows="3" spellcheck="false" placeholder="My channels | https://example.com/list.m3u"></textarea></label>
           <div class="lib-btns"><button type="button" class="btn" id="addFolderBtn">Add folder…</button><button type="button" class="btn" id="dhakaflixBtn">Fill in DhakaFlix servers</button></div>
           <label class="check"><input type="checkbox" name="shareTv"> Share my folders with my TV
             <small>Your Android TV app can then play the folders on this computer (when it's on), next to the ISP servers. Only devices on your home network can see them.</small></label>
@@ -198,6 +200,15 @@
     <div class="rd-ctl" id="rdCtl"></div>
   </div>
   <div class="rd-body" id="rdBody"></div>
+</div>
+
+<!-- Live TV viewer -->
+<div id="liveView" tabindex="-1" hidden>
+  <video id="liveVideo" playsinline autoplay></video>
+  <div class="lv-top"><button class="icon-btn" id="liveClose" title="Close (Esc)"></button>
+    <div class="lv-title"><b id="liveName"></b><small id="liveGroup"></small></div>
+    <div class="lv-ctl"><button class="icon-btn" id="livePrev" title="Previous channel (↑)"></button><button class="icon-btn" id="liveNext" title="Next channel (↓)"></button><button class="icon-btn" id="liveFull" title="Full screen (F)">⛶</button></div></div>
+  <p id="liveMsg" role="status"></p>
 </div>
 
 <!-- Music: stays at the bottom while you browse -->

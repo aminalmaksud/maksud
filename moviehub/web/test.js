@@ -111,7 +111,8 @@ await new Promise((r) => tmdbFake.listen(0, '127.0.0.1', r));
 process.env.TMDB_API = `http://127.0.0.1:${tmdbFake.address().port}`;
 process.env.SERVER_URL = `http://127.0.0.1:${isp.address().port}/movies/`;
 process.env.PORT = '0';
-process.env.CONFIG_FILE = path.join(os.tmpdir(), `moviehub-test-${process.pid}.json`);
+// its own folder: the Jellyfin state file lives beside the config, and must not carry over from an earlier run
+process.env.CONFIG_FILE = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'moviehub-test-')), 'config.json');
 process.env.SHARE_PORT = '0'; // any free port for the TV share
 process.env.JELLYFIN_PORT = '0'; // and for the Jellyfin API
 const { server } = await import('./server.js');
@@ -439,4 +440,41 @@ assert.equal((await (await fetch(`${J2}/UserViews`, { headers: { 'x-emby-token':
 await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Stuff | ${serial}`, jellyfin: false }) });
 assert.equal((await (await get('/api/browse')).json()).rootType, undefined, 'without a type nothing changes');
 fs.rmSync(serial, { recursive: true, force: true });
-server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });
+// --- Live TV: an M3U playlist's channels, and a channel played as one continuous stream
+import { parseM3U } from './iptv.js';
+const chs = parseM3U('#EXTM3U\n#EXTINF:-1 tvg-id="a.bd" tvg-logo="http://x/a.png" group-title="News, Local",Channel A, HD\nhttp://h/a.m3u8\n#EXTGRP:Sports\n#EXTINF:-1,Channel B\nhttp://h/b.ts\n#EXTINF:-1 group-title="",No group\nrtmp://h/c\n', 'My list');
+assert.deepEqual(chs.map((c) => [c.name, c.group, c.logo]), [['Channel A, HD', 'News, Local', 'http://x/a.png'], ['Channel B', 'Sports', ''], ['No group', 'Sports', '']], 'names, groups and logos (an #EXTGRP line holds until the next one)');
+assert.equal(chs[0].url, 'http://h/a.m3u8');
+{
+  const { spawnSync } = await import('node:child_process');
+  const clip = path.join(os.tmpdir(), `mh-live-${process.pid}.ts`);
+  const made = spawnSync(process.env.FFMPEG_PATH || 'ffmpeg', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'testsrc=size=160x120:rate=10:duration=3', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=3', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest', '-f', 'mpegts', clip]);
+  const tvHost = http.createServer((q, s) => {
+    if (q.url === '/list.m3u') { s.setHeader('content-type', 'audio/x-mpegurl'); return s.end(`#EXTM3U\n#EXTINF:-1 group-title="Test",Test One\nhttp://127.0.0.1:${tvHost.address().port}/one.ts\n#EXTINF:-1 group-title="Test",Test Two\nhttp://127.0.0.1:${tvHost.address().port}/one.ts?x=2\n`); }
+    if (q.url.startsWith('/one.ts')) return fs.createReadStream(clip).pipe(s);
+    s.statusCode = 404; s.end();
+  });
+  await new Promise((r) => tvHost.listen(0, '127.0.0.1', r));
+  const plUrl = `http://127.0.0.1:${tvHost.address().port}/list.m3u`;
+  assert.equal((await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, playlists: `Mine | ${plUrl}`, jellyfin: false }) })).status, 200);
+  assert.deepEqual((await (await get('/api/config')).json()).playlists, [`Mine | ${plUrl}`]);
+  r = await (await get('/api/iptv')).json();
+  assert.deepEqual(r.channels.map((c) => [c.name, c.group]), [['Test One', 'Test'], ['Test Two', 'Test']]);
+  assert.ok(r.channels[0].id && !('url' in r.channels[0]), 'the page gets ids, not stream addresses');
+  assert.equal((await get('/live?id=nope')).status, 404);
+  if (made.status === 0) {
+    const live = await get(`/live?id=${r.channels[0].id}`);
+    assert.equal(live.status, 200); assert.equal(live.headers.get('content-type'), 'video/webm');
+    const bytes = Buffer.from(await live.arrayBuffer());
+    assert.ok(bytes.length > 2000 && bytes.readUInt32BE(0) === 0x1a45dfa3, 'a Matroska stream');
+    const live2 = await get(`/live?id=${r.channels[0].id}&fmt=mp4`);
+    assert.equal(live2.headers.get('content-type'), 'video/mp4');
+    assert.equal(Buffer.from(await live2.arrayBuffer()).subarray(4, 8).toString(), 'ftyp', 'an MP4 stream');
+  } else console.log('ffmpeg missing: skipped the /live stream check');
+  await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, playlists: `Bad | http://127.0.0.1:${tvHost.address().port}/nope.m3u`, jellyfin: false }) });
+  r = await (await get('/api/iptv')).json();
+  assert.equal(r.channels.length, 0); assert.match(r.errors[0], /404/, 'a broken playlist is reported, not hidden');
+  await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, playlists: '', jellyfin: false }) });
+  tvHost.close(); fs.rmSync(clip, { force: true });
+}
+server.close(); isp.close(); fs.rmSync(path.dirname(process.env.CONFIG_FILE), { recursive: true, force: true });

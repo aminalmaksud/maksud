@@ -99,7 +99,7 @@ export async function keyframeBefore(url, auth, t) {
  * Starts ffmpeg writing fragmented MP4 to stdout, beginning at `start` seconds, with the chosen audio
  * track converted to stereo AAC. Video is copied unless the engine can't decode it.
  */
-export function remux(url, auth, { start = 0, audio = 0, audioDelay = 0, info, format = 'mkv' }) {
+export function remux(url, auth, { start = 0, audio = 0, audioDelay = 0, info, format = 'mkv', live = false }) {
   const v = info?.video;
   const a = info?.audio?.[audio];
   const videoArgs = !v ? [] : !v.transcode
@@ -117,7 +117,10 @@ export function remux(url, auth, { start = 0, audio = 0, audioDelay = 0, info, f
   //  - Fragmented MP4 restarts each track at zero on its own and browsers ignore its edit lists, which is
   //    what threw sound off by up to a whole keyframe interval. It's only a fallback (e.g. HEVC), started
   //    on a keyframe for both tracks to keep the error small.
-  const container = format === 'mp4'
+  // A live channel has no start or end: reconnect if it drops, and let the timestamps begin at zero.
+  const container = live
+    ? [...(/^https?:/i.test(url) ? ['-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '5'] : []), '-fflags', '+genpts+discardcorrupt', '-i', url]
+    : format === 'mp4'
     ? [...(start > 0 ? ['-noaccurate_seek', '-ss', String(start)] : []), '-i', url]
     : [...(start > 0 ? ['-ss', String(start)] : []), '-copyts', '-i', url];
   // The total length must be in the Matroska header: without it the engine treats the stream as live and

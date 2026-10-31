@@ -97,6 +97,15 @@ and a season pack gives you the right episode.
 create an account at themoviedb.org, then go to Settings → API. Without a key the app still uses any
 poster images it finds on the server (`poster.jpg`, `folder.jpg`, …) and draws a colored card otherwise.
 
+
+## Live TV (IPTV)
+
+Add M3U or M3U8 playlists under **Settings → Live TV**, one per line (`My channels | https://example.com/list.m3u`,
+or a playlist file on this computer). A **Live TV** tab appears with the channels grouped as the playlist groups them,
+a search box, logos and favourites (★). Click a channel to watch; ↑ / ↓ change channel, F is full screen, Esc closes.
+StreamHub only plays the streams your playlist links to. Channels are converted with ffmpeg on the way, so HLS, MPEG-TS and
+most other streams play with sound, but live streams can't be paused or rewound. There is no programme guide yet.
+
 ## Mac app
 
 ### Install

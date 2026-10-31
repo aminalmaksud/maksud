@@ -1,6 +1,7 @@
 // MusingsofMaksudTV UI: library browser with posters, details sheet, and a player with audio/subtitle menus.
 import { createMusic } from './music.js';
 import { createReader } from './reader.js';
+import { createLive } from './live.js';
 const $ = (id) => document.getElementById(id);
 if (navigator.userAgent.includes('Electron')) document.documentElement.classList.add('electron');
 const WIN = navigator.userAgent.includes('Windows');
@@ -35,6 +36,7 @@ const I = {
   full: P('<path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>'),
   unfull: P('<path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/>'),
   close: P('<path d="M18 6L6 18M6 6l12 12"/>'),
+  live: P('<circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/>'),
   tv: P('<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M17 2l-5 5-5-5"/>'),
   spark: P('<path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/>'),
   calendar: P('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
@@ -112,6 +114,7 @@ const store = {
 // Music keeps playing while you browse; the reader opens books over the page (see music.js, reader.js)
 const music = createMusic({ I, $, esc, enc, fmt, api, pauseVideo: () => { const v = $('video'); if (v && !v.paused) v.pause(); } });
 const reader = createReader({ I, $, esc, enc, api, store });
+const live = createLive({ I, $, esc, enc, api, store, pauseAudio: () => music.pause() });
 
 /* ---------------- watch history ---------------- */
 const history_ = store.get('history', {});
@@ -463,6 +466,7 @@ async function showHome() {
   renderNav();
   let c;
   try { c = state.config = await api('/api/config'); } catch (e) { $('status').textContent = e.message; $('status').className = 'error'; return; }
+  if (!c.servers.length && c.playlists?.length) { location.hash = '#/live'; return; }
   if (!c.servers.length) { $('welcome').hidden = false; hideHero(); return; }
   $('status').textContent = 'Loading your libraries…';
   let libs;
@@ -488,6 +492,17 @@ async function showHome() {
   $('rows').querySelectorAll('.row[data-row]').forEach((r) => rowObserver.observe(r));
   $('rows').querySelectorAll('.continue .card, .mylist .card').forEach((c2) => lazy.observe(c2));
   heroOffer(myList.slice(0, 6));
+}
+
+async function showLive({ refresh = false } = {}) {
+  resetView('live');
+  if (!state.config) { try { state.config = await api('/api/config'); } catch { /* the page shows its own error */ } }
+  renderNav();
+  $('crumbs').innerHTML = '<a href="#/">Home</a>';
+  $('folderTitle').textContent = 'Live TV';
+  $('folderSub').textContent = 'Channels from your playlists';
+  $('backBtn').hidden = false;
+  await live.render($('rows'), { refresh });
 }
 
 function showList() {
@@ -815,6 +830,7 @@ function renderNav() {
   if (SH) return renderSideNav(cur);
   $('nav').innerHTML = `<a href="#/" class="${cur === -1 ? 'on' : ''}">Home</a>` +
     state.groups.map((g, i) => `<a data-go="${esc(g.root)}" class="${cur === i ? 'on' : ''}">${esc(g.name)}</a>`).join('') +
+    (state.config?.playlists?.length ? `<a href="#/live" class="${state.view === 'live' ? 'on' : ''}">Live TV</a>` : '') +
     `<a href="#/list" class="${state.view === 'list' ? 'on' : ''}">My List</a>` +
     (state.config?.downloads ? `<a href="#/downloads" class="${state.view === 'downloads' ? 'on' : ''}">⬇ Downloads</a>` : '');
 }
@@ -825,6 +841,7 @@ function renderSideNav(cur) {
   const sectionIcon = (name) => (/music|audio|song|album/i.test(name) ? I.audio : /\bbooks?\b|novel|comic|magazine|ebook|library/i.test(name) ? I.book : /anime|cartoon|animation/i.test(name) ? I.spark : /series|tv|show|season|drama/i.test(name) ? I.tv : I.film);
   $('nav').innerHTML = item(cur === -1, 'href="#/"', I.home, 'Home') +
     state.groups.map((g, i) => item(cur === i, `data-go="${esc(g.root)}"`, sectionIcon(g.name), g.name)).join('') +
+    (state.config?.playlists?.length ? item(state.view === 'live', 'href="#/live"', I.live, 'Live TV') : '') +
     item(state.view === 'list', 'href="#/list"', I.bookmark, 'My List') +
     (state.config?.downloads ? item(state.view === 'downloads', 'href="#/downloads"', I.download, 'Downloads', '<em id="dlBadge" hidden></em>') : '') +
     item(state.view === 'server', 'href="#/server"', I.server, 'Server');
@@ -880,6 +897,7 @@ function route({ refresh = false } = {}) {
   if (h.startsWith('search/')) return showSearch(decodeURIComponent(h.slice(7)));
   if (h === 'downloads') return showDownloads();
   if (h === 'list') return showList();
+  if (h === 'live') return showLive();
   if (h === 'settings') return showSettings();
   if (h === 'server' && SH) return showServer();
   return showHome();
@@ -1142,6 +1160,7 @@ async function fillSettings() {
   const c = await api('/api/config');
   state.config = c;
   const f = $('settingsForm');
+  f.playlists.value = (c.playlists || []).join('\n');
   f.servers.value = c.servers.join('\n'); f.username.value = c.username; f.password.value = ''; f.tmdbKey.value = c.tmdbKey || '';
   f.password.placeholder = c.hasPassword ? '•••••• (saved)' : '';
   f.opensubsKey.value = c.opensubsKey || ''; f.opensubsUser.value = c.opensubsUser || ''; f.opensubsPass.value = ''; f.subdlKey.value = c.subdlKey || '';
@@ -1272,7 +1291,7 @@ $('settingsForm').onsubmit = async (e) => {
   try {
     const keepPw = !f.password.value && state.config?.hasPassword && f.username.value === state.config.username;
     await saveConfig({
-      servers: f.servers.value, username: f.username.value, password: f.password.value, keepPassword: keepPw, tmdbKey: f.tmdbKey.value,
+      servers: f.servers.value, playlists: f.playlists.value, username: f.username.value, password: f.password.value, keepPassword: keepPw, tmdbKey: f.tmdbKey.value,
       opensubsKey: f.opensubsKey.value, opensubsUser: f.opensubsUser.value, opensubsPass: f.opensubsPass.value,
       shareTv: f.shareTv.checked,
       jellyfin: f.jellyfin.checked, jellyfinPass: f.jellyfinNoPass.checked ? '' : (f.jellyfinPass.value || undefined),
@@ -2076,6 +2095,6 @@ if (SH) {
   document.querySelector('#welcome h1').innerHTML = 'Stream<span>Hub</span>';
   document.querySelector('#welcome .w-lead').textContent = 'Every movie, series and anime on your ISP’s BDIX servers, ready to play on this PC.';
 }
-music.init(); reader.init();
+music.init(); reader.init(); live.init();
 route();
 window.addEventListener('scroll', () => document.body.classList.toggle('scrolled', window.scrollY > 30), { passive: true });

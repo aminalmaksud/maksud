@@ -12,6 +12,7 @@ import { openZip } from './zip.js';
 import { hasFfmpeg, ffmpegVersion, probe, remux, extractSubtitle, keyframeBefore, audioAsMp3, embeddedArt } from './media.js';
 import { metaFor, seasonEpisodes } from './meta.js';
 import { createJellyfin } from './jellyfin.js';
+import { loadPlaylist, forgetPlaylists } from './iptv.js';
 import { movieHash, searchSubtitles, fetchSubtitle } from './subsearch.js';
 import { groupKey, mergeListings, encodeV, decodeV } from './merge.js';
 import { downloadsEnabled, startDownload, cancelDownload, deleteDownloaded, listDownloads, localEntries, localFile } from './downloads.js';
@@ -50,6 +51,7 @@ function loadConfig() {
     // online subtitles (see subsearch.js)
     opensubsKey: c.opensubsKey ?? '', opensubsUser: c.opensubsUser ?? '', opensubsPass: c.opensubsPass ?? '', subdlKey: c.subdlKey ?? '',
     shareTv: !!c.shareTv, // share local folders with the Android TV app (see shareServer)
+    playlists: splitServers(c.playlists), // Live TV: M3U playlists, one per line (see iptv.js)
     jellyfin: !!c.jellyfin, jellyfinPass: c.jellyfinPass ?? '', // Jellyfin-compatible API for Jellyfin apps (see jellyfin.js)
   };
 }
@@ -440,6 +442,37 @@ async function handleProbe(url, res) {
   }
 }
 
+/** Live TV channels from every playlist: { channels: [{ id, name, logo, group }], errors }. */
+async function channelsOf(refresh) {
+  const errors = [], channels = [], seen = new Set();
+  const got = await Promise.allSettled(config.playlists.map((l) => loadPlaylist(l, { force: refresh })));
+  got.forEach((g, i) => {
+    if (g.status === 'rejected') return errors.push(`${config.playlists[i]}: ${g.reason.message}`);
+    for (const c of g.value) if (!seen.has(c.id)) { seen.add(c.id); channels.push(c); }
+  });
+  return { channels, errors };
+}
+async function handleIptv(url, res) {
+  const { channels, errors } = await channelsOf(!!url.searchParams.get('refresh'));
+  json(res, 200, { channels: channels.map(({ id, name, logo, group }) => ({ id, name, logo, group })), errors });
+}
+/** A live channel as one continuous stream the browser can play (Matroska, or MP4 for engines that need it). Not seekable. */
+async function handleLive(url, res) {
+  if (!hasFfmpeg) throw httpError(501, 'Live TV needs ffmpeg');
+  const ch = (await channelsOf(false)).channels.find((c) => c.id === url.searchParams.get('id'));
+  if (!ch) throw httpError(404, 'Unknown channel');
+  // What's in the stream decides whether the picture can be copied. If the channel won't say, assume the usual H.264 and AAC.
+  const info = await probe(ch.url, '').catch(() => ({ video: { transcode: false }, audio: [{}], duration: 0 }));
+  const mp4 = url.searchParams.get('fmt') === 'mp4';
+  const p = remux(ch.url, '', { info, format: mp4 ? 'mp4' : 'mkv', live: true });
+  let err = '';
+  p.stderr.on('data', (d) => { err = (err + d).slice(-1500); });
+  res.on('close', () => p.kill('SIGKILL'));
+  p.on('close', (code) => { if (code && !res.writableEnded) console.error('live:', ch.name, err.trim()); });
+  res.writeHead(200, { 'content-type': mp4 ? 'video/mp4' : 'video/webm', 'cache-control': 'no-store' });
+  p.stdout.pipe(res);
+}
+
 async function handleRemux(url, res) {
   const m = media(url.searchParams.get('path'));
   if (!hasFfmpeg) throw httpError(501, 'ffmpeg is not installed');
@@ -671,15 +704,16 @@ async function handleConfig(req, res) {
       opensubsPass: b.keepOpensubsPass || b.opensubsPass === undefined ? config.opensubsPass : String(b.opensubsPass),
       subdlKey: b.subdlKey === undefined ? config.subdlKey : String(b.subdlKey).trim(),
       shareTv: b.shareTv === undefined ? config.shareTv : !!b.shareTv,
+      playlists: b.playlists === undefined ? config.playlists : splitServers(b.playlists),
       jellyfin: b.jellyfin === undefined ? config.jellyfin : !!b.jellyfin,
       jellyfinPass: b.jellyfinPass === undefined ? config.jellyfinPass : String(b.jellyfinPass),
     };
-    listCache.clear(); libRoots.clear(); localWalks.clear(); jf.reset();
+    listCache.clear(); libRoots.clear(); localWalks.clear(); jf.reset(); forgetPlaylists();
     updateShare(); updateJellyfin();
     fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
-  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND, localLibs: localLibs(), share: shareInfo(), jellyfin: jellyfinInfo(),
+  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND, localLibs: localLibs(), playlists: config.playlists, share: shareInfo(), jellyfin: jellyfinInfo(),
     opensubsKey: config.opensubsKey, opensubsUser: config.opensubsUser, hasOpensubsPass: !!config.opensubsPass, subdlKey: config.subdlKey });
 }
 
@@ -959,6 +993,8 @@ const server = http.createServer(async (req, res) => {
       const m = media(url.searchParams.get('path'));
       return m.local ? serveFile(req, res, m.src) : await proxy(req, res, m.src, { cache: true });
     }
+    if (p === '/api/iptv') return await handleIptv(url, res);
+    if (p === '/live') return await handleLive(url, res);
     if (p === '/remux') return await handleRemux(url, res);
     if (p === '/subs') return await handleSubs(url, res);
     if (p.startsWith('/tmdb/')) return await handleTmdbImage(req, url, res);

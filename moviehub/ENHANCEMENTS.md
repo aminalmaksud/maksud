@@ -34,9 +34,10 @@ One line each. Part 1 is what Maksud's original app already had, so you can see 
 16. **Smarter titles**: "Panchayat (TV Series 2020– )" and "Blade.Runner.2049.2017" now read correctly.
 17. **A Server page** (Windows look) showing status, ffmpeg, the address and each library's response time, and a Ctrl+K search.
 18. **Fixes along the way**: Username/Password alignment in Settings, the Vintage hero on PCs with animations turned off, and the Jellyfin API moving to the next port when a real Jellyfin already uses 8096.
-19. **Automated tests and builds**: tests for the server, Jellyfin API, books and music, and GitHub builds for Windows and both Mac versions on every change.
+19. **Live TV (IPTV)**: add M3U playlists (web address or file) and watch channels grouped, searchable, with logos and favourites; the server converts any stream so it plays with sound.
+20. **Automated tests and builds**: tests for the server, Jellyfin API, books and music, and GitHub builds for Windows and both Mac versions on every change.
 
 ## 3. Not done yet
 
 1. A **separate Android app** for phone, tablet and TV (planned last; Streamyfin through the Jellyfin API may make it unnecessary).
-2. Live TV playlists (M3U), per-person profiles, and the Mac app on Tauri.
+2. Per-person profiles, the Mac app on Tauri (a playback test on a Mac comes first), and Live TV in Jellyfin apps and a programme guide (EPG).
