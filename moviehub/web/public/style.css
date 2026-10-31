@@ -853,3 +853,14 @@ html[data-theme="parchment"] .menu .ss-form input:focus { border-color: var(--ma
 .dl-del svg { width: 16px; height: 16px; }
 .card:hover .dl-del { opacity: 1; }
 .dl-ring { font: 700 12px var(--body); color: var(--gold-2); }
+
+/* "What's in this folder?" */
+.type-dlg { border: 1px solid var(--edge); border-radius: 14px; background: var(--surface-bg, var(--bg)); color: inherit; padding: 22px 24px; width: min(420px, 92vw); }
+.type-dlg::backdrop { background: rgba(0, 0, 0, .55); }
+.type-dlg h3 { margin: 0 0 4px; }
+.type-dlg p { margin: 0 0 12px; opacity: .75; font-size: .9em; }
+.type-dlg .kind { display: flex; gap: 10px; align-items: flex-start; padding: 8px 6px; border-radius: 8px; cursor: pointer; }
+.type-dlg .kind:hover { background: rgba(127, 127, 127, .12); }
+.type-dlg .kind small { display: block; opacity: .7; }
+.type-dlg .kind-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.type-dlg input[type="radio"] { display: inline-block; width: auto; margin: 3px 0 0; padding: 0; box-shadow: none; accent-color: var(--maroon); flex: none; }

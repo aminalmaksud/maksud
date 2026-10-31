@@ -86,7 +86,8 @@ export function createJellyfin(ctx) {
 
   // ---- typed items: sections that hold movies or series are indexed, so apps get Movie / Series / Season / Episode ----
   const indexes = new Map(); // section rel -> what the crawl has found so far
-  const typeOfView = (v) => collectionTypeOf(v.name);
+  const JF_TYPES = { movies: 'movies', shows: 'tvshows', music: 'music', books: 'books' };
+  const typeOfView = (v) => JF_TYPES[v.type] || collectionTypeOf(v.name);
   async function indexFor(view, waitMs = 4000) {
     let idx = indexes.get(view.rel);
     if (!idx || Date.now() - idx.at > 30 * 60e3) { idx = crawl(view.rel, typeOfView(view), (rel) => ctx.children(rel)); indexes.set(view.rel, idx); }

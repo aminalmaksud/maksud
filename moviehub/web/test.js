@@ -424,4 +424,19 @@ const mp3 = await get('/stream?path=0/Song.mp3', { range: 'bytes=10-19' });
 assert.deepEqual([mp3.status, mp3.headers.get('content-type'), (await mp3.arrayBuffer()).byteLength], [206, 'audio/mpeg', 10], 'music streams with ranges');
 assert.equal((await get('/stream?path=0/Manual.pdf')).headers.get('content-type'), 'application/pdf');
 fs.rmSync(shelf, { recursive: true, force: true });
+// library type: "Name | folder | shows" says what a folder holds, so plainly named series show as a grid, and Jellyfin apps get that type
+const serial = fs.mkdtempSync(path.join(os.tmpdir(), 'mh-serial-'));
+for (const n of ['Breaking Bad', 'Dark', 'Chernobyl']) { fs.mkdirSync(path.join(serial, n)); fs.writeFileSync(path.join(serial, n, 'S01E01.mkv'), FILE); }
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Stuff | ${serial} | shows`, jellyfin: true }) });
+r = await (await get('/api/browse')).json();
+assert.equal(r.rootType, 'shows', 'the library root knows its type');
+assert.deepEqual(r.items.map((i) => i.name).sort(), ['Breaking Bad', 'Chernobyl', 'Dark']);
+r = await (await get(`/api/browse?path=${encodeURIComponent(r.items[0].path)}`)).json();
+assert.equal(r.rootType, undefined, 'folders inside it are ordinary');
+await new Promise((res) => setTimeout(res, 100));
+const J2 = `http://127.0.0.1:${await jfPort()}`;
+assert.equal((await (await fetch(`${J2}/UserViews`, { headers: { 'x-emby-token': T } })).json()).Items[0].CollectionType, 'tvshows', 'Jellyfin apps get the chosen type');
+await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Stuff | ${serial}`, jellyfin: false }) });
+assert.equal((await (await get('/api/browse')).json()).rootType, undefined, 'without a type nothing changes');
+fs.rmSync(serial, { recursive: true, force: true });
 server.close(); isp.close(); fs.rmSync(process.env.CONFIG_FILE, { force: true });

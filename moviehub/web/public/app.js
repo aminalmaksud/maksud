@@ -229,11 +229,11 @@ function isCategoryFolder(items) {
 const sortCategories = (dirs) => (dirs.every((d) => isYearFolder(d.name)) ? [...dirs].sort((a, b) => yearOf(b.name) - yearOf(a.name)) : dirs);
 
 /** What a row for `dirPath` shows: its titles, or for a folder of years, the newest year's titles. */
-async function rowContent(dirPath) {
+async function rowContent(dirPath, typed = false) {
   const l = await listFolder(dirPath);
   let items = playable(l.items), note = '';
   const dirs = items.filter((i) => i.isDir);
-  if (dirs.length && dirs.every((d) => isYearFolder(d.name) || !isTitleFolder(d.name)) && !items.some((i) => i.kind === 'video' || i.kind === 'audio' || i.kind === 'book')) {
+  if (!typed && dirs.length && dirs.every((d) => isYearFolder(d.name) || !isTitleFolder(d.name)) && !items.some((i) => i.kind === 'video' || i.kind === 'audio' || i.kind === 'book')) {
     const newest = dirs.some((d) => isYearFolder(d.name)) ? [...dirs].sort((a, b) => yearOf(b.name) - yearOf(a.name))[0] : dirs[0];
     items = playable((await listFolder(newest.path)).items);
     note = newest.name.replace(/[()[\]]/g, '').trim();
@@ -301,8 +301,8 @@ const PANELS = [
   'linear-gradient(118deg, #1c0a2c 0%, #43166b 40%, #8b3fd1 78%, #c08bff 100%)',
 ];
 
-function rowShell({ title, sub = '', path = '' }) {
-  return `<section class="row" data-row="${esc(path)}">
+function rowShell({ title, sub = '', path = '', typed = false }) {
+  return `<section class="row" data-row="${esc(path)}"${typed ? ' data-typed="1"' : ''}>
     <div class="row-head">${rowIcon(title)}${path ? `<a class="row-title" data-go="${esc(path)}">${esc(title)}<span class="see-all">See all ›</span></a>` : `<h2 class="row-title">${esc(title)}</h2>`}${sub ? `<small>${esc(sub)}</small>` : ''}</div>
     <div class="row-wrap"><button class="row-arrow left" aria-label="Scroll left">${I.back}</button>
       <div class="row-scroll"><div class="row-skel"></div><div class="row-skel"></div><div class="row-skel"></div><div class="row-skel"></div><div class="row-skel"></div><div class="row-skel"></div></div>
@@ -313,7 +313,7 @@ function rowShell({ title, sub = '', path = '' }) {
 async function fillRow(section) {
   const scroller = section.querySelector('.row-scroll');
   try {
-    const { items, note } = await rowContent(section.dataset.row);
+    const { items, note } = await rowContent(section.dataset.row, !!section.dataset.typed);
     if (!items.length) { section.remove(); return; }
     if (note) section.querySelector('.row-head').insertAdjacentHTML('beforeend', `<small>Newest · ${esc(note)}</small>`);
     scroller.innerHTML = items.map((it) => cardHtml(it)).join('');
@@ -478,10 +478,10 @@ async function showHome() {
   listings.forEach((l, i) => {
     const g = groups[i];
     if (!l) { html += `<p class="status error">Can’t reach “${esc(g.name)}” right now.</p>`; return; }
-    if (isCategoryFolder(l.items)) {
+    if (!l.rootType && isCategoryFolder(l.items)) {
       for (const d of sortCategories(l.items.filter((x) => x.isDir))) html += rowShell({ title: d.name, sub: groups.length > 1 ? g.name : '', path: d.path });
     } else {
-      html += rowShell({ title: g.name, path: l.path });
+      html += rowShell({ title: g.name, path: l.path, typed: !!l.rootType });
     }
   });
   $('rows').innerHTML = html;
@@ -579,7 +579,7 @@ async function showFolder(path, { refresh = false } = {}) {
   state.path = l.path; state.items = l.items;
   renderNav(); renderHead();
   $('status').textContent = '';
-  if (isCategoryFolder(l.items)) {
+  if (!l.rootType && isCategoryFolder(l.items)) {
     $('rows').innerHTML = sortCategories(l.items.filter((x) => x.isDir)).map((d) => rowShell({ title: d.name, path: d.path })).join('');
     $('rows').querySelectorAll('.row[data-row]').forEach((r) => rowObserver.observe(r));
   } else {
@@ -1191,7 +1191,27 @@ document.querySelectorAll('[data-look]').forEach((b) => {
 $('settingsBtn').onclick = openSettings;
 $('cancelBtn').onclick = closeSettings;
 $('dhakaflixBtn').onclick = () => { $('settingsForm').servers.value = DHAKAFLIX; };
-// Local folders: the system's folder picker (Mac and Windows apps), else type the path. Gives a "Name | path" line.
+const LIB_KINDS = [['movies', 'Movies', 'Films, one folder or file each'], ['shows', 'TV series', 'One folder per series, with seasons or episodes'], ['music', 'Music', 'Artists and albums'], ['books', 'Books', 'PDF, EPUB and comics'], ['auto', 'Mixed / not sure', 'StreamHub guesses from the folders']];
+/** Guess from the folder's name, to preselect the choice. */
+const guessKind = (name) => (/movie|film|cinema/i.test(name) ? 'movies' : /\b(tv|series|serial|show|shows|anime|drama|dramas|cartoons?)\b/i.test(name) ? 'shows' : /music|song|album|audio/i.test(name) ? 'music' : /book|comic|pdf|epub/i.test(name) ? 'books' : 'auto');
+/** Asks what a folder holds (like Jellyfin's library type). Answers a type, or null if cancelled. */
+function askLibraryType(name) {
+  return new Promise((resolve) => {
+    const d = document.createElement('dialog');
+    d.className = 'type-dlg';
+    const pre = guessKind(name);
+    d.innerHTML = `<form method="dialog"><h3>What’s in “${esc(name)}”?</h3><p>This decides how StreamHub shows it, and how Jellyfin apps see it.</p>
+      ${LIB_KINDS.map(([v, t, h]) => `<label class="kind"><input type="radio" name="kind" value="${v}"${v === pre ? ' checked' : ''}><span><b>${esc(t)}</b><small>${esc(h)}</small></span></label>`).join('')}
+      <div class="kind-btns"><button type="button" class="btn" value="cancel">Cancel</button><button class="btn gold" value="ok">Add</button></div></form>`;
+    document.body.append(d);
+    const done = (v) => { d.close(); d.remove(); resolve(v); };
+    d.querySelector('[value=cancel]').onclick = () => done(null);
+    d.addEventListener('cancel', (e) => { e.preventDefault(); done(null); });
+    d.querySelector('form').onsubmit = (e) => { e.preventDefault(); done(d.querySelector('input:checked').value); };
+    d.showModal();
+  });
+}
+// Local folders: the system's folder picker (Mac and Windows apps), else type the path. Gives a "Name | path | type" line.
 async function pickFolderLine() {
   let picked = '';
   try { picked = (await api('/api/pick-folder', { method: 'POST' })).path; } catch {
@@ -1199,7 +1219,9 @@ async function pickFolderLine() {
   }
   if (!picked) return '';
   const name = picked.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || picked;
-  return `${name} | ${picked}`;
+  const kind = await askLibraryType(name);
+  if (!kind) return '';
+  return `${name} | ${picked}${kind === 'auto' ? '' : ` | ${kind}`}`;
 }
 $('addFolderBtn').onclick = async () => {
   const ta = $('settingsForm').servers, line = await pickFolderLine();

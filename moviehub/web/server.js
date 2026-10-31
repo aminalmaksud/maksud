@@ -56,7 +56,15 @@ function loadConfig() {
 let config = loadConfig();
 
 /** A server line is "http://host/path/" or "Label | http://host/path/". */
-const splitLabel = (s) => { const m = /^(.*?)\s*\|\s*(.+?)\s*$/.exec(s); return m ? { label: m[1], url: m[2] } : { label: '', url: s.trim() }; };
+const LIB_TYPES = ['auto', 'movies', 'shows', 'music', 'books'];
+/** "Name | address | type": the name and the type are optional ("movies", "shows", "music", "books"; "auto" guesses from the folders). */
+function splitLabel(s) {
+  const parts = String(s).split('|').map((x) => x.trim());
+  let type = 'auto';
+  if (parts.length >= 3 && LIB_TYPES.includes(parts.at(-1).toLowerCase())) type = parts.pop().toLowerCase();
+  if (parts.length >= 2) return { label: parts[0], url: parts.slice(1).join('|'), type };
+  return { label: '', url: parts[0], type };
+}
 
 /** A folder on this computer: "G:\\Movie", "/Users/me/Movies", "~/Movies" or "file:///...". */
 const isFolderPath = (s) => /^(?:[a-z]:[\\/]|\\\\|\/|~[\\/]|file:)/i.test(s);
@@ -73,6 +81,7 @@ function toBase(line) {
   return u;
 }
 const bases = () => config.servers.map(toBase);
+const libTypes = () => config.servers.map((l) => splitLabel(l).type);
 const isLocalBase = (b) => b.protocol === 'file:';
 const localLibs = () => bases().map((b, i) => (isLocalBase(b) ? i : -1)).filter((i) => i >= 0);
 /** Real path of a file:// URL inside a local library, or an error if it (or a symlink in it) leads outside. */
@@ -255,9 +264,10 @@ function groups() {
   const names = serverNames(), out = new Map();
   names.forEach((name, i) => {
     const k = groupKey(name);
-    if (!out.has(k)) out.set(k, { name, libs: [] });
+    if (!out.has(k)) out.set(k, { name, libs: [], type: 'auto' });
     const g = out.get(k);
     g.libs.push(i);
+    if (g.type === 'auto') g.type = libTypes()[i];
     if (name.length < g.name.length) g.name = name;
   });
   return [...out.values()];
@@ -291,14 +301,15 @@ async function handleBrowse(url, res) {
   const roots = await Promise.all(all.map((_, i) => libraryRoot(i).then((l) => l.path, () => `${i}/`)));
   const gs = groups().map((g) => ({ ...g, root: groupRoot(g, roots) }));
   const extra = { servers, roots, groups: gs, localLibs: localLibs() };
+  const rootTypeOf = (r) => { const t = gs.find((g) => g.root === r)?.type; return t && t !== 'auto' ? t : undefined; };
   if (!rel && gs.length > 1) {
     return json(res, 200, { path: '', ...extra, items: gs.map((g) => ({ name: g.name, path: g.root, isDir: true, kind: 'dir' })) });
   }
   if (!rel) rel = gs[0].root;
-  if (rel.startsWith('v:')) return json(res, 200, { ...(await listVirtual(rel, refresh)), ...extra });
+  if (rel.startsWith('v:')) return json(res, 200, { ...(await listVirtual(rel, refresh)), ...extra, rootType: rootTypeOf(rel) });
   if (!rel.endsWith('/')) rel += '/';
   const listing = /^\d+\/$/.test(rel) ? await libraryRoot(Number(rel.slice(0, -1))) : await listDir(rel);
-  json(res, 200, { ...listing, ...extra });
+  json(res, 200, { ...listing, ...extra, rootType: rootTypeOf(rel) });
 }
 
 /** Search every library. h5ai servers search themselves; others are skipped (their folders can still be filtered). */
@@ -846,7 +857,7 @@ let jellyfinServer = null, jellyfinPort = 0, jellyfinNote = '', jellyfinError = 
 const viewsList = async () => {
   const all = bases();
   const roots = await Promise.all(all.map((_, i) => libraryRoot(i).then((l) => l.path, () => `${i}/`)));
-  return groups().map((g) => ({ name: g.name, rel: groupRoot(g, roots) }));
+  return groups().map((g) => ({ name: g.name, rel: groupRoot(g, roots), type: g.type }));
 };
 const childrenOf = async (rel) => {
   if (rel.startsWith('v:')) return (await listVirtual(rel)).items;
