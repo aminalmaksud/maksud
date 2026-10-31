@@ -9,6 +9,8 @@ or h5ai servers) on:
 - **Windows**: **StreamHub** (`windows/`), the same app for Windows PCs, with ffmpeg built in too.
 - **Android TV**: a native app (`android-tv/`).
 
+What Maksud built, and what was added on top, one line each: [ENHANCEMENTS.md](ENHANCEMENTS.md).
+
 The Mac app looks like Netflix: a slideshow of featured titles at the top, then a row of posters for every
 category on every server (English Movies, Hindi Movies, TV & Web Series, Anime…). Movie folders open straight
 to the movie, seasons open as episode lists, and the search box searches every server at once.
