@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#F5F7FA;font-family:Inter,system-ui,sans-serif;color:#0F1521;-webkit-font-smoothing:antialiased}a{color:#2563FF;text-decoration:none}a:hover{color:#1449E6}*{box-sizing:border-box}</style>
+</helmet>
+<div style="max-width:1240px;margin:0 auto;padding:40px 32px 80px;display:flex;flex-direction:column;gap:24px">
+
+<section data-screen-label="01 Cover" style="background:#0B1640;border-radius:16px;padding:56px 56px 48px;color:#fff;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:40px;align-items:end">
+  <div style="display:flex;flex-direction:column;gap:28px">
+    <div style="font:500 12px/1 Inter;letter-spacing:.12em;text-transform:uppercase;color:#84ADFF">Brand pack · v0.1 · Windows</div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <img src="assets/streamhub-mark-ondark.svg" alt="" style="height:64px;width:auto;display:block">
+      <div style="font:700 56px/1 Inter;letter-spacing:-.035em">StreamHub</div>
+    </div>
+    <p style="margin:0;font:400 20px/1.5 Inter;color:#B6CEFF;max-width:520px;text-wrap:pretty">Your media library, served from your PC and streamed to every screen in the house.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;height:120px">
+    <div style="background:#2563FF;border-radius:10px;padding:10px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;font:600 11px/1.2 Inter;color:#fff">Blue 500<span style="font:400 11px JetBrains Mono">#2563FF</span></div>
+    <div style="background:#4F86FF;border-radius:10px;padding:10px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;font:600 11px/1.2 Inter;color:#0B1640">Blue 400<span style="font:400 11px JetBrains Mono">#4F86FF</span></div>
+    <div style="background:#182030;border:1px solid #263041;border-radius:10px;padding:10px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;font:600 11px/1.2 Inter;color:#D3DAE4">Slate 800<span style="font:400 11px JetBrains Mono">#182030</span></div>
+    <div style="background:#F5F7FA;border-radius:10px;padding:10px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;font:600 11px/1.2 Inter;color:#0F1521">Slate 50<span style="font:400 11px JetBrains Mono">#F5F7FA</span></div>
+  </div>
+</section>
+
+<section data-screen-label="02 Principles" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+  <div style="background:#fff;border:1px solid #E9EDF3;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:8px"><div style="font:600 13px/1 JetBrains Mono;color:#2563FF">01</div><div style="font:600 18px/1.3 Inter;letter-spacing:-.01em">Content first</div><div style="font:400 14px/1.55 Inter;color:#566377">Posters and artwork carry the color. Chrome stays quiet, dark and neutral.</div></div>
+  <div style="background:#fff;border:1px solid #E9EDF3;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:8px"><div style="font:600 13px/1 JetBrains Mono;color:#2563FF">02</div><div style="font:600 18px/1.3 Inter;letter-spacing:-.01em">Flat, not flimsy</div><div style="font:400 14px/1.55 Inter;color:#566377">No shadows or gradients. Depth comes from surface tone steps and 1px borders.</div></div>
+  <div style="background:#fff;border:1px solid #E9EDF3;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:8px"><div style="font:600 13px/1 JetBrains Mono;color:#2563FF">03</div><div style="font:600 18px/1.3 Inter;letter-spacing:-.01em">Blue means action</div><div style="font:400 14px/1.55 Inter;color:#566377">Blue is reserved for primary actions, focus, selection and progress. Nothing else.</div></div>
+  <div style="background:#fff;border:1px solid #E9EDF3;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:8px"><div style="font:600 13px/1 JetBrains Mono;color:#2563FF">04</div><div style="font:600 18px/1.3 Inter;letter-spacing:-.01em">Status at a glance</div><div style="font:400 14px/1.55 Inter;color:#566377">The server is always visible: running, transcoding, or stopped — one dot, one word.</div></div>
+</section>
+
+<section data-screen-label="03 Logo" style="background:#fff;border:1px solid #E9EDF3;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap"><h2 style="margin:0;font:600 28px/1.2 Inter;letter-spacing:-.02em">Logo</h2><span style="font:400 14px/1.4 Inter;color:#7A879B">Geometric S + play. All edges share one 20° slope.</span></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+    <div style="background:#2563FF;border-radius:12px;height:200px;display:flex;align-items:center;justify-content:center;gap:12px;color:#fff"><img src="assets/streamhub-mark-white.svg" alt="" style="height:44px;width:auto;display:block"><span style="font:700 30px/1 Inter;letter-spacing:-.035em">StreamHub</span></div>
+    <div style="background:#080C14;border-radius:12px;height:200px;display:flex;align-items:center;justify-content:center;gap:12px;color:#fff"><img src="assets/streamhub-mark-ondark.svg" alt="" style="height:44px;width:auto;display:block"><span style="font:700 30px/1 Inter;letter-spacing:-.035em">StreamHub</span></div>
+    <div style="background:#F5F7FA;border:1px solid #E9EDF3;border-radius:12px;height:200px;display:flex;align-items:center;justify-content:center;gap:12px;color:#0F1521"><img src="assets/streamhub-mark.svg" alt="" style="height:44px;width:auto;display:block"><span style="font:700 30px/1 Inter;letter-spacing:-.035em">Stream<span style="color:#2563FF">Hub</span></span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
+    <div style="border:1px solid #E9EDF3;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+      <div style="font:600 14px/1 Inter">Clearspace & minimum size</div>
+      <div style="display:flex;align-items:center;justify-content:center;padding:20px 0">
+        <div style="padding:24px;border:1px dashed #84ADFF;background:#EEF4FF;border-radius:6px;display:flex;align-items:center;gap:10px"><img src="assets/streamhub-mark.svg" alt="" style="height:30px;width:auto;display:block"><span style="font:700 22px/1 Inter;letter-spacing:-.035em">StreamHub</span></div>
+      </div>
+      <div style="font:400 13px/1.5 Inter;color:#566377">Clearspace = mark height × 0.85 on all sides. Wordmark min 80px wide; mark alone min 16px.</div>
+    </div>
+    <div style="border:1px solid #E9EDF3;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+      <div style="font:600 14px/1 Inter">Windows app icon</div>
+      <div style="display:flex;align-items:flex-end;gap:20px;padding:12px 0">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><img src="assets/streamhub-icon.svg" alt="" style="width:96px;height:96px;display:block"><span style="font:400 11px JetBrains Mono;color:#7A879B">256</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><img src="assets/streamhub-icon.svg" alt="" style="width:48px;height:48px;display:block"><span style="font:400 11px JetBrains Mono;color:#7A879B">48</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><img src="assets/streamhub-icon.svg" alt="" style="width:32px;height:32px;display:block"><span style="font:400 11px JetBrains Mono;color:#7A879B">32</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><img src="assets/streamhub-icon.svg" alt="" style="width:16px;height:16px;display:block"><span style="font:400 11px JetBrains Mono;color:#7A879B">16</span></div>
+      </div>
+      <div style="font:400 13px/1.5 Inter;color:#566377">Blue 500 tile, white bands, Blue 200 play. Tray icon uses a monochrome mark for light/dark taskbars.</div>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="04 Color" style="background:#fff;border:1px solid #E9EDF3;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap"><h2 style="margin:0;font:600 28px/1.2 Inter;letter-spacing:-.02em">Color</h2><span style="font:400 14px/1.4 Inter;color:#7A879B">Dark UI by default. 70 neutral · 25 surface · 5 blue.</span></div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:600 14px/1 Inter">Signal Blue</div>
+    <div style="display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:6px">
+      <sc-for list="{{ blues }}" as="c" hint-placeholder-count="11">
+        <div style="display:flex;flex-direction:column;gap:6px"><div style="height:72px;border-radius:8px;background:{{ c.hex }}"></div><div style="font:600 12px/1.2 Inter">{{ c.name }}</div><div style="font:400 11px/1.2 JetBrains Mono;color:#7A879B">{{ c.hex }}</div></div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:600 14px/1 Inter">Slate</div>
+    <div style="display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:6px">
+      <sc-for list="{{ slates }}" as="c" hint-placeholder-count="11">
+        <div style="display:flex;flex-direction:column;gap:6px"><div style="height:72px;border-radius:8px;border:1px solid #E9EDF3;background:{{ c.hex }}"></div><div style="font:600 12px/1.2 Inter">{{ c.name }}</div><div style="font:400 11px/1.2 JetBrains Mono;color:#7A879B">{{ c.hex }}</div></div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="font:600 14px/1 Inter">Semantic</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+        <sc-for list="{{ semantic }}" as="c" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:6px"><div style="height:56px;border-radius:8px;background:{{ c.hex }}"></div><div style="font:600 12px/1.2 Inter">{{ c.name }}</div><div style="font:400 11px/1.2 JetBrains Mono;color:#7A879B">{{ c.hex }}</div></div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="font:600 14px/1 Inter">Dark surfaces (default)</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);border-radius:8px;overflow:hidden;height:56px">
+        <div style="background:#080C14;color:#A9B4C4;font:500 11px Inter;padding:8px">bg</div>
+        <div style="background:#0F1521;color:#A9B4C4;font:500 11px Inter;padding:8px">surface</div>
+        <div style="background:#182030;color:#A9B4C4;font:500 11px Inter;padding:8px">raised</div>
+        <div style="background:#263041;color:#D3DAE4;font:500 11px Inter;padding:8px">border</div>
+      </div>
+      <div style="font:400 13px/1.5 Inter;color:#566377">Each step up = one level of elevation. No drop shadows.</div>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="05 Type" style="background:#fff;border:1px solid #E9EDF3;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap"><h2 style="margin:0;font:600 28px/1.2 Inter;letter-spacing:-.02em">Typography</h2><span style="font:400 14px/1.4 Inter;color:#7A879B">Inter for everything. JetBrains Mono for paths, ports & codecs.</span></div>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:40px">
+    <div style="display:flex;flex-direction:column">
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr);align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid #E9EDF3"><span style="font:400 12px/1.4 JetBrains Mono;color:#7A879B">Display<br>48/52 · 700</span><span style="font:700 48px/1.08 Inter;letter-spacing:-.035em">Dune: Part Two</span></div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr);align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid #E9EDF3"><span style="font:400 12px/1.4 JetBrains Mono;color:#7A879B">Title<br>28/34 · 600</span><span style="font:600 28px/1.2 Inter;letter-spacing:-.02em">Continue watching</span></div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr);align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid #E9EDF3"><span style="font:400 12px/1.4 JetBrains Mono;color:#7A879B">Heading<br>18/24 · 600</span><span style="font:600 18px/1.33 Inter;letter-spacing:-.01em">Library folders</span></div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr);align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid #E9EDF3"><span style="font:400 12px/1.4 JetBrains Mono;color:#7A879B">Body<br>15/22 · 400</span><span style="font:400 15px/1.47 Inter;color:#263041">StreamHub scans these folders and keeps your library in sync as files change.</span></div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr);align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid #E9EDF3"><span style="font:400 12px/1.4 JetBrains Mono;color:#7A879B">Label<br>13/16 · 500</span><span style="font:500 13px/1.25 Inter">2h 46m · 2024 · 4K HDR</span></div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr);align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid #E9EDF3"><span style="font:400 12px/1.4 JetBrains Mono;color:#7A879B">Overline<br>11/14 · 600</span><span style="font:600 11px/1.3 Inter;letter-spacing:.1em;text-transform:uppercase;color:#566377">Recently added</span></div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr);align-items:baseline;gap:16px;padding:14px 0"><span style="font:400 12px/1.4 JetBrains Mono;color:#7A879B">Mono<br>13/18 · 400</span><span style="font:400 13px/1.4 JetBrains Mono;color:#263041">http://127.0.0.1:47990 · H.265 → H.264</span></div>
+    </div>
+    <div style="background:#0B1640;border-radius:12px;padding:28px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;gap:24px">
+      <div style="font:700 120px/.9 Inter;letter-spacing:-.05em">Aa</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font:400 13px/1.5 Inter;color:#B6CEFF"><span style="font:600 16px Inter;color:#fff">Inter</span><span>Regular 400 · Medium 500<br>Semibold 600 · Bold 700</span><span>Tabular nums on for timecodes and sizes.</span></div>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="06 Space & shape" style="background:#fff;border:1px solid #E9EDF3;border-radius:16px;padding:40px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px">
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <h2 style="margin:0;font:600 28px/1.2 Inter;letter-spacing:-.02em">Spacing</h2>
+    <div style="font:400 14px/1.5 Inter;color:#566377">4px base grid. Common steps:</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ spaces }}" as="s" hint-placeholder-count="7">
+        <div style="display:grid;grid-template-columns:40px minmax(0,1fr);align-items:center;gap:12px"><span style="font:400 12px JetBrains Mono;color:#7A879B">{{ s.v }}</span><div style="height:12px;border-radius:3px;background:#2563FF;width:{{ s.px }}"></div></div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <h2 style="margin:0;font:600 28px/1.2 Inter;letter-spacing:-.02em">Radius</h2>
+    <div style="font:400 14px/1.5 Inter;color:#566377">Soft but tight. Posters 8, panels 12, window 8 (Win11).</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="aspect-ratio:1;background:#EEF4FF;border:1.5px solid #2563FF;border-radius:4px"></div><span style="font:400 12px JetBrains Mono;color:#7A879B">4 · chip</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="aspect-ratio:1;background:#EEF4FF;border:1.5px solid #2563FF;border-radius:8px"></div><span style="font:400 12px JetBrains Mono;color:#7A879B">8 · control</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="aspect-ratio:1;background:#EEF4FF;border:1.5px solid #2563FF;border-radius:12px"></div><span style="font:400 12px JetBrains Mono;color:#7A879B">12 · panel</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="aspect-ratio:1;background:#EEF4FF;border:1.5px solid #2563FF;border-radius:999px"></div><span style="font:400 12px JetBrains Mono;color:#7A879B">full · avatar</span></div>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="07 Components" style="background:#080C14;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:28px;color:#E9EDF3">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap"><h2 style="margin:0;font:600 28px/1.2 Inter;letter-spacing:-.02em;color:#fff">Core components</h2><span style="font:400 14px/1.4 Inter;color:#7A879B">Shown on the default dark theme.</span></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px">
+
+    <div style="background:#0F1521;border:1px solid #182030;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+      <div style="font:600 11px/1 Inter;letter-spacing:.1em;text-transform:uppercase;color:#7A879B">Buttons</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <button style="height:40px;padding:0 18px;border:0;border-radius:8px;background:#2563FF;color:#fff;font:600 14px Inter;display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:#1449E6"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 1.5v11l9-5.5z" fill="currentColor"></path></svg>Play</button>
+        <button style="height:40px;padding:0 18px;border:0;border-radius:8px;background:#182030;color:#E9EDF3;font:600 14px Inter;cursor:pointer" style-hover="background:#263041">Add folder</button>
+        <button style="height:40px;padding:0 14px;border:0;border-radius:8px;background:transparent;color:#84ADFF;font:600 14px Inter;cursor:pointer" style-hover="background:#13318A">Details</button>
+        <button style="height:40px;padding:0 18px;border:1px solid #3B1A1F;border-radius:8px;background:transparent;color:#FF7A7E;font:600 14px Inter;cursor:pointer">Stop server</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <button style="height:32px;padding:0 12px;border:0;border-radius:6px;background:#2563FF;color:#fff;font:600 13px Inter">Small</button>
+        <button style="height:32px;padding:0 12px;border:0;border-radius:6px;background:#182030;color:#566377;font:600 13px Inter">Disabled</button>
+        <button style="width:40px;height:40px;border:0;border-radius:999px;background:#182030;color:#E9EDF3;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3.5v11M3.5 9h11"></path></svg></button>
+      </div>
+    </div>
+
+    <div style="background:#0F1521;border:1px solid #182030;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+      <div style="font:600 11px/1 Inter;letter-spacing:.1em;text-transform:uppercase;color:#7A879B">Inputs</div>
+      <div style="height:40px;border-radius:8px;background:#182030;display:flex;align-items:center;gap:10px;padding:0 12px;color:#7A879B"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.75"></circle><path d="M10.5 10.5l3 3"></path></svg><span style="font:400 14px Inter">Search movies, shows…</span><span style="margin-left:auto;font:500 11px JetBrains Mono;padding:2px 6px;border-radius:4px;background:#263041;color:#A9B4C4">Ctrl K</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 13px Inter;color:#A9B4C4">Server port</span><div style="height:40px;border-radius:8px;background:#0F1521;border:1.5px solid #2563FF;display:flex;align-items:center;padding:0 12px;font:400 14px JetBrains Mono;color:#fff">47990</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:500 14px Inter">Hardware transcoding</span><div style="width:40px;height:22px;border-radius:999px;background:#2563FF;padding:3px;display:flex;justify-content:flex-end"><div style="width:16px;height:16px;border-radius:999px;background:#fff"></div></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:500 14px Inter;color:#A9B4C4">Launch at startup</span><div style="width:40px;height:22px;border-radius:999px;background:#263041;padding:3px;display:flex"><div style="width:16px;height:16px;border-radius:999px;background:#7A879B"></div></div></div>
+    </div>
+
+    <div style="background:#0F1521;border:1px solid #182030;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+      <div style="font:600 11px/1 Inter;letter-spacing:.1em;text-transform:uppercase;color:#7A879B">Chips & status</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span style="height:30px;padding:0 12px;border-radius:999px;background:#2563FF;color:#fff;font:500 13px Inter;display:flex;align-items:center">All</span>
+        <span style="height:30px;padding:0 12px;border-radius:999px;background:#182030;color:#D3DAE4;font:500 13px Inter;display:flex;align-items:center">Movies</span>
+        <span style="height:30px;padding:0 12px;border-radius:999px;background:#182030;color:#D3DAE4;font:500 13px Inter;display:flex;align-items:center">TV Shows</span>
+        <span style="height:30px;padding:0 12px;border-radius:999px;background:#182030;color:#D3DAE4;font:500 13px Inter;display:flex;align-items:center">Unwatched</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span style="height:24px;padding:0 8px;border-radius:4px;background:#182030;color:#D3DAE4;font:600 11px Inter;letter-spacing:.04em;display:flex;align-items:center">4K</span>
+        <span style="height:24px;padding:0 8px;border-radius:4px;background:#182030;color:#D3DAE4;font:600 11px Inter;letter-spacing:.04em;display:flex;align-items:center">HDR</span>
+        <span style="height:24px;padding:0 8px;border-radius:4px;background:#182030;color:#D3DAE4;font:600 11px Inter;letter-spacing:.04em;display:flex;align-items:center">5.1</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px;font:500 13px Inter"><span style="width:8px;height:8px;border-radius:999px;background:#22C55E"></span>Server running<span style="margin-left:auto;font:400 12px JetBrains Mono;color:#7A879B">:47990</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font:500 13px Inter"><span style="width:8px;height:8px;border-radius:999px;background:#4F86FF"></span>Transcoding 1 stream<span style="margin-left:auto;font:400 12px JetBrains Mono;color:#7A879B">1.8×</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font:500 13px Inter;color:#A9B4C4"><span style="width:8px;height:8px;border-radius:999px;background:#566377"></span>Stopped</div>
+      </div>
+    </div>
+
+    <div style="background:#0F1521;border:1px solid #182030;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+      <div style="font:600 11px/1 Inter;letter-spacing:.1em;text-transform:uppercase;color:#7A879B">Poster card</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div style="display:flex;flex-direction:column;gap:8px"><div style="aspect-ratio:2/3;border-radius:8px;background:#182030;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font:500 10px Inter;color:#566377">poster<div style="position:absolute;left:0;right:0;bottom:0;height:3px;background:#263041"><div style="width:62%;height:100%;background:#2563FF"></div></div></div><div style="font:600 13px/1.3 Inter">Arrival</div><div style="font:400 12px Inter;color:#7A879B">2016 · 1h 56m</div></div>
+        <div style="display:flex;flex-direction:column;gap:8px"><div style="aspect-ratio:2/3;border-radius:8px;background:#182030;outline:2px solid #2563FF;outline-offset:2px;display:flex;align-items:center;justify-content:center;font:500 10px Inter;color:#566377">focused</div><div style="font:600 13px/1.3 Inter">Severance</div><div style="font:400 12px Inter;color:#7A879B">S2 · 10 eps</div></div>
+        <div style="display:flex;flex-direction:column;gap:8px"><div style="aspect-ratio:2/3;border-radius:8px;background:#182030;display:flex;align-items:center;justify-content:center;font:500 10px Inter;color:#566377">poster</div><div style="font:600 13px/1.3 Inter">Past Lives</div><div style="font:400 12px Inter;color:#7A879B">2023 · 1h 46m</div></div>
+      </div>
+    </div>
+
+    <div style="background:#0F1521;border:1px solid #182030;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+      <div style="font:600 11px/1 Inter;letter-spacing:.1em;text-transform:uppercase;color:#7A879B">Player scrubber</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="height:4px;border-radius:999px;background:#263041;position:relative"><div style="position:absolute;inset:0 60% 0 0;background:#4F86FF;opacity:.35;border-radius:999px"></div><div style="position:absolute;inset:0 72% 0 0;background:#2563FF;border-radius:999px"></div><div style="position:absolute;left:28%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:999px;background:#fff"></div></div>
+        <div style="display:flex;justify-content:space-between;font:500 12px JetBrains Mono;color:#A9B4C4"><span>00:46:12</span><span>-01:59:48</span></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:20px;color:#E9EDF3">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 11a7 7 0 1 0 2-5M4 3v3.5h3.5"></path></svg>
+        <div style="width:52px;height:52px;border-radius:999px;background:#2563FF;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 18 18"><rect x="4" y="3" width="3" height="12" rx="1" fill="#fff"></rect><rect x="11" y="3" width="3" height="12" rx="1" fill="#fff"></rect></svg></div>
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 11a7 7 0 1 1-2-5M18 3v3.5h-3.5"></path></svg>
+      </div>
+    </div>
+
+    <div style="background:#0F1521;border:1px solid #182030;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:6px">
+      <div style="font:600 11px/1 Inter;letter-spacing:.1em;text-transform:uppercase;color:#7A879B;margin-bottom:10px">Navigation</div>
+      <div style="height:40px;border-radius:8px;background:#13318A;color:#fff;display:flex;align-items:center;gap:12px;padding:0 12px;font:500 14px Inter"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8l6-5 6 5v7H3z"></path></svg>Home</div>
+      <div style="height:40px;border-radius:8px;color:#A9B4C4;display:flex;align-items:center;gap:12px;padding:0 12px;font:500 14px Inter"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="3.5" width="13" height="11" rx="1.5"></rect><path d="M2.5 7h13"></path></svg>Movies</div>
+      <div style="height:40px;border-radius:8px;color:#A9B4C4;display:flex;align-items:center;gap:12px;padding:0 12px;font:500 14px Inter"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="4.5" width="13" height="9" rx="1.5"></rect><path d="M6.5 16h5M7 2l2 2.5L11 2"></path></svg>TV Shows</div>
+      <div style="height:40px;border-radius:8px;color:#A9B4C4;display:flex;align-items:center;gap:12px;padding:0 12px;font:500 14px Inter"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="2.25"></circle><path d="M9 2v2M9 14v2M2 9h2M14 9h2M4 4l1.4 1.4M12.6 12.6L14 14M4 14l1.4-1.4M12.6 5.4L14 4"></path></svg>Server</div>
+    </div>
+
+  </div>
+</section>
+
+<section data-screen-label="08 Icons & voice" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px">
+  <div style="background:#fff;border:1px solid #E9EDF3;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:20px">
+    <h2 style="margin:0;font:600 28px/1.2 Inter;letter-spacing:-.02em">Iconography</h2>
+    <div style="font:400 14px/1.55 Inter;color:#566377">Outline, 1.5px stroke on a 18/24px grid, round joins. Filled only for play/pause. Recommended set: Lucide or Fluent System (Regular).</div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;color:#0F1521">
+      <div style="aspect-ratio:1;border-radius:8px;background:#F5F7FA;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"></path></svg></div>
+      <div style="aspect-ratio:1;border-radius:8px;background:#F5F7FA;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M15.5 15.5L20 20"></path></svg></div>
+      <div style="aspect-ratio:1;border-radius:8px;background:#F5F7FA;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 6.5h6l2 2h10v10H3z"></path></svg></div>
+      <div style="aspect-ratio:1;border-radius:8px;background:#F5F7FA;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 8h16M4 16h16"></path><circle cx="9" cy="8" r="2.2" fill="#F5F7FA"></circle><circle cx="15" cy="16" r="2.2" fill="#F5F7FA"></circle></svg></div>
+      <div style="aspect-ratio:1;border-radius:8px;background:#F5F7FA;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="5" width="18" height="12" rx="2"></rect><path d="M8 20h8"></path></svg></div>
+      <div style="aspect-ratio:1;border-radius:8px;background:#F5F7FA;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 12.5a9.5 9.5 0 0 1 14 0M8 15.5a5 5 0 0 1 8 0"></path><circle cx="12" cy="18.5" r=".8" fill="currentColor"></circle></svg></div>
+    </div>
+  </div>
+  <div style="background:#fff;border:1px solid #E9EDF3;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:20px">
+    <h2 style="margin:0;font:600 28px/1.2 Inter;letter-spacing:-.02em">Voice</h2>
+    <div style="font:400 14px/1.55 Inter;color:#566377">Plain, calm, technical only when it helps. Sentence case everywhere.</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;font:400 14px/1.45 Inter"><span style="font:600 12px Inter;color:#16A34A">Do</span><span>“Server is running. Open StreamHub on any device at 192.168.1.20:47990.”</span></div>
+      <div style="display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;font:400 14px/1.45 Inter;color:#7A879B"><span style="font:600 12px Inter;color:#E5484D">Don’t</span><span style="text-decoration:line-through">“Mmtv-server sidecar initialized successfully on port 47990!”</span></div>
+      <div style="display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;font:400 14px/1.45 Inter"><span style="font:600 12px Inter;color:#16A34A">Do</span><span>“Converting to a format your TV can play.”</span></div>
+      <div style="display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;font:400 14px/1.45 Inter;color:#7A879B"><span style="font:600 12px Inter;color:#E5484D">Don’t</span><span style="text-decoration:line-through">“FFmpeg transcode job spawned (libx264).”</span></div>
+    </div>
+  </div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const mk = (pfx, arr) => arr.map(([n, hex]) => ({ name: `${pfx} ${n}`, hex }));
+    return {
+      blues: mk('Blue', [[50,'#EEF4FF'],[100,'#D9E6FF'],[200,'#B6CEFF'],[300,'#84ADFF'],[400,'#4F86FF'],[500,'#2563FF'],[600,'#1449E6'],[700,'#1139B4'],[800,'#13318A'],[900,'#142A6B'],[950,'#0B1640']]),
+      slates: mk('Slate', [[0,'#FFFFFF'],[50,'#F5F7FA'],[100,'#E9EDF3'],[200,'#D3DAE4'],[300,'#A9B4C4'],[400,'#7A879B'],[500,'#566377'],[600,'#3B4658'],[700,'#263041'],[800,'#182030'],[950,'#080C14']]),
+      semantic: [{name:'Success',hex:'#22C55E'},{name:'Warning',hex:'#F5A524'},{name:'Danger',hex:'#E5484D'},{name:'Info',hex:'#4F86FF'}],
+      spaces: [4,8,12,16,24,32,48].map(v => ({ v, px: (v * 4) + 'px' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+name: StreamHub Windows app
+
+on:
+  push:
+    paths: ['moviehub/web/**', 'moviehub/windows/**', '.github/workflows/moviehub-windows.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write # publishes each build as a pre-release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: moviehub/windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.1' # must match NODE_VERSION in scripts/build-server.mjs
+      - name: Web tests
+        run: node test.js
+        working-directory: moviehub/web
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: moviehub/windows/src-tauri
+      - name: Install (Windows ffmpeg)
+        run: npm ci --no-audit --no-fund
+        env:
+          npm_config_platform: win32
+          npm_config_arch: x64
+      - name: Build server and ffmpeg sidecars
+        run: npm run build-server
+      - name: Check the server has no broken signature
+        # A leftover, broken node.exe signature makes Chrome and SmartScreen call the download dangerous.
+        run: |
+          node -e '
+            const b = require("fs").readFileSync(process.argv[1]);
+            const opt = b.readUInt32LE(0x3c) + 24, dirs = opt + (b.readUInt16LE(opt) === 0x20b ? 112 : 96);
+            const size = b.readUInt32LE(dirs + 36);
+            if (size) { console.error("mmtv-server.exe still has a signature (" + size + " bytes)"); process.exit(1); }
+            console.log("mmtv-server.exe: no signature");
+          ' src-tauri/binaries/mmtv-server-x86_64-pc-windows-msvc.exe
+      - name: Smoke test the bundled server
+        run: |
+          mkdir -p "$RUNNER_TEMP/data"
+          PORT=47990 BRAND=streamhub WEB_ROOT="$PWD/../web" CONFIG_FILE="$RUNNER_TEMP/data/config.json" \
+            FFMPEG_PATH="$PWD/src-tauri/binaries/ffmpeg-x86_64-pc-windows-msvc.exe" \
+            FFPROBE_PATH="$PWD/src-tauri/binaries/ffprobe-x86_64-pc-windows-msvc.exe" \
+            src-tauri/binaries/mmtv-server-x86_64-pc-windows-msvc.exe &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:47990/api/config > config.json && break; sleep 1; done
+          cat config.json
+          grep -q '"ffmpeg":true' config.json
+          curl -sf http://127.0.0.1:47990/ | grep -q 'class="streamhub"'
+          curl -sf http://127.0.0.1:47990/streamhub.css > /dev/null
+          curl -sf http://127.0.0.1:47990/api/status | grep -q '"libraries"'
+          kill %1
+      - name: Build installer
+        run: npx tauri build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: StreamHub-windows-x64
+          path: moviehub/windows/src-tauri/target/release/bundle/nsis/*.exe
+      - name: Publish as a pre-release
+        # A direct setup.exe download from the Releases page, instead of a zipped artifact.
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p 'require("./src-tauri/tauri.conf.json").version')
+          tag="streamhub-v$version-build.$GITHUB_RUN_NUMBER"
+          gh release create "$tag" src-tauri/target/release/bundle/nsis/*.exe \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+            --title "StreamHub $version (build $GITHUB_RUN_NUMBER)" \
+            --notes "Windows installer built from ${GITHUB_REF_NAME} at ${GITHUB_SHA:0:7}. Unsigned: if SmartScreen warns, choose More info → Run anyway."

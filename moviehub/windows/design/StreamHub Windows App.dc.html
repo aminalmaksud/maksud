@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Hind+Siliguri:wght@500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#05070C;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}*{box-sizing:border-box}a{color:#2563FF;text-decoration:none}a:hover{color:#1449E6}button,input,textarea{font-family:inherit}button:focus-visible{outline:2px solid #2563FF;outline-offset:2px}.sh-scroll::-webkit-scrollbar{width:10px;height:10px}.sh-scroll::-webkit-scrollbar-thumb{background:rgba(122,135,155,.35);border-radius:10px;border:3px solid transparent;background-clip:content-box}.sh-row::-webkit-scrollbar{display:none}</style>
+</helmet>
+<div style="position:fixed;inset:0;overflow:hidden;background:#05070C;--bg:{{ t.bg }};--surface:{{ t.surface }};--raised:{{ t.raised }};--hover:{{ t.hover }};--line:{{ t.line }};--line2:{{ t.line2 }};--text:{{ t.text }};--strong:{{ t.strong }};--muted:{{ t.muted }};--subtle:{{ t.subtle }};--sel:{{ t.sel }};--selText:{{ t.selText }};--accText:{{ t.accText }};--bar:{{ t.bar }}">
+<div data-screen-label="Windows desktop" style="position:absolute;left:50%;top:50%;width:1600px;height:960px;margin:-480px 0 0 -800px;transform:scale({{ scale }});background:#0B1640;overflow:hidden;color:var(--text)">
+  <img src="assets/streamhub-mark-white.svg" alt="" style="position:absolute;right:120px;top:120px;height:640px;opacity:.05;pointer-events:none">
+
+<sc-if value="{{ open }}" hint-placeholder-val="{{ true }}">
+<div onClick="{{ closeMenus }}" style="position:absolute;left:{{ geo.l }};top:{{ geo.t }};width:{{ geo.w }};height:{{ geo.h }};border-radius:{{ geo.r }};overflow:hidden;background:var(--bg);border:1px solid var(--line2);display:flex;flex-direction:column">
+
+  <div style="height:40px;flex:none;display:flex;align-items:center;user-select:none">
+    <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ back }}" title="Back (Esc)" style="width:44px;height:40px;border:0;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--raised)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.arrowLeft }}"></path></svg></button>
+    </sc-if>
+    <div style="display:flex;align-items:center;gap:10px;padding:0 14px;font:400 12px Inter;color:var(--muted)"><img src="assets/streamhub-mark.svg" alt="" style="height:16px;display:block">StreamHub</div>
+    <div style="flex:1"></div>
+    <button onClick="{{ minimize }}" title="Minimize" style="width:46px;height:40px;border:0;background:transparent;color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--raised)"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor"></path></svg></button>
+    <button onClick="{{ toggleMax }}" title="Maximize" style="width:46px;height:40px;border:0;background:transparent;color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--raised)"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="9" height="9" rx="1.5"></rect></svg></button>
+    <button onClick="{{ closeWin }}" title="Close to tray" style="width:46px;height:40px;border:0;background:transparent;color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#C42B1C;color:#fff"><svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor"><path d="M0 0l10 10M10 0L0 10"></path></svg></button>
+  </div>
+
+  <div style="flex:1;min-height:0;display:flex;position:relative">
+
+    <sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+    <nav style="width:{{ navW }};flex:none;display:flex;flex-direction:column;gap:2px;padding:4px 8px 12px">
+      <button onClick="{{ goSearch }}" title="Search (Ctrl+K)" style="height:36px;margin:0 0 10px;border:1px solid var(--line2);border-radius:8px;background:var(--surface);display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--subtle);cursor:pointer;font:400 13px Inter" style-hover="border-color:#2563FF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.search }}"></path></svg><span style="display:{{ labelDisp }};flex:1;text-align:left">Search</span><span style="display:{{ labelDisp }};font:500 10px JetBrains Mono;padding:2px 5px;border-radius:4px;background:var(--raised);color:var(--muted)">Ctrl K</span></button>
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+        <button onClick="{{ n.go }}" title="{{ n.label }}" style="height:40px;border:0;border-radius:6px;background:{{ n.bg }};color:{{ n.color }};display:flex;align-items:center;gap:12px;padding:0 11px;font:500 14px Inter;cursor:pointer;position:relative;text-align:left" style-hover="background:var(--raised)">
+          <span style="position:absolute;left:0;top:12px;width:3px;height:16px;border-radius:3px;background:{{ n.barC }}"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ n.icon }}"></path></svg>
+          <span style="display:{{ labelDisp }};flex:1">{{ n.label }}</span>
+          <sc-if value="{{ n.badge }}" hint-placeholder-val="{{ false }}"><span style="display:{{ labelDisp }};min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:#2563FF;color:#fff;font:600 11px/20px Inter;text-align:center">{{ n.badge }}</span></sc-if>
+        </button>
+      </sc-for>
+      <div style="flex:1"></div>
+      <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ goServer }}" style="border:1px solid var(--line2);border-radius:8px;background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:4px;text-align:left;cursor:pointer;margin-bottom:8px" style-hover="border-color:#2563FF">
+        <span style="display:flex;align-items:center;gap:8px;font:600 13px Inter;color:var(--text)"><span style="width:8px;height:8px;border-radius:99px;background:{{ status.dot }}"></span>{{ status.label }}</span>
+        <span style="font:400 11px JetBrains Mono;color:var(--subtle)">{{ status.sub }}</span>
+      </button>
+      </sc-if>
+      <button onClick="{{ cycleTheme }}" title="Theme: {{ themeLabel }}" style="height:40px;border:0;border-radius:6px;background:transparent;color:var(--muted);display:flex;align-items:center;gap:12px;padding:0 11px;font:500 14px Inter;cursor:pointer" style-hover="background:var(--raised)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ themeIcon }}"></path></svg><span style="display:{{ labelDisp }};flex:1;text-align:left">Theme</span><span style="display:{{ labelDisp }};font:500 12px Inter;color:var(--subtle)">{{ themeLabel }}</span></button>
+      <button onClick="{{ goSettings }}" title="Settings" style="height:40px;border:0;border-radius:6px;background:{{ setNav.bg }};color:{{ setNav.color }};display:flex;align-items:center;gap:12px;padding:0 11px;font:500 14px Inter;cursor:pointer;position:relative" style-hover="background:var(--raised)"><span style="position:absolute;left:0;top:12px;width:3px;height:16px;border-radius:3px;background:{{ setNav.barC }}"></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ ic.settings }}"></path></svg><span style="display:{{ labelDisp }}">Settings</span></button>
+    </nav>
+    </sc-if>
+
+    <main style="flex:1;min-width:0;position:relative;background:var(--surface);border-top-left-radius:{{ mainRadius }};border-top:1px solid var(--line);border-left:{{ mainBorder }};overflow:hidden">
+
+<sc-if value="{{ is.welcome }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="First run" class="sh-scroll" style="position:absolute;inset:0;overflow:auto;display:flex;align-items:center;justify-content:center;padding:32px">
+  <div style="width:100%;max-width:640px;display:flex;flex-direction:column;gap:28px">
+    <img src="{{ markSrc }}" alt="StreamHub" style="height:56px;align-self:flex-start">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <h1 style="margin:0;font:700 36px/1.1 Inter;letter-spacing:-.035em;color:var(--strong)">Welcome to StreamHub</h1>
+      <p style="margin:0;font:400 16px/1.5 Inter;color:var(--muted);text-wrap:pretty">Pick where your movies and shows come from. You can add more libraries later in Settings.</p>
+    </div>
+    <sc-if value="{{ scanning }}" hint-placeholder-val="{{ false }}">
+      <div style="border:1px solid var(--line2);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;font:600 15px Inter;color:var(--strong)"><span>Scanning libraries…</span><span style="font-variant-numeric:tabular-nums;color:var(--muted)">{{ scanPct }}%</span></div>
+        <div style="height:6px;border-radius:99px;background:var(--raised)"><div style="height:100%;border-radius:99px;background:#2563FF;width:{{ scanW }}"></div></div>
+        <div style="font:400 13px JetBrains Mono;color:var(--subtle)">{{ scanLine }}</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ notScanning }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+        <sc-for list="{{ welcomeOpts }}" as="o" hint-placeholder-count="2">
+          <button onClick="{{ o.pick }}" style="border:{{ o.border }};border-radius:12px;background:{{ o.bg }};padding:20px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:12px;color:var(--text)">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="width:40px;height:40px;border-radius:8px;background:var(--raised);color:var(--accText);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ o.icon }}"></path></svg></span><span style="width:20px;height:20px;border-radius:99px;border:{{ o.radio }};background:var(--surface)"></span></div>
+            <span style="font:600 16px Inter;color:var(--strong)">{{ o.title }}</span>
+            <span style="font:400 13px/1.5 Inter;color:var(--muted)">{{ o.desc }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ ownServer }}" hint-placeholder-val="{{ false }}">
+        <label style="display:flex;flex-direction:column;gap:8px;font:500 13px Inter;color:var(--muted)">Server address
+          <input value="{{ ownAddr }}" onChange="{{ setOwnAddr }}" placeholder="http://172.16.50.7/" style="height:42px;border-radius:8px;border:1px solid var(--line2);background:var(--surface);color:var(--strong);padding:0 12px;font:400 14px JetBrains Mono;outline:none" style-focus="border-color:#2563FF;box-shadow:0 0 0 1px #2563FF"></label>
+      </sc-if>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button onClick="{{ startScan }}" style="height:42px;padding:0 20px;border:0;border-radius:8px;background:#2563FF;color:#fff;font:600 14px Inter;cursor:pointer;display:flex;align-items:center;gap:8px" style-hover="background:#1449E6">Get started<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.chevRight }}"></path></svg></button>
+        <span style="font:400 13px Inter;color:var(--subtle)">Local folders arrive in a later update.</span>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.home }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Home" class="sh-scroll" style="position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:{{ pad }};display:flex;flex-direction:column;gap:28px">
+  <div style="height:{{ heroH }};flex:none;border-radius:12px;background:{{ hero.bg }};position:relative;overflow:hidden;display:flex;color:#fff">
+    <div style="position:absolute;right:0;top:0;bottom:0;width:58%;background:{{ hero.bg2 }};display:flex;align-items:flex-start;justify-content:flex-end;padding:14px 16px;font:400 11px JetBrains Mono;color:rgba(255,255,255,.4)">TMDB backdrop</div>
+    <div style="position:relative;flex:1;padding:{{ heroPad }};display:flex;flex-direction:column;justify-content:flex-end;gap:12px;max-width:560px">
+      <span style="font:600 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:#B6CEFF">{{ hero.section }}</span>
+      <span style="font:700 {{ heroFs }}/1.05 Inter;letter-spacing:-.035em">{{ hero.title }}</span>
+      <div style="display:flex;align-items:center;gap:10px;font:500 13px Inter;color:#D3DAE4;flex-wrap:wrap"><span style="display:flex;align-items:center;gap:4px;color:#F5A524"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.star }}"></path></svg>{{ hero.rating }}</span><span>{{ hero.year }}</span><span>{{ hero.runtimeL }}</span><span style="padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.14);font:600 11px Inter">{{ hero.quality }}</span><span>{{ hero.genre }}</span></div>
+      <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}"><p style="margin:0;font:400 14px/1.55 Inter;color:#D3DAE4;text-wrap:pretty">{{ hero.plot }}</p></sc-if>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onClick="{{ hero.play }}" style="height:40px;padding:0 18px;border:0;border-radius:8px;background:#2563FF;color:#fff;font:600 14px Inter;display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:#1449E6"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.play }}"></path></svg>Play</button>
+        <button onClick="{{ hero.open }}" style="height:40px;padding:0 16px;border:0;border-radius:8px;background:rgba(255,255,255,.16);color:#fff;font:600 14px Inter;display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:rgba(255,255,255,.24)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.info }}"></path></svg>More info</button>
+        <button onClick="{{ hero.toggleList }}" title="My List" style="width:40px;height:40px;border:0;border-radius:8px;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgba(255,255,255,.24)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ hero.listIcon }}"></path></svg></button>
+      </div>
+    </div>
+    <div style="position:absolute;right:16px;bottom:16px;display:flex;gap:6px">
+      <sc-for list="{{ heroDots }}" as="d" hint-placeholder-count="4"><button onClick="{{ d.go }}" style="width:{{ d.w }};height:6px;border-radius:99px;border:0;padding:0;background:{{ d.c }};cursor:pointer"></button></sc-for>
+    </div>
+  </div>
+
+  <sc-if value="{{ hasCw }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <h2 style="margin:0;font:600 18px/1.3 Inter;letter-spacing:-.01em;color:var(--strong)">Continue watching</h2>
+    <div class="sh-row" style="display:flex;gap:12px;overflow-x:auto;margin:0 -4px;padding:4px">
+      <sc-for list="{{ cw }}" as="c" hint-placeholder-count="3">
+        <div style="flex:none;width:{{ cwW }};display:flex;flex-direction:column;gap:8px;position:relative">
+          <button onClick="{{ c.play }}" style="aspect-ratio:16/9;border:0;border-radius:8px;background:{{ c.bg }};position:relative;overflow:hidden;cursor:pointer;padding:0;color:#fff;display:flex;align-items:center;justify-content:center" style-hover="outline:2px solid #2563FF;outline-offset:2px">
+            <span style="width:44px;height:44px;border-radius:99px;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="{{ ic.play }}"></path></svg></span>
+            <span style="position:absolute;left:12px;top:10px;font:700 15px/1.1 Inter;letter-spacing:-.02em;text-align:left;max-width:70%">{{ c.title }}</span>
+            <span style="position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.22)"><span style="display:block;height:100%;background:#2563FF;width:{{ c.pct }}"></span></span>
+          </button>
+          <button onClick="{{ c.remove }}" title="Remove from Continue watching" style="position:absolute;right:8px;top:8px;width:28px;height:28px;border:0;border-radius:99px;background:rgba(0,0,0,.45);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgba(0,0,0,.7)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="{{ ic.x }}"></path></svg></button>
+          <div style="display:flex;justify-content:space-between;gap:8px;font:500 13px Inter"><span style="color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.sub }}</span><span style="color:var(--subtle);flex:none;font-variant-numeric:tabular-nums">{{ c.left }}</span></div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-for list="{{ rows }}" as="r" hint-placeholder-count="3">
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px"><h2 style="margin:0;font:600 18px/1.3 Inter;letter-spacing:-.01em;color:var(--strong)">{{ r.title }}</h2><button onClick="{{ r.all }}" style="border:0;background:transparent;color:var(--accText);font:600 13px Inter;cursor:pointer;display:flex;align-items:center;gap:2px;padding:4px 6px;border-radius:6px" style-hover="background:var(--raised)">See all<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.chevRight }}"></path></svg></button></div>
+    <div class="sh-row" style="display:flex;gap:14px;overflow-x:auto;margin:0 -4px;padding:4px">
+      <sc-for list="{{ r.items }}" as="p" hint-placeholder-count="6">
+        <button onClick="{{ p.open }}" style="flex:none;width:{{ posterW }};border:0;padding:0;background:transparent;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:8px;color:var(--text)">
+          <div style="width:100%;aspect-ratio:2/3;border-radius:8px;background:{{ p.bg }};position:relative;overflow:hidden;padding:12px;display:flex;flex-direction:column;justify-content:space-between;color:#fff" style-hover="outline:2px solid #2563FF;outline-offset:2px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px"><span style="font:600 10px Inter;letter-spacing:.06em;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.28)">{{ p.quality }}</span><sc-if value="{{ p.inList }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="{{ ic.bookmark }}"></path></svg></sc-if></div>
+            <div><div style="font:700 17px/1.1 Inter;letter-spacing:-.02em;text-wrap:balance">{{ p.title }}</div><div style="font:500 11px Inter;opacity:.75;margin-top:6px">{{ p.year }}</div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font:600 13px/1.3 Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span><span style="font:400 12px Inter;color:var(--subtle)">{{ p.meta }}</span></div>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.library }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Library grid" class="sh-scroll" style="position:absolute;inset:0;overflow-y:auto;padding:{{ pad }};display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;gap:4px"><h1 style="margin:0;font:600 28px/1.2 Inter;letter-spacing:-.02em;color:var(--strong)">{{ lib.title }}</h1><span style="font:400 13px Inter;color:var(--subtle)">{{ lib.count }} titles · from {{ lib.sources }}</span></div>
+    <div style="display:flex;align-items:center;gap:8px"><span style="font:500 13px Inter;color:var(--muted)">Sort</span><button onClick="{{ cycleSort }}" style="height:34px;padding:0 10px 0 12px;border:1px solid var(--line2);border-radius:8px;background:var(--surface);color:var(--text);font:500 13px Inter;display:flex;align-items:center;gap:6px;cursor:pointer" style-hover="border-color:#2563FF">{{ sortLabel }}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.chevDown }}"></path></svg></button></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <sc-for list="{{ lib.chips }}" as="ch" hint-placeholder-count="4"><button onClick="{{ ch.pick }}" style="height:32px;padding:0 14px;border-radius:99px;border:0;background:{{ ch.bg }};color:{{ ch.color }};font:500 13px Inter;cursor:pointer">{{ ch.label }}</button></sc-for>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax({{ posterW }},1fr));gap:20px 16px">
+    <sc-for list="{{ lib.items }}" as="p" hint-placeholder-count="10">
+      <button onClick="{{ p.open }}" style="border:0;padding:0;background:transparent;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:8px;color:var(--text);min-width:0">
+        <div style="width:100%;aspect-ratio:2/3;border-radius:8px;background:{{ p.bg }};position:relative;overflow:hidden;padding:12px;display:flex;flex-direction:column;justify-content:space-between;color:#fff" style-hover="outline:2px solid #2563FF;outline-offset:2px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start"><span style="font:600 10px Inter;letter-spacing:.06em;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.28)">{{ p.quality }}</span><span style="display:flex;align-items:center;gap:3px;font:600 11px Inter"><svg width="11" height="11" viewBox="0 0 24 24" fill="#F5A524"><path d="{{ ic.star }}"></path></svg>{{ p.rating }}</span></div>
+          <div><div style="font:700 17px/1.1 Inter;letter-spacing:-.02em;text-wrap:balance">{{ p.title }}</div><div style="font:500 11px Inter;opacity:.75;margin-top:6px">{{ p.year }}</div></div>
+          <sc-if value="{{ p.hasProg }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.22)"><span style="display:block;height:100%;background:#2563FF;width:{{ p.pct }}"></span></span></sc-if>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font:600 13px/1.3 Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span><span style="font:400 12px Inter;color:var(--subtle)">{{ p.meta }}</span></div>
+      </button>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.detail }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Title details" class="sh-scroll" style="position:absolute;inset:0;overflow-y:auto">
+  <div style="height:{{ bdH }};background:{{ d.bg2 }};position:relative;display:flex;justify-content:flex-end;padding:14px 16px;font:400 11px JetBrains Mono;color:rgba(255,255,255,.4)">TMDB backdrop</div>
+  <div style="padding:0 {{ padX }} 40px;display:flex;gap:28px;margin-top:-120px;position:relative">
+    <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:none;width:220px;aspect-ratio:2/3;border-radius:12px;background:{{ d.bg }};padding:16px;display:flex;flex-direction:column;justify-content:space-between;color:#fff;border:4px solid var(--surface)"><span style="align-self:flex-start;font:600 10px Inter;letter-spacing:.06em;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.28)">{{ d.quality }}</span><div style="font:700 22px/1.1 Inter;letter-spacing:-.02em">{{ d.title }}</div></div>
+    </sc-if>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px;padding-top:{{ dTop }}">
+      <div style="display:flex;flex-direction:column;gap:10px;color:#fff;min-height:96px;justify-content:flex-end">
+        <span style="font:600 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:#B6CEFF">{{ d.section }}</span>
+        <h1 style="margin:0;font:700 40px/1.05 Inter;letter-spacing:-.035em">{{ d.title }}</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;font:500 13px Inter;color:var(--muted);flex-wrap:wrap;padding-top:8px"><span style="display:flex;align-items:center;gap:4px;color:var(--strong)"><svg width="14" height="14" viewBox="0 0 24 24" fill="#F5A524"><path d="{{ ic.star }}"></path></svg>{{ d.rating }}</span><span>{{ d.year }}</span><span>{{ d.runtimeL }}</span><span>{{ d.genre }}</span><span style="padding:2px 6px;border-radius:4px;background:var(--raised);color:var(--text);font:600 11px Inter">{{ d.quality }}</span><span style="padding:2px 6px;border-radius:4px;background:var(--raised);color:var(--text);font:600 11px Inter">5.1</span></div>
+      <p style="margin:0;font:400 15px/1.6 Inter;color:var(--text);max-width:680px;text-wrap:pretty">{{ d.plot }}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button onClick="{{ d.play }}" style="height:42px;padding:0 20px;border:0;border-radius:8px;background:#2563FF;color:#fff;font:600 14px Inter;display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:#1449E6"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.play }}"></path></svg>{{ d.playLabel }}</button>
+        <button onClick="{{ d.toggleList }}" style="height:42px;padding:0 16px;border:0;border-radius:8px;background:var(--raised);color:var(--text);font:600 14px Inter;display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:var(--hover)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ d.listIcon }}"></path></svg>My List</button>
+        <button onClick="{{ d.download }}" style="height:42px;padding:0 16px;border:0;border-radius:8px;background:var(--raised);color:var(--text);font:600 14px Inter;display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:var(--hover)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.download }}"></path></svg>{{ d.dlLabel }}</button>
+        <div style="display:flex;height:42px;padding:3px;border-radius:8px;background:var(--raised);gap:2px">
+          <sc-for list="{{ qualities }}" as="q" hint-placeholder-count="2"><button onClick="{{ q.pick }}" style="height:36px;padding:0 12px;border:0;border-radius:6px;background:{{ q.bg }};color:{{ q.color }};font:600 13px Inter;cursor:pointer">{{ q.label }}</button></sc-for>
+        </div>
+      </div>
+      <div style="font:400 12px JetBrains Mono;color:var(--subtle)">{{ d.source }}</div>
+
+      <sc-if value="{{ d.isSeries }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line2)">
+            <div style="display:flex;gap:4px">
+              <sc-for list="{{ seasons }}" as="s" hint-placeholder-count="2"><button onClick="{{ s.pick }}" style="height:40px;padding:0 14px;border:0;border-bottom:2px solid {{ s.line }};background:transparent;color:{{ s.color }};font:600 14px Inter;cursor:pointer">{{ s.label }}</button></sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <button onClick="{{ toggleAutoNext }}" style="border:0;background:transparent;display:flex;align-items:center;gap:8px;font:500 13px Inter;color:var(--muted);cursor:pointer">Auto next episode<span style="width:36px;height:20px;border-radius:99px;background:{{ autoNextBg }};padding:2px;display:flex;justify-content:{{ autoNextJ }}"><span style="width:16px;height:16px;border-radius:99px;background:#fff"></span></span></button>
+              <button onClick="{{ clearProgress }}" title="Clear season progress" style="height:32px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--muted);font:500 13px Inter;display:flex;align-items:center;gap:6px;cursor:pointer" style-hover="background:var(--raised)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.rotateCcw }}"></path></svg>Reset</button>
+            </div>
+          </div>
+          <sc-for list="{{ episodes }}" as="e" hint-placeholder-count="6">
+            <button onClick="{{ e.play }}" style="border:0;border-radius:8px;background:transparent;padding:10px;display:grid;grid-template-columns:28px 160px minmax(0,1fr) auto;gap:16px;align-items:center;text-align:left;cursor:pointer;color:var(--text)" style-hover="background:var(--raised)">
+              <span style="font:600 15px Inter;color:var(--subtle);text-align:center;font-variant-numeric:tabular-nums">{{ e.n }}</span>
+              <span style="aspect-ratio:16/9;border-radius:6px;background:{{ e.bg }};position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,.85)"><path d="{{ ic.play }}"></path></svg><span style="position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.2)"><span style="display:block;height:100%;background:#2563FF;width:{{ e.pct }}"></span></span></span>
+              <span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font:600 14px Inter;color:var(--strong)">{{ e.title }}</span><span style="font:400 13px/1.45 Inter;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.desc }}</span></span>
+              <span style="font:500 13px Inter;color:var(--subtle);font-variant-numeric:tabular-nums">{{ e.state }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.search }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Search" class="sh-scroll" style="position:absolute;inset:0;overflow-y:auto;padding:{{ pad }};display:flex;flex-direction:column;gap:20px">
+  <div style="height:52px;border-radius:10px;border:1.5px solid #2563FF;background:var(--surface);display:flex;align-items:center;gap:12px;padding:0 16px;color:var(--subtle)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.search }}"></path></svg>
+    <input ref="{{ searchRef }}" value="{{ q }}" onChange="{{ setQ }}" placeholder="Search movies, series, anime across all servers" style="flex:1;min-width:0;height:100%;border:0;background:transparent;outline:none;color:var(--strong);font:500 17px Inter">
+    <sc-if value="{{ hasQ }}" hint-placeholder-val="{{ false }}"><button onClick="{{ clearQ }}" style="width:28px;height:28px;border:0;border-radius:99px;background:var(--raised);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="{{ ic.x }}"></path></svg></button></sc-if>
+  </div>
+  <sc-if value="{{ noQ }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;gap:12px"><span style="font:600 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--subtle)">Recent searches</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ recent }}" as="rs" hint-placeholder-count="4"><button onClick="{{ rs.go }}" style="height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 13px Inter;display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="border-color:#2563FF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.rotateCcw }}"></path></svg>{{ rs.label }}</button></sc-for></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ hasQ }}" hint-placeholder-val="{{ false }}">
+    <span style="font:500 13px Inter;color:var(--muted)">{{ resultLabel }}</span>
+    <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}"><div style="padding:48px 0;text-align:center;display:flex;flex-direction:column;gap:6px"><span style="font:600 16px Inter;color:var(--strong)">Nothing matches “{{ q }}”</span><span style="font:400 14px Inter;color:var(--muted)">Check the spelling, or refresh libraries in Server.</span></div></sc-if>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax({{ posterW }},1fr));gap:20px 16px">
+      <sc-for list="{{ results }}" as="p" hint-placeholder-count="4">
+        <button onClick="{{ p.open }}" style="border:0;padding:0;background:transparent;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:8px;color:var(--text);min-width:0">
+          <div style="width:100%;aspect-ratio:2/3;border-radius:8px;background:{{ p.bg }};padding:12px;display:flex;flex-direction:column;justify-content:space-between;color:#fff" style-hover="outline:2px solid #2563FF;outline-offset:2px"><span style="align-self:flex-start;font:600 10px Inter;letter-spacing:.06em;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.28)">{{ p.quality }}</span><div><div style="font:700 17px/1.1 Inter;letter-spacing:-.02em;text-wrap:balance">{{ p.title }}</div><div style="font:500 11px Inter;opacity:.75;margin-top:6px">{{ p.year }}</div></div></div>
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font:600 13px/1.3 Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span><span style="font:400 12px Inter;color:var(--subtle)">{{ p.section }}</span></div>
+        </button>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.downloads }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Downloads" class="sh-scroll" style="position:absolute;inset:0;overflow-y:auto;padding:{{ pad }};display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap"><div style="display:flex;flex-direction:column;gap:4px"><h1 style="margin:0;font:600 28px/1.2 Inter;letter-spacing:-.02em;color:var(--strong)">Downloads</h1><span style="font:400 13px JetBrains Mono;color:var(--subtle)">D:\StreamHub\Downloads · 412 GB free</span></div><button style="height:36px;padding:0 14px;border:0;border-radius:8px;background:var(--raised);color:var(--text);font:600 13px Inter;display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:var(--hover)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.folderOpen }}"></path></svg>Show in Explorer</button></div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:600 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--subtle)">In progress</span>
+    <sc-for list="{{ dlActive }}" as="x" hint-placeholder-count="2">
+      <div style="border:1px solid var(--line2);border-radius:12px;padding:14px;display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:16px;align-items:center">
+        <div style="width:48px;aspect-ratio:2/3;border-radius:6px;background:{{ x.bg }}"></div>
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="font:600 14px Inter;color:var(--strong)">{{ x.title }}</span><span style="font:500 13px Inter;color:var(--muted);font-variant-numeric:tabular-nums">{{ x.pctL }}</span></div>
+          <div style="height:6px;border-radius:99px;background:var(--raised)"><div style="height:100%;border-radius:99px;background:#2563FF;width:{{ x.pctL }}"></div></div>
+          <div style="font:400 12px Inter;color:var(--subtle);font-variant-numeric:tabular-nums">{{ x.info }}</div>
+        </div>
+        <div style="display:flex;gap:4px"><button onClick="{{ x.toggle }}" title="{{ x.toggleLabel }}" style="width:36px;height:36px;border:0;border-radius:8px;background:var(--raised);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--hover)"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="{{ x.toggleIcon }}"></path></svg></button><button onClick="{{ x.cancel }}" title="Cancel" style="width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--raised)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.x }}"></path></svg></button></div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:600 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--subtle)">Ready to watch offline</span>
+    <sc-for list="{{ dlDone }}" as="x" hint-placeholder-count="3">
+      <div style="border-radius:12px;padding:10px 14px;display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:16px;align-items:center" style-hover="background:var(--raised)">
+        <div style="width:48px;aspect-ratio:2/3;border-radius:6px;background:{{ x.bg }}"></div>
+        <div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font:600 14px Inter;color:var(--strong)">{{ x.title }}</span><span style="font:400 12px Inter;color:var(--subtle)">{{ x.info }}</span></div>
+        <div style="display:flex;gap:4px"><button onClick="{{ x.play }}" style="height:36px;padding:0 14px;border:0;border-radius:8px;background:#2563FF;color:#fff;font:600 13px Inter;display:flex;align-items:center;gap:6px;cursor:pointer" style-hover="background:#1449E6"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.play }}"></path></svg>Watch</button><button onClick="{{ x.remove }}" title="Delete file" style="width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--hover);color:#E5484D"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.trash }}"></path></svg></button></div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.server }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Server dashboard" class="sh-scroll" style="position:absolute;inset:0;overflow-y:auto;padding:{{ pad }};display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap"><div style="display:flex;flex-direction:column;gap:4px"><h1 style="margin:0;font:600 28px/1.2 Inter;letter-spacing:-.02em;color:var(--strong)">Server</h1><span style="font:400 13px Inter;color:var(--subtle)">StreamHub serves your library to phones, TVs and browsers on this network.</span></div>
+    <div style="display:flex;gap:8px"><button onClick="{{ restartServer }}" style="height:36px;padding:0 14px;border:0;border-radius:8px;background:var(--raised);color:var(--text);font:600 13px Inter;display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:var(--hover)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.refresh }}"></path></svg>Restart</button><button onClick="{{ toggleServer }}" style="height:36px;padding:0 14px;border:{{ srvBtn.border }};border-radius:8px;background:{{ srvBtn.bg }};color:{{ srvBtn.color }};font:600 13px Inter;display:flex;align-items:center;gap:8px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.power }}"></path></svg>{{ srvBtn.label }}</button></div>
+  </div>
+  <div style="display:grid;grid-template-columns:{{ srvCols }};gap:16px">
+    <div style="border:1px solid var(--line2);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="width:10px;height:10px;border-radius:99px;background:{{ status.dot }}"></span><span style="font:600 18px Inter;color:var(--strong)">{{ status.big }}</span><span style="margin-left:auto;font:400 12px Inter;color:var(--subtle)">{{ status.uptime }}</span></div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line2);border-radius:8px;overflow:hidden">
+        <sc-for list="{{ srvStats }}" as="s" hint-placeholder-count="4"><div style="background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:4px"><span style="font:500 12px Inter;color:var(--subtle)">{{ s.k }}</span><span style="font:600 18px Inter;color:var(--strong);font-variant-numeric:tabular-nums">{{ s.v }}</span></div></sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font:600 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--subtle);margin-bottom:6px">Now streaming</span>
+        <sc-if value="{{ noStreams }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px Inter;color:var(--muted);padding:8px 0">No one is watching right now.</span></sc-if>
+        <sc-for list="{{ streams }}" as="s" hint-placeholder-count="2">
+          <div style="display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)">
+            <span style="width:36px;height:36px;border-radius:8px;background:var(--raised);color:var(--accText);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ s.icon }}"></path></svg></span>
+            <span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font:600 14px Inter;color:var(--strong)">{{ s.title }}</span><span style="font:400 12px Inter;color:var(--subtle)">{{ s.device }}</span></span>
+            <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px"><span style="font:500 12px Inter;color:{{ s.modeC }}">{{ s.mode }}</span><span style="font:400 11px JetBrains Mono;color:var(--subtle)">{{ s.detail }}</span></span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="border:1px solid var(--line2);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px">
+      <span style="font:600 16px Inter;color:var(--strong)">Watch on another device</span>
+      <div style="display:flex;gap:16px;align-items:center">
+        <div style="width:132px;height:132px;flex:none;border-radius:8px;background:#fff;padding:10px;opacity:{{ qrOp }}"><svg viewBox="0 0 25 25" width="112" height="112" shape-rendering="crispEdges"><path d="{{ qr }}" fill="#080C14"></path></svg></div>
+        <span style="font:400 13px/1.5 Inter;color:var(--muted)">Scan with your phone camera, or open the address in any browser on the same Wi-Fi.</span>
+      </div>
+      <div style="height:40px;border-radius:8px;background:var(--raised);display:flex;align-items:center;gap:8px;padding:0 4px 0 12px"><span style="flex:1;font:500 13px JetBrains Mono;color:var(--strong)">http://192.168.1.20:47990</span><button onClick="{{ copyUrl }}" style="height:32px;padding:0 10px;border:0;border-radius:6px;background:var(--surface);color:var(--text);font:600 12px Inter;display:flex;align-items:center;gap:6px;cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ copyIcon }}"></path></svg>{{ copyLabel }}</button></div>
+      <div style="font:400 12px Inter;color:var(--subtle)">Android TV app: enter <span style="font:500 12px JetBrains Mono;color:var(--text)">192.168.1.20</span> when asked.</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:{{ srvCols }};gap:16px">
+    <div style="border:1px solid var(--line2);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:4px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font:600 16px Inter;color:var(--strong)">Libraries</span><button onClick="{{ goSettings }}" style="border:0;background:transparent;color:var(--accText);font:600 13px Inter;cursor:pointer;padding:4px 6px;border-radius:6px" style-hover="background:var(--raised)">Manage</button></div>
+      <sc-for list="{{ sources }}" as="s" hint-placeholder-count="4">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)">
+          <span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font:600 14px Inter;color:var(--strong)">{{ s.label }}</span><span style="font:400 12px JetBrains Mono;color:var(--subtle);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.addr }}</span></span>
+          <span style="display:flex;align-items:center;gap:6px;font:500 12px Inter;color:var(--muted)"><span style="width:8px;height:8px;border-radius:99px;background:{{ s.dot }}"></span>{{ s.state }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="border:1px solid var(--line2);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:4px">
+      <span style="font:600 16px Inter;color:var(--strong);margin-bottom:8px">System</span>
+      <sc-for list="{{ sysRows }}" as="s" hint-placeholder-count="4">
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font:500 13px Inter"><span style="color:var(--muted)">{{ s.k }}</span><span style="font:400 13px JetBrains Mono;color:var(--strong)">{{ s.v }}</span></div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.settings }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Settings" class="sh-scroll" style="position:absolute;inset:0;overflow-y:auto;padding:{{ pad }}">
+  <div style="max-width:760px;display:flex;flex-direction:column;gap:28px">
+    <h1 style="margin:0;font:600 28px/1.2 Inter;letter-spacing:-.02em;color:var(--strong)">Settings</h1>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <span style="font:600 16px Inter;color:var(--strong)">Appearance</span>
+      <div style="border:1px solid var(--line2);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap"><span style="display:flex;flex-direction:column;gap:2px"><span style="font:500 14px Inter;color:var(--strong)">Theme</span><span style="font:400 13px Inter;color:var(--subtle)">“System” follows your Windows color mode.</span></span>
+        <div style="display:flex;padding:3px;border-radius:8px;background:var(--raised);gap:2px"><sc-for list="{{ themeOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.pick }}" style="height:32px;padding:0 12px;border:0;border-radius:6px;background:{{ o.bg }};color:{{ o.color }};font:600 13px Inter;display:flex;align-items:center;gap:6px;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ o.icon }}"></path></svg>{{ o.label }}</button></sc-for></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <span style="font:600 16px Inter;color:var(--strong)">Libraries</span>
+      <div style="border:1px solid var(--line2);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px">
+        <label style="display:flex;flex-direction:column;gap:6px;font:500 13px Inter;color:var(--muted)">Servers — one “Label | address” per line
+          <textarea value="{{ libText }}" onChange="{{ setLibText }}" rows="4" style="border-radius:8px;border:1px solid var(--line2);background:var(--surface);color:var(--strong);padding:10px 12px;font:400 13px/1.6 JetBrains Mono;outline:none;resize:vertical" style-focus="border-color:#2563FF;box-shadow:0 0 0 1px #2563FF"></textarea></label>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+          <label style="display:flex;flex-direction:column;gap:6px;font:500 13px Inter;color:var(--muted)">Username<input value="guest" style="height:38px;border-radius:8px;border:1px solid var(--line2);background:var(--surface);color:var(--strong);padding:0 12px;font:400 14px Inter;outline:none" style-focus="border-color:#2563FF"></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font:500 13px Inter;color:var(--muted)">Password<input type="password" value="streamhub" style="height:38px;border-radius:8px;border:1px solid var(--line2);background:var(--surface);color:var(--strong);padding:0 12px;font:400 14px Inter;outline:none" style-focus="border-color:#2563FF"></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font:500 13px Inter;color:var(--muted)">TMDB API key<input value="a1f3••••••••••••c92e" style="height:38px;border-radius:8px;border:1px solid var(--line2);background:var(--surface);color:var(--strong);padding:0 12px;font:400 13px JetBrains Mono;outline:none" style-focus="border-color:#2563FF"></label>
+        </div>
+        <div style="display:flex;gap:8px"><button style="height:36px;padding:0 14px;border:0;border-radius:8px;background:#2563FF;color:#fff;font:600 13px Inter;cursor:pointer" style-hover="background:#1449E6">Save & rescan</button><button disabled style="height:36px;padding:0 14px;border:0;border-radius:8px;background:var(--raised);color:var(--subtle);font:600 13px Inter;display:flex;align-items:center;gap:8px;cursor:not-allowed"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.folder }}"></path></svg>Add folder… · soon</button></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <span style="font:600 16px Inter;color:var(--strong)">Server & startup</span>
+      <div style="border:1px solid var(--line2);border-radius:12px;overflow:hidden">
+        <sc-for list="{{ toggles }}" as="tg" hint-placeholder-count="4">
+          <button onClick="{{ tg.flip }}" style="width:100%;border:0;border-top:1px solid var(--line);background:transparent;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:16px;text-align:left;cursor:pointer" style-hover="background:var(--raised)">
+            <span style="display:flex;flex-direction:column;gap:2px"><span style="font:500 14px Inter;color:var(--strong)">{{ tg.label }}</span><span style="font:400 13px Inter;color:var(--subtle)">{{ tg.desc }}</span></span>
+            <span style="flex:none;width:40px;height:22px;border-radius:99px;background:{{ tg.bg }};padding:3px;display:flex;justify-content:{{ tg.j }}"><span style="width:16px;height:16px;border-radius:99px;background:{{ tg.knob }}"></span></span>
+          </button>
+        </sc-for>
+        <div style="border-top:1px solid var(--line);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:16px"><span style="display:flex;flex-direction:column;gap:2px"><span style="font:500 14px Inter;color:var(--strong)">Port</span><span style="font:400 13px Inter;color:var(--subtle)">Change only if another app uses it.</span></span><input value="47990" style="width:96px;height:36px;border-radius:8px;border:1px solid var(--line2);background:var(--surface);color:var(--strong);padding:0 12px;font:400 14px JetBrains Mono;outline:none;text-align:right" style-focus="border-color:#2563FF"></div>
+      </div>
+    </div>
+    <div style="font:400 12px JetBrains Mono;color:var(--subtle)">StreamHub 1.0.0 · Windows x64 · Node 24.22.1 · FFmpeg 7.1</div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ playerFull }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Player" onMouseMove="{{ poke }}" style="position:absolute;inset:0;background:#000;color:#fff;overflow:hidden;cursor:{{ pl.cursor }}">
+  <button onClick="{{ togglePlay }}" style="position:absolute;inset:0;border:0;padding:0;background:{{ pl.bg }};cursor:inherit;display:flex;align-items:center;justify-content:center"><span style="font:400 12px JetBrains Mono;color:rgba(255,255,255,.35)">video · {{ pl.quality }}</span></button>
+  <sc-if value="{{ subOn }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:0;right:0;bottom:{{ subBottom }};display:flex;justify-content:center;pointer-events:none"><span style="font:{{ sub.font }};color:{{ sub.color }};background:{{ sub.bg }};padding:4px 12px;border-radius:4px;text-shadow:0 0 3px #000,0 0 3px #000">{{ sub.text }}</span></div></sc-if>
+  <sc-if value="{{ pl.paused }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:50%;top:50%;width:76px;height:76px;margin:-38px 0 0 -38px;border-radius:99px;background:#2563FF;display:flex;align-items:center;justify-content:center;pointer-events:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="{{ ic.play }}"></path></svg></div></sc-if>
+  <div style="position:absolute;left:0;right:0;top:0;padding:16px 20px;display:flex;align-items:center;gap:14px;background:rgba(0,0,0,.55);opacity:{{ pl.ui }}">
+    <button onClick="{{ shrinkPlayer }}" title="Back (Esc)" style="width:36px;height:36px;border:0;border-radius:99px;background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.arrowLeft }}"></path></svg></button>
+    <span style="display:flex;flex-direction:column;gap:2px"><span style="font:600 16px Inter">{{ pl.title }}</span><span style="font:400 12px Inter;color:#A9B4C4">{{ pl.sub }}</span></span>
+  </div>
+  <div onClick="{{ stop }}" style="position:absolute;left:0;right:0;bottom:0;padding:14px 20px 16px;display:flex;flex-direction:column;gap:10px;background:rgba(0,0,0,.6);opacity:{{ pl.ui }}">
+    <div onClick="{{ seek }}" style="height:16px;display:flex;align-items:center;cursor:pointer;position:relative"><div style="flex:1;height:4px;border-radius:99px;background:rgba(255,255,255,.25);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ pl.buf }};background:rgba(255,255,255,.3);border-radius:99px"></div><div style="position:absolute;left:0;top:0;bottom:0;width:{{ pl.pct }};background:#2563FF;border-radius:99px"></div><div style="position:absolute;left:{{ pl.pct }};top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:99px;background:#fff"></div></div></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button onClick="{{ togglePlay }}" title="Play/Pause (Space)" style="width:40px;height:40px;border:0;border-radius:99px;background:#2563FF;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="{{ pl.ppIcon }}"></path></svg></button>
+      <button onClick="{{ back10 }}" title="Back 10 s (←)" style="width:40px;height:40px;border:0;border-radius:8px;background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgba(255,255,255,.12)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.rotateCcw }}"></path></svg></button>
+      <button onClick="{{ fwd10 }}" title="Forward 10 s (→)" style="width:40px;height:40px;border:0;border-radius:8px;background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgba(255,255,255,.12)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.rotateCw }}"></path></svg></button>
+      <sc-if value="{{ pl.hasNext }}" hint-placeholder-val="{{ false }}"><button onClick="{{ nextEp }}" title="Next episode (N)" style="height:40px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:#fff;display:flex;align-items:center;gap:6px;font:600 13px Inter;cursor:pointer" style-hover="background:rgba(255,255,255,.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.skipFwd }}"></path></svg>Next</button></sc-if>
+      <button onClick="{{ toggleMute }}" title="Mute (M)" style="width:40px;height:40px;border:0;border-radius:8px;background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgba(255,255,255,.12)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ pl.volIcon }}"></path></svg></button>
+      <div style="width:80px;height:4px;border-radius:99px;background:rgba(255,255,255,.25)"><div style="height:100%;border-radius:99px;background:#fff;width:{{ pl.vol }}"></div></div>
+      <span style="margin-left:10px;font:500 13px JetBrains Mono;color:#D3DAE4">{{ pl.time }}</span>
+      <div style="flex:1"></div>
+      <button onClick="{{ menuSpeed }}" title="Speed" style="height:40px;padding:0 10px;border:0;border-radius:8px;background:{{ pl.mSpeed }};color:#fff;font:600 13px Inter;cursor:pointer" style-hover="background:rgba(255,255,255,.12)">{{ pl.speedL }}</button>
+      <button onClick="{{ menuAudio }}" title="Audio (A)" style="width:40px;height:40px;border:0;border-radius:8px;background:{{ pl.mAudio }};color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgba(255,255,255,.12)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.audio }}"></path></svg></button>
+      <button onClick="{{ menuCc }}" title="Subtitles (C)" style="width:40px;height:40px;border:0;border-radius:8px;background:{{ pl.mCc }};color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgba(255,255,255,.12)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.captions }}"></path></svg></button>
+      <button onClick="{{ shrinkPlayer }}" title="Mini player" style="width:40px;height:40px;border:0;border-radius:8px;background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgba(255,255,255,.12)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.pip }}"></path></svg></button>
+      <button onClick="{{ toggleMax }}" title="Full screen (F)" style="width:40px;height:40px;border:0;border-radius:8px;background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgba(255,255,255,.12)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.maximize }}"></path></svg></button>
+    </div>
+  </div>
+  <sc-if value="{{ menu.open }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ stop }}" style="position:absolute;right:20px;bottom:96px;width:300px;border-radius:12px;background:#0F1521;border:1px solid #263041;padding:8px;display:flex;flex-direction:column;gap:2px;color:#E9EDF3">
+      <span style="font:600 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:#7A879B;padding:8px 10px 6px">{{ menu.title }}</span>
+      <sc-for list="{{ menu.items }}" as="m" hint-placeholder-count="3">
+        <button onClick="{{ m.pick }}" style="height:38px;border:0;border-radius:6px;background:{{ m.bg }};color:#E9EDF3;padding:0 10px;display:flex;align-items:center;gap:10px;font:{{ m.font }};cursor:pointer;text-align:left" style-hover="background:#182030"><span style="width:16px;color:#4F86FF;display:flex"><sc-if value="{{ m.on }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.check }}"></path></svg></sc-if></span><span style="flex:1">{{ m.label }}</span><span style="font:400 12px Inter;color:#7A879B">{{ m.note }}</span></button>
+      </sc-for>
+      <sc-if value="{{ menu.hasSync }}" hint-placeholder-val="{{ false }}">
+        <div style="border-top:1px solid #263041;margin-top:6px;padding:10px 10px 4px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;font:500 13px Inter"><span>Sync</span><span style="font:500 13px JetBrains Mono;color:#84ADFF">{{ menu.syncL }}</span></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px"><sc-for list="{{ syncBtns }}" as="sb" hint-placeholder-count="4"><button onClick="{{ sb.go }}" style="height:30px;border:0;border-radius:6px;background:#182030;color:#E9EDF3;font:500 12px JetBrains Mono;cursor:pointer" style-hover="background:#263041">{{ sb.label }}</button></sc-for></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ menu.isCc }}" hint-placeholder-val="{{ false }}">
+        <div style="border-top:1px solid #263041;padding:10px 10px 4px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font:500 13px Inter"><span>Size</span><div style="display:flex;gap:4px"><sc-for list="{{ subSizes }}" as="ss" hint-placeholder-count="3"><button onClick="{{ ss.pick }}" style="width:32px;height:28px;border:0;border-radius:6px;background:{{ ss.bg }};color:#fff;font:600 12px Inter;cursor:pointer">{{ ss.label }}</button></sc-for></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font:500 13px Inter"><span>Color</span><div style="display:flex;gap:6px"><sc-for list="{{ subColors }}" as="sc" hint-placeholder-count="4"><button onClick="{{ sc.pick }}" title="{{ sc.c }}" style="width:22px;height:22px;border-radius:99px;border:2px solid {{ sc.ring }};background:{{ sc.c }};cursor:pointer;padding:0"></button></sc-for></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font:500 13px Inter"><span>Background box</span><button onClick="{{ toggleSubBg }}" style="width:36px;height:20px;border:0;border-radius:99px;background:{{ subBgT.bg }};padding:2px;display:flex;justify-content:{{ subBgT.j }};cursor:pointer"><span style="width:16px;height:16px;border-radius:99px;background:#fff"></span></button></div>
+          <button style="height:32px;border:1px dashed #3B4658;border-radius:6px;background:transparent;color:#A9B4C4;font:500 12px Inter;cursor:pointer">Load .srt file…</button>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ playerMini }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Mini player" style="position:absolute;right:20px;bottom:20px;width:336px;border-radius:12px;overflow:hidden;background:#0F1521;border:1px solid #263041;color:#fff">
+    <button onClick="{{ expandPlayer }}" title="Expand" style="width:100%;aspect-ratio:16/9;border:0;padding:0;background:{{ pl.bg }};position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center"><span style="font:400 11px JetBrains Mono;color:rgba(255,255,255,.35)">video</span><span style="position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.2)"><span style="display:block;height:100%;background:#2563FF;width:{{ pl.pct }}"></span></span></button>
+    <div style="display:flex;align-items:center;gap:6px;padding:8px 8px 8px 12px"><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font:600 13px Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ pl.title }}</span><span style="font:400 11px JetBrains Mono;color:#A9B4C4">{{ pl.time }}</span></span>
+      <button onClick="{{ togglePlay }}" style="width:32px;height:32px;border:0;border-radius:99px;background:#2563FF;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="{{ pl.ppIcon }}"></path></svg></button>
+      <button onClick="{{ expandPlayer }}" title="Expand" style="width:32px;height:32px;border:0;border-radius:6px;background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#182030"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.maximize }}"></path></svg></button>
+      <button onClick="{{ stopPlayer }}" title="Stop" style="width:32px;height:32px;border:0;border-radius:6px;background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#182030"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.x }}"></path></svg></button>
+    </div>
+  </div>
+</sc-if>
+
+    </main>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;right:16px;bottom:64px;width:360px;border-radius:8px;background:var(--surface);border:1px solid var(--line2);padding:16px;display:flex;gap:12px;color:var(--text)">
+    <img src="assets/streamhub-icon.svg" alt="" style="width:32px;height:32px;flex:none">
+    <span style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:600 14px Inter;color:var(--strong)">StreamHub is still running</span><span style="font:400 13px/1.45 Inter;color:var(--muted)">Your devices can keep streaming. Open it again from the tray.</span></span>
+    <button onClick="{{ hideToast }}" style="width:24px;height:24px;border:0;background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.x }}"></path></svg></button>
+  </div>
+</sc-if>
+
+<sc-if value="{{ tray }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Tray menu" style="position:absolute;right:120px;bottom:60px;width:300px;border-radius:8px;background:var(--surface);border:1px solid var(--line2);padding:6px;display:flex;flex-direction:column;gap:2px;color:var(--text)">
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 10px"><img src="assets/streamhub-icon.svg" alt="" style="width:36px;height:36px"><span style="display:flex;flex-direction:column;gap:3px"><span style="font:600 14px Inter;color:var(--strong)">StreamHub</span><span style="display:flex;align-items:center;gap:6px;font:500 12px Inter;color:var(--muted)"><span style="width:7px;height:7px;border-radius:99px;background:{{ status.dot }}"></span>{{ status.label }}</span></span></div>
+    <div style="margin:0 10px 8px;height:34px;border-radius:6px;background:var(--raised);display:flex;align-items:center;padding:0 10px;font:500 12px JetBrains Mono;color:var(--strong)">192.168.1.20:47990</div>
+    <sc-for list="{{ trayItems }}" as="ti" hint-placeholder-count="4">
+      <button onClick="{{ ti.go }}" style="height:36px;border:0;border-radius:6px;background:transparent;color:{{ ti.color }};padding:0 10px;display:flex;align-items:center;gap:10px;font:500 13px Inter;cursor:pointer;text-align:left" style-hover="background:var(--raised)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ti.icon }}"></path></svg>{{ ti.label }}</button>
+    </sc-for>
+  </div>
+</sc-if>
+
+<div style="position:absolute;left:0;right:0;bottom:0;height:48px;background:var(--bar);border-top:1px solid var(--line2);display:flex;align-items:center;padding:0 12px">
+  <div style="flex:1"></div>
+  <div style="display:flex;gap:4px;align-items:center">
+    <div style="width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center"><span style="width:20px;height:20px;border-radius:4px;background:var(--line2)"></span></div>
+    <div style="width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center"><span style="width:20px;height:20px;border-radius:4px;background:var(--line2)"></span></div>
+    <button onClick="{{ taskbarApp }}" title="StreamHub" style="width:40px;height:40px;border:0;border-radius:6px;background:{{ tbBg }};display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer" style-hover="background:var(--raised)"><img src="assets/streamhub-icon.svg" alt="" style="width:24px;height:24px"><span style="position:absolute;bottom:2px;left:50%;width:{{ tbInd }};height:3px;margin-left:-8px;border-radius:3px;background:#4F86FF"></span></button>
+    <div style="width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center"><span style="width:20px;height:20px;border-radius:4px;background:var(--line2)"></span></div>
+  </div>
+  <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:2px;color:var(--text)">
+    <button onClick="{{ toggleTray }}" title="StreamHub — {{ status.label }}" style="width:36px;height:40px;border:0;border-radius:6px;background:{{ trayBg }};display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative" style-hover="background:var(--raised)"><img src="{{ markSrc }}" alt="" style="height:16px"><span style="position:absolute;right:7px;bottom:10px;width:6px;height:6px;border-radius:99px;background:{{ status.dot }};border:1px solid var(--bar)"></span></button>
+    <div style="height:40px;padding:0 8px;display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.wifi }}"></path></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.volume }}"></path></svg></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;padding:0 8px;font:400 12px/1.35 Inter"><span>8:42 PM</span><span>10/28/2026</span></div>
+  </div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;welcome&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;'home'|'welcome'&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;windowSize&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;default&quot;,&quot;minimum&quot;,&quot;max&quot;],&quot;default&quot;:&quot;default&quot;,&quot;tsType&quot;:&quot;'default'|'minimum'|'max'&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;windowsTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark'|'light'&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
+const IC = {
+  house:'M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8 M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
+  film:'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M7 3v18 M3 7.5h4 M3 12h18 M3 16.5h4 M17 3v18 M17 7.5h4 M17 16.5h4',
+  tv:'M17 2l-5 5-5-5 M4 7h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z',
+  server:'M4 2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z M4 14h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z M6 6h.01 M6 18h.01',
+  download:'M12 15V3 M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5',
+  settings:'M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
+  search:'M21 21l-4.34-4.34 M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0z',
+  play:'M6 3.5v17a1 1 0 0 0 1.5.86l14-8.5a1 1 0 0 0 0-1.72l-14-8.5A1 1 0 0 0 6 3.5z',
+  pause:'M6 3h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z M14 3h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z',
+  plus:'M5 12h14 M12 5v14', check:'M20 6L9 17l-5-5', x:'M18 6L6 18 M6 6l12 12',
+  info:'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z M12 16v-4 M12 8h.01',
+  chevRight:'M9 18l6-6-6-6', chevDown:'M6 9l6 6 6-6', arrowLeft:'M12 19l-7-7 7-7 M19 12H5',
+  rotateCcw:'M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5',
+  rotateCw:'M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8 M21 3v5h-5',
+  volume:'M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z M16 9a5 5 0 0 1 0 6 M19.364 18.364a9 9 0 0 0 0-12.728',
+  volumeX:'M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z M22 9l-6 6 M16 9l6 6',
+  captions:'M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M7 15h4 M15 15h2 M7 11h2 M13 11h4',
+  audio:'M2 10v3 M6 6v11 M10 3v18 M14 8v7 M18 5v13 M22 10v3',
+  maximize:'M8 3H5a2 2 0 0 0-2 2v3 M21 8V5a2 2 0 0 0-2-2h-3 M3 16v3a2 2 0 0 0 2 2h3 M16 21h3a2 2 0 0 0 2-2v-3',
+  pip:'M21 9V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h4 M14 13h6a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2z',
+  skipFwd:'M5 4l10 8-10 8z M19 5v14',
+  folder:'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z',
+  folderOpen:'M6 14l1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2',
+  globe:'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20 M2 12h20',
+  refresh:'M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8 M21 3v5h-5 M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16 M8 16H3v5',
+  sun:'M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0z M12 2v2 M12 20v2 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M2 12h2 M20 12h2 M6.34 17.66l-1.41 1.41 M19.07 4.93l-1.41 1.41',
+  moon:'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z',
+  monitor:'M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M8 21h8 M12 17v4',
+  bookmark:'M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z',
+  star:'M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z',
+  power:'M12 2v10 M18.4 6.6a9 9 0 1 1-12.77.04',
+  wifi:'M12 20h.01 M2 8.82a15 15 0 0 1 20 0 M5 12.859a10 10 0 0 1 14 0 M8.5 16.429a5 5 0 0 1 7 0',
+  copy:'M10 8h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2',
+  trash:'M3 6h18 M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6 M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2 M10 11v6 M14 11v6',
+  smartphone:'M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z M12 18h.01',
+  external:'M15 3h6v6 M10 14L21 3 M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6',
+  logOut:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9'
+};
+const S = { en:'English Movies', hi:'Hindi Movies', tv:'TV & Web Series', an:'Anime' };
+const CAT = [
+  ['dune','Dune: Part Two',2024,166,'Sci-Fi','4K',8.5,'en',245,'Paul Atreides unites with the Fremen while on a path of revenge against the conspirators who destroyed his family.'],
+  ['oppenheimer','Oppenheimer',2023,180,'Drama','1080p',8.3,'en',30,'The story of J. Robert Oppenheimer and the race to build the first atomic bomb.'],
+  ['arrival','Arrival',2016,116,'Sci-Fi','1080p',7.9,'en',200,'A linguist is recruited to communicate with mysterious visitors after twelve spacecraft land around the world.'],
+  ['pastlives','Past Lives',2023,106,'Romance','1080p',7.8,'en',15,'Two childhood friends are reunited decades later in New York for one fateful week.'],
+  ['interstellar','Interstellar',2014,169,'Sci-Fi','4K',8.7,'en',220,'A team of explorers travels through a wormhole in space in an attempt to ensure humanity’s survival.'],
+  ['batman','The Batman',2022,176,'Crime','1080p',7.8,'en',260,'In his second year of fighting crime, Batman uncovers corruption in Gotham that connects to his own family.'],
+  ['insideout2','Inside Out 2',2024,96,'Animation','1080p',7.6,'en',320,'Riley enters her teenage years, and Headquarters makes room for some unexpected new emotions.'],
+  ['civilwar','Civil War',2024,109,'Thriller','1080p',7.0,'en',10,'A team of journalists travels across a fractured United States during a rapidly escalating conflict.'],
+  ['12thfail','12th Fail',2023,147,'Drama','1080p',8.9,'hi',60,'Based on the true story of a young man from Chambal who overcomes poverty to clear the UPSC exams.'],
+  ['laapataa','Laapataa Ladies',2024,122,'Comedy','1080p',8.4,'hi',40,'Two young brides get swapped on a train, setting off a search across rural India.'],
+  ['andhadhun','Andhadhun',2018,139,'Thriller','1080p',8.2,'hi',280,'A pianist who pretends to be blind unwittingly becomes entangled in a murder.'],
+  ['jawan','Jawan',2023,169,'Action','1080p',7.0,'hi',350,'A man driven by a personal vendetta sets out to rectify wrongs in society.'],
+  ['stree2','Stree 2',2024,149,'Horror','720p',7.2,'hi',300,'The town of Chanderi faces a new supernatural threat targeting its women.'],
+  ['severance','Severance',2022,null,'Thriller','4K',8.7,'tv',210,'Mark leads a team of office workers whose memories have been surgically divided between their work and personal lives.',[9,10]],
+  ['shogun','Shōgun',2024,null,'Drama','1080p',8.6,'tv',25,'In 1600 Japan, Lord Toranaga fights for his life as enemies on the Council of Regents unite against him.',[10]],
+  ['thebear','The Bear',2022,null,'Comedy','1080p',8.5,'tv',190,'A young chef returns home to Chicago to run his family’s sandwich shop.',[8,10]],
+  ['panchayat','Panchayat',2020,null,'Comedy','1080p',9.0,'tv',130,'An engineering graduate takes a job as secretary of a panchayat office in a remote village.',[8,8]],
+  ['scam1992','Scam 1992',2020,null,'Drama','1080p',9.3,'tv',85,'The rise and fall of stockbroker Harshad Mehta in 1980s–90s Bombay.',[10]],
+  ['frieren','Frieren',2023,null,'Fantasy','1080p',9.0,'an',165,'An elf mage reflects on life and loss after her party defeats the Demon King.',[28]],
+  ['jjk','Jujutsu Kaisen',2020,null,'Action','1080p',8.6,'an',275,'A boy swallows a cursed talisman and joins a secret school of sorcerers.',[24,23]],
+  ['spirited','Spirited Away',2001,125,'Fantasy','1080p',8.6,'an',180,'A young girl wanders into a world ruled by gods, witches and spirits.'],
+  ['yourname','Your Name',2016,106,'Romance','1080p',8.4,'an',235,'Two strangers find themselves linked in a bizarre way.'],
+].map(([id,title,year,rt,genre,quality,rating,sec,h,plot,seasons]) => ({id,title,year,rt,genre,quality,rating,sec,h,plot,seasons,type:seasons?'series':'movie'}));
+const BY = Object.fromEntries(CAT.map(c=>[c.id,c]));
+const SEV = ['Good News About Hell','Half Loop','In Perpetuity','The You You Are','The Grim Barbarity of Optics and Design','Hide and Seek','Defiant Jazz','What’s for Dinner?','The We We Are'];
+const DARK = {bg:'#080C14',surface:'#0F1521',raised:'#182030',hover:'#263041',line:'#182030',line2:'#263041',text:'#E9EDF3',strong:'#FFFFFF',muted:'#A9B4C4',subtle:'#7A879B',sel:'#13318A',selText:'#FFFFFF',accText:'#84ADFF',bar:'#0F1521'};
+const LIGHT = {bg:'#E9EDF3',surface:'#FFFFFF',raised:'#F0F3F7',hover:'#E3E8EF',line:'#E9EDF3',line2:'#D3DAE4',text:'#182030',strong:'#080C14',muted:'#3B4658',subtle:'#566377',sel:'#D9E6FF',selText:'#1139B4',accText:'#1449E6',bar:'#F5F7FA'};
+const pbg = (h,l=0.42,c=0.1) => `oklch(${l} ${c} ${h})`;
+const fmt = s => { s=Math.max(0,Math.floor(s)); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60; return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0'); };
+const rtl = m => m ? `${Math.floor(m/60)}h ${m%60}m` : '';
+function qrPath(){ const N=25, g=[]; let seed=7; const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+  for(let y=0;y<N;y++){g[y]=[];for(let x=0;x<N;x++)g[y][x]=rnd()>.52;}
+  const finder=(ox,oy)=>{for(let y=-1;y<8;y++)for(let x=-1;x<8;x++){const X=ox+x,Y=oy+y;if(X<0||Y<0||X>=N||Y>=N)continue;const r=Math.max(Math.abs(x-3),Math.abs(y-3));g[Y][X]=(x>=0&&y>=0&&x<7&&y<7)&&(r===3||r<=1);}};
+  finder(0,0);finder(N-7,0);finder(0,N-7);
+  for(let y=16;y<21;y++)for(let x=16;x<21;x++){const r=Math.max(Math.abs(x-18),Math.abs(y-18));g[y][x]=r!==1;}
+  let d='';for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(g[y][x])d+=`M${x} ${y}h1v1h-1z`;return d;}
+const QR = qrPath();
+
+class Component extends DCLogic {
+  state = {
+    screen: null, hist: [], detailId: null, libKind: 'movies', chip: 'All', sort: 0, season: 1,
+    q: '', player: null, playing: true, menu: null, ui: Date.now(), muted: false, speed: 1,
+    audioTrack: 0, audioSync: 0, subTrack: 1, subSync: 0, subSize: 'M', subColor: '#FFFFFF', subBg: false,
+    open: true, max: false, tray: false, toast: false, themeMode: 'system', heroI: 0,
+    myList: ['oppenheimer','shogun','frieren','laapataa'], quality: '1080p', autoNext: true,
+    cw: [{id:'severance',s:2,e:3,pct:.42},{id:'dune',pct:.28},{id:'panchayat',s:2,e:5,pct:.7},{id:'12thfail',pct:.55},{id:'frieren',s:1,e:12,pct:.15}],
+    epProg: {}, welcomeChoice: 'dhakaflix', ownAddr: '', scanning: false, scanPct: 0,
+    server: true, copied: false, toasted: false,
+    dl: [{id:'dune',pct:64,speed:11.2,size:9.4,paused:false},{id:'shogun',ep:'S1 E4',pct:22,speed:8.7,size:2.1,paused:false}],
+    dlDone: [{id:'pastlives',info:'1080p · 2.3 GB · Downloaded yesterday'},{id:'12thfail',info:'1080p · 2.8 GB · Downloaded Oct 21'},{id:'frieren',ep:'S1 E1–E4',info:'1080p · 1.6 GB · 4 episodes'}],
+    toggles: {startup:true, tray:true, hw:true, share:true},
+    libText: 'DhakaFlix Movies | http://172.16.50.7/DHAKA-FLIX-7/\nDhakaFlix Hindi | http://172.16.50.14/DHAKA-FLIX-14/\nDhakaFlix Series | http://172.16.50.12/DHAKA-FLIX-12/\nDhakaFlix Anime | http://172.16.50.9/DHAKA-FLIX-9/',
+    scale: 1
+  };
+  searchRef = React.createRef();
+  componentDidMount(){
+    this.fit = () => this.setState({ scale: Math.min(window.innerWidth/1600, window.innerHeight/960) });
+    this.fit(); window.addEventListener('resize', this.fit);
+    this.key = e => this.onKey(e); window.addEventListener('keydown', this.key);
+    this.tick = setInterval(() => this.onTick(), 1000);
+    this.heroT = setInterval(() => { if ((this.state.screen||this.start())==='home') this.setState(s => ({ heroI: (s.heroI+1)%4 })); }, 7000);
+  }
+  componentWillUnmount(){ window.removeEventListener('resize', this.fit); window.removeEventListener('keydown', this.key); clearInterval(this.tick); clearInterval(this.heroT); clearInterval(this.scanT); }
+  start(){ return (this.props.startScreen ?? 'home') === 'welcome' ? 'welcome' : 'home'; }
+  onTick(){
+    const s = this.state, up = {};
+    if (s.player && s.playing) up.player = { ...s.player, t: Math.min(s.player.dur, s.player.t + s.speed) };
+    if (s.dl.some(d => !d.paused && d.pct < 100)) up.dl = s.dl.map(d => d.paused || d.pct >= 100 ? d : { ...d, pct: Math.min(100, d.pct + d.speed/ (d.size*10.24) ) });
+    if (Object.keys(up).length) this.setState(up);
+  }
+  onKey(e){
+    const s = this.state, tag = (e.target.tagName||'').toLowerCase();
+    if ((e.ctrlKey||e.metaKey) && (e.key==='k'||e.key==='f')) { e.preventDefault(); this.go('search'); return; }
+    if (e.key === 'Escape') { if (s.menu) return this.setState({menu:null}); if (s.player && !s.player.mini) return this.shrink(); if (s.tray) return this.setState({tray:false}); return this.back(); }
+    if (tag === 'input' || tag === 'textarea') return;
+    if (s.player && !s.player.mini) {
+      if (e.key === ' ') { e.preventDefault(); this.setState({playing:!s.playing, ui:Date.now()}); }
+      if (e.key === 'ArrowLeft') this.skip(-10); if (e.key === 'ArrowRight') this.skip(10);
+      if (e.key === 'm') this.setState({muted:!s.muted}); if (e.key === 'c') this.setState({menu: s.menu==='cc'?null:'cc'});
+      if (e.key === 'a') this.setState({menu: s.menu==='audio'?null:'audio'}); if (e.key === 'n') this.nextEp();
+      if (e.key === 'f') this.setState({max:!s.max});
+    }
+  }
+  cur(){ return this.state.screen || this.start(); }
+  go(screen, extra={}){ const s=this.state; this.setState({ hist:[...s.hist, {screen:this.cur(), detailId:s.detailId, libKind:s.libKind}].slice(-20), screen, menu:null, tray:false, ...extra }, () => { if (screen==='search') setTimeout(()=>this.searchRef.current && this.searchRef.current.focus(), 30); }); }
+  back(){ const h=[...this.state.hist]; const p=h.pop(); if (!p) return; this.setState({ hist:h, screen:p.screen, detailId:p.detailId, libKind:p.libKind }); }
+  openTitle(id){ this.go('detail', { detailId:id, season:1 }); }
+  play(id, s, e){ const c=BY[id]; const dur = (c.rt || (c.sec==='an'?24:52))*60; const cw=this.state.cw.find(x=>x.id===id); const t = cw && (!s || (cw.s===s && cw.e===e)) ? cw.pct*dur : 0;
+    if (c.type==='series' && !s) { s = cw ? cw.s : 1; e = cw ? cw.e : 1; }
+    this.setState({ player:{ id, s, e, t, dur, mini:false }, playing:true, menu:null, tray:false, ui:Date.now() }); }
+  shrink(){ this.setState(s => ({ player: s.player && { ...s.player, mini:true }, menu:null })); }
+  skip(d){ this.setState(s => ({ player: s.player && { ...s.player, t: Math.max(0, Math.min(s.player.dur, s.player.t + d)) }, ui:Date.now() })); }
+  nextEp(){ const p=this.state.player; if (!p || !p.s) return; const c=BY[p.id]; const n=c.seasons[p.s-1]; if (p.e < n) this.play(p.id, p.s, p.e+1); else if (c.seasons[p.s]) this.play(p.id, p.s+1, 1); }
+  toggleList(id){ this.setState(s => ({ myList: s.myList.includes(id) ? s.myList.filter(x=>x!==id) : [...s.myList, id] })); }
+  startScan(){ this.setState({scanning:true, scanPct:0}); this.scanT = setInterval(() => { const p=this.state.scanPct+7; if (p>=100){ clearInterval(this.scanT); this.setState({scanning:false, scanPct:100, screen:'home', hist:[]}); } else this.setState({scanPct:p}); }, 160); }
+
+  poster(c){ const cwI=this.state.cw.find(x=>x.id===c.id); return { id:c.id, title:c.title, year:c.year, quality:c.quality, rating:c.rating.toFixed(1), bg:pbg(c.h), section:S[c.sec],
+    meta: c.type==='series' ? `${c.seasons.length} season${c.seasons.length>1?'s':''} · ${c.genre}` : `${c.year} · ${rtl(c.rt)}`,
+    inList:this.state.myList.includes(c.id), hasProg:!!cwI, pct: cwI ? Math.round(cwI.pct*100)+'%' : '0%', open:()=>this.openTitle(c.id) }; }
+
+  renderVals(){
+    const s=this.state, scr=this.cur();
+    const sysDark=(this.props.windowsTheme ?? 'dark')==='dark';
+    const dark = s.themeMode==='system' ? sysDark : s.themeMode==='dark';
+    const sizeKey = s.max ? 'max' : (this.props.windowSize ?? 'default');
+    const G = { default:{l:140,t:36,w:1320,h:840,r:8}, minimum:{l:420,t:206,w:760,h:500,r:8}, max:{l:0,t:0,w:1600,h:912,r:0} }[sizeKey] || {l:140,t:36,w:1320,h:840,r:8};
+    const wide = G.w >= 1000;
+    const p = s.player, pc = p && BY[p.id];
+    const playerFull = !!p && !p.mini && s.open;
+    const showNav = scr!=='welcome' && !playerFull;
+    const navSel = id => { const on = id===scr || (scr==='library' && id===s.libKind) || (scr==='detail' && s.detailId && ((BY[s.detailId].type==='series'?'tv':'movies')===id)); return { bg: on?'var(--raised)':'transparent', color: on?'var(--strong)':'var(--muted)', barC: on?'#2563FF':'transparent' }; };
+    const nav = [['home','Home',IC.house],['movies','Movies',IC.film],['tv','TV & Series',IC.tv],['downloads','Downloads',IC.download],['server','Server',IC.server]].map(([id,label,icon]) => ({ label, icon, ...navSel(id), badge: id==='downloads' ? String(s.dl.filter(d=>d.pct<100).length||'') : '',
+      go: () => id==='movies'||id==='tv' ? this.go('library',{libKind:id, chip:'All'}) : this.go(id) }));
+    const streamsN = (p && !s.playing ? 0 : (p?1:0)) + 2;
+    const status = s.server ? { dot:'#22C55E', label:'Server running', big:'Running', sub:'192.168.1.20:47990', uptime:'Up 3 h 12 min' } : { dot:'#7A879B', label:'Server stopped', big:'Stopped', sub:'Devices can’t connect', uptime:'' };
+
+    // home
+    const heroIds=['dune','severance','12thfail','frieren']; const hc=BY[heroIds[s.heroI]];
+    const hero = { ...hc, section: S[hc.sec], runtimeL: hc.type==='series' ? `${hc.seasons.length} season${hc.seasons.length>1?'s':''}` : rtl(hc.rt), rating: hc.rating.toFixed(1), bg:pbg(hc.h,0.3,0.07), bg2:pbg(hc.h,0.36,0.09),
+      play:()=>this.play(hc.id), open:()=>this.openTitle(hc.id), toggleList:()=>this.toggleList(hc.id), listIcon: s.myList.includes(hc.id)?IC.check:IC.plus };
+    const heroDots = heroIds.map((_,i)=>({ w: i===s.heroI?'20px':'6px', c: i===s.heroI?'#fff':'rgba(255,255,255,.4)', go:()=>this.setState({heroI:i}) }));
+    const cw = s.cw.map(x => { const c=BY[x.id]; const dur=(c.rt||(c.sec==='an'?24:52)); return { title:c.title, bg:pbg(c.h,0.38,0.09), pct:Math.round(x.pct*100)+'%',
+      sub: x.s ? `S${x.s} · E${x.e}${c.id==='severance'?' · '+SEV[x.e-1]:''}` : c.title, left: Math.round(dur*(1-x.pct))+' min left',
+      play:()=>this.play(x.id, x.s, x.e), remove:()=>this.setState(st=>({cw:st.cw.filter(y=>y.id!==x.id)})) }; });
+    const secRow = (sec) => ({ title:S[sec], items: CAT.filter(c=>c.sec===sec).map(c=>this.poster(c)), all:()=>this.go('library',{libKind: sec==='tv'?'tv':'movies', chip: sec==='en'?'English':sec==='hi'?'Hindi':sec==='an'?'Anime':'All'}) });
+    const rows = [ ...(s.myList.length ? [{ title:'My List', items:s.myList.map(id=>this.poster(BY[id])), all:()=>this.go('library',{libKind:'movies',chip:'My List'}) }] : []), secRow('en'), secRow('hi'), secRow('tv'), secRow('an') ];
+
+    // library
+    const sorts=['Recently added','Rating','Title A–Z','Year'];
+    const chipsFor = s.libKind==='tv' ? ['All','English','Hindi','Anime','My List'] : ['All','English','Hindi','Anime','My List'];
+    let items = CAT.filter(c => s.libKind==='tv' ? c.type==='series' : c.type==='movie');
+    const ch=s.chip; if (ch==='English') items=items.filter(c=>c.sec==='en'||(c.sec==='tv'&&!['panchayat','scam1992'].includes(c.id))); if (ch==='Hindi') items=items.filter(c=>c.sec==='hi'||['panchayat','scam1992'].includes(c.id)); if (ch==='Anime') items=items.filter(c=>c.sec==='an'); if (ch==='My List') items=items.filter(c=>s.myList.includes(c.id));
+    if (s.sort===1) items=[...items].sort((a,b)=>b.rating-a.rating); if (s.sort===2) items=[...items].sort((a,b)=>a.title.localeCompare(b.title)); if (s.sort===3) items=[...items].sort((a,b)=>b.year-a.year);
+    const lib = { title: s.libKind==='tv'?'TV & Series':'Movies', count: items.length, sources: s.libKind==='tv'?'DhakaFlix Series, Anime':'DhakaFlix Movies, Hindi, Anime',
+      chips: chipsFor.map(l=>({ label:l, bg: l===ch?'#2563FF':'var(--raised)', color: l===ch?'#fff':'var(--text)', pick:()=>this.setState({chip:l}) })), items: items.map(c=>this.poster(c)) };
+
+    // detail
+    const dc = s.detailId ? BY[s.detailId] : CAT[0];
+    const cwD = s.cw.find(x=>x.id===dc.id); const inDl = s.dl.find(x=>x.id===dc.id) || s.dlDone.find(x=>x.id===dc.id);
+    const d = { ...dc, section:S[dc.sec], rating:dc.rating.toFixed(1), runtimeL: dc.type==='series' ? `${dc.seasons.length} season${dc.seasons.length>1?'s':''}` : rtl(dc.rt), bg:pbg(dc.h), bg2:pbg(dc.h,0.3,0.07), isSeries: dc.type==='series',
+      playLabel: cwD ? (cwD.s ? `Resume S${cwD.s} E${cwD.e}` : 'Resume') : (dc.type==='series' ? 'Play S1 E1' : 'Play'),
+      play:()=>this.play(dc.id), toggleList:()=>this.toggleList(dc.id), listIcon: s.myList.includes(dc.id)?IC.check:IC.plus,
+      dlLabel: inDl ? (inDl.pct!=null && inDl.pct<100 ? 'Downloading…' : 'Downloaded') : 'Download',
+      download:()=>{ if (!inDl) this.setState(st=>({dl:[...st.dl,{id:dc.id,pct:0,speed:9.8,size:dc.type==='series'?1.9:4.2,paused:false,ep:dc.type==='series'?'S1 E1':null}]})); },
+      source: `${S[dc.sec].includes('Movies')?'DhakaFlix '+(dc.sec==='hi'?'Hindi':'Movies'):'DhakaFlix '+(dc.sec==='an'?'Anime':'Series')} · ${dc.quality==='4K'?'2160p HEVC':s.quality+' H.264'} · ${dc.title.replace(/[^\w]+/g,'.')}.${dc.year}.mkv` };
+    const qualities = ['1080p','720p'].map(q=>({ label:q, bg:s.quality===q?'var(--surface)':'transparent', color:s.quality===q?'var(--strong)':'var(--muted)', pick:()=>this.setState({quality:q}) }));
+    const seasons = (dc.seasons||[]).map((n,i)=>({ label:`Season ${i+1}`, line: s.season===i+1?'#2563FF':'transparent', color: s.season===i+1?'var(--strong)':'var(--muted)', pick:()=>this.setState({season:i+1}) }));
+    const nEp = dc.seasons ? dc.seasons[Math.min(s.season, dc.seasons.length)-1] : 0;
+    const epLen = dc.sec==='an'?24:52;
+    const episodes = Array.from({length:nEp},(_,i)=>{ const e=i+1, key=`${dc.id}-${s.season}-${e}`; let pr = s.epProg[key];
+      if (pr==null) { pr = cwD && cwD.s ? (s.season<cwD.s || (s.season===cwD.s && e<cwD.e) ? 1 : (s.season===cwD.s&&e===cwD.e ? cwD.pct : 0)) : 0; }
+      return { n:e, title: dc.id==='severance'&&s.season===1 ? SEV[i] : `Episode ${e}`, desc: dc.plot, bg: pbg(dc.h + i*6, 0.36, 0.08), pct: Math.round(pr*100)+'%',
+        state: pr>=1 ? 'Watched' : pr>0 ? Math.round(epLen*(1-pr))+' min left' : epLen+' min', play:()=>this.play(dc.id, s.season, e) }; });
+
+    // search
+    const ql = s.q.trim().toLowerCase();
+    const res = ql ? CAT.filter(c => (c.title+' '+c.genre+' '+S[c.sec]).toLowerCase().includes(ql)) : [];
+    const recent = ['Nolan','Panchayat','anime 2024','Shah Rukh'].map(l=>({label:l, go:()=>this.setState({q:l})}));
+
+    // downloads
+    const dlActive = s.dl.filter(x=>x.pct<100).map(x=>{ const c=BY[x.id]; const left=(x.size*(1-x.pct/100)*1024)/x.speed/60; return { title: c.title+(x.ep?' · '+x.ep:''), bg:pbg(c.h), pctL: Math.floor(x.pct)+'%',
+      info: x.paused ? `Paused · ${(x.size*x.pct/100).toFixed(1)} of ${x.size} GB` : `${x.speed} MB/s · ${(x.size*x.pct/100).toFixed(1)} of ${x.size} GB · ${Math.max(1,Math.round(left))} min left`,
+      toggleIcon: x.paused?IC.play:IC.pause, toggleLabel: x.paused?'Resume':'Pause',
+      toggle:()=>this.setState(st=>({dl:st.dl.map(y=>y.id===x.id?{...y,paused:!y.paused}:y)})), cancel:()=>this.setState(st=>({dl:st.dl.filter(y=>y.id!==x.id)})) }; });
+    const finished = [...s.dl.filter(x=>x.pct>=100).map(x=>({id:x.id, ep:x.ep, info:`${BY[x.id].quality} · ${x.size} GB · Just now`})), ...s.dlDone];
+    const dlDone = finished.map(x=>{ const c=BY[x.id]; return { title:c.title+(x.ep?' · '+x.ep:''), bg:pbg(c.h), info:x.info, play:()=>this.play(x.id), remove:()=>this.setState(st=>({dlDone:st.dlDone.filter(y=>y.id!==x.id), dl:st.dl.filter(y=>y.id!==x.id)})) }; });
+
+    // server
+    const streams = s.server ? [
+      ...(p ? [{ title: pc.title+(p.s?` · S${p.s} E${p.e}`:''), device:'This PC · StreamHub', mode: s.playing?'Direct play':'Paused', modeC:'var(--muted)', detail: fmt(p.t), icon:IC.monitor }] : []),
+      { title:'Severance · S2 E3', device:'Living room TV · Android TV', mode:'Converting for TV', modeC:'var(--accText)', detail:'H.265 → H.264 · 1.8×', icon:IC.tv },
+      { title:'Past Lives', device:'Pixel 8 · Browser', mode:'Direct play', modeC:'var(--muted)', detail:'1080p · 6.2 Mb/s', icon:IC.smartphone } ] : [];
+    const srvStats = [{k:'Streams',v:String(streams.length)},{k:'Titles',v:'4,812'},{k:'Devices',v:s.server?'3':'0'},{k:'CPU',v:s.server?'18%':'0%'}];
+    const sources = [{label:'DhakaFlix Movies',addr:'http://172.16.50.7/DHAKA-FLIX-7/',dot:'#22C55E',state:'4 ms'},{label:'DhakaFlix Hindi',addr:'http://172.16.50.14/DHAKA-FLIX-14/',dot:'#22C55E',state:'6 ms'},{label:'DhakaFlix Series',addr:'http://172.16.50.12/DHAKA-FLIX-12/',dot:'#22C55E',state:'5 ms'},{label:'DhakaFlix Anime',addr:'http://172.16.50.9/DHAKA-FLIX-9/',dot:'#F5A524',state:'Slow · 420 ms'}];
+    const sysRows = [{k:'Address',v:'192.168.1.20:47990'},{k:'FFmpeg',v:'7.1 · ready'},{k:'Hardware encode',v:s.toggles.hw?'Intel Quick Sync':'Off'},{k:'Cache',v:'1.4 GB'},{k:'Version',v:'1.0.0'}];
+
+    // settings
+    const toggles = [['startup','Launch at startup','Start the server quietly when Windows starts.'],['tray','Keep running in tray','Closing the window keeps the server on.'],['hw','Hardware transcoding','Use your GPU to convert video for TVs and phones.'],['share','Share on local network','Let other devices on this Wi-Fi connect.']].map(([k,label,desc])=>{ const on=s.toggles[k]; return { label, desc, bg: on?'#2563FF':'var(--hover)', j: on?'flex-end':'flex-start', knob: on?'#fff':'var(--subtle)', flip:()=>this.setState(st=>({toggles:{...st.toggles,[k]:!st.toggles[k]}})) }; });
+    const themeOpts = [['system','System',IC.monitor],['light','Light',IC.sun],['dark','Dark',IC.moon]].map(([k,label,icon])=>({ label, icon, bg:s.themeMode===k?'var(--surface)':'transparent', color:s.themeMode===k?'var(--strong)':'var(--muted)', pick:()=>this.setState({themeMode:k}) }));
+
+    // player
+    let pl = {}, menu = { open:false }, sub = {};
+    if (p) { const idle = Date.now()-s.ui > 3500 && s.playing && !s.menu;
+      const hasNext = !!(p.s && (p.e < pc.seasons[p.s-1] || pc.seasons[p.s]));
+      pl = { title: pc.title, sub: p.s ? `S${p.s} · E${p.e}${pc.id==='severance'&&p.s===1?' · '+SEV[p.e-1]:''}` : `${pc.year} · ${pc.genre}`, bg: pbg(pc.h,0.22,0.05), quality: pc.quality==='4K'?'2160p':s.quality,
+        pct: (p.t/p.dur*100).toFixed(2)+'%', buf: Math.min(100,p.t/p.dur*100+12).toFixed(1)+'%', time: `${fmt(p.t)} / ${fmt(p.dur)}`, paused: !s.playing, ppIcon: s.playing?IC.pause:IC.play,
+        volIcon: s.muted?IC.volumeX:IC.volume, vol: s.muted?'0%':'72%', speedL: s.speed===1?'1×':s.speed+'×', hasNext, ui: idle?'0':'1', cursor: idle?'none':'default',
+        mSpeed: s.menu==='speed'?'rgba(255,255,255,.16)':'transparent', mAudio: s.menu==='audio'?'rgba(255,255,255,.16)':'transparent', mCc: s.menu==='cc'?'rgba(255,255,255,.16)':'transparent' };
+      const sz = {S:18,M:24,L:32}[s.subSize];
+      sub = { text: s.subTrack===2 ? 'তুমি আমাকে কোথায় নিয়ে যাচ্ছ?' : 'Where are you taking me?', font: s.subTrack===2 ? `600 ${sz}px/1.3 'Hind Siliguri'` : `600 ${sz}px/1.3 Inter`, color: s.subColor, bg: s.subBg?'rgba(0,0,0,.75)':'transparent' };
+      const fs = '500 14px Inter', bn = `500 14px 'Hind Siliguri', Inter`;
+      if (s.menu==='speed') menu = { open:true, title:'Playback speed', items:[0.5,0.75,1,1.25,1.5,2].map(v=>({label:v===1?'Normal':v+'×', note:'', on:s.speed===v, bg:'transparent', font:fs, pick:()=>this.setState({speed:v})})) };
+      if (s.menu==='audio') menu = { open:true, hasSync:true, syncL:(s.audioSync>=0?'+':'')+s.audioSync.toFixed(1)+' s', title:'Audio', items:[['English','5.1 · AAC'],['Hindi (dub)','2.0 · AAC'],['বাংলা (dub)','2.0 · AAC']].map(([l,n],i)=>({label:l,note:n,on:s.audioTrack===i,bg:'transparent',font:i===2?bn:fs,pick:()=>this.setState({audioTrack:i})})) };
+      if (s.menu==='cc') menu = { open:true, hasSync:true, isCc:true, syncL:(s.subSync>=0?'+':'')+s.subSync.toFixed(1)+' s', title:'Subtitles', items:[['Off',''],['English','SRT'],['বাংলা','SRT']].map(([l,n],i)=>({label:l,note:n,on:s.subTrack===i,bg:'transparent',font:i===2?bn:fs,pick:()=>this.setState({subTrack:i})})) };
+    }
+    const syncKey = s.menu==='cc'?'subSync':'audioSync';
+    const syncBtns = [-0.5,-0.1,0.1,0.5].map(v=>({label:(v>0?'+':'')+v, go:()=>this.setState(st=>({[syncKey]: Math.round((st[syncKey]+v)*10)/10}))}));
+
+    const welcomeOpts = [['dhakaflix','Use DhakaFlix servers','Recommended on BDIX. Movies, series and anime are ready in a minute.',IC.globe],['own','Add my own server','Point StreamHub at any “Index of /” or h5ai address.',IC.server]].map(([k,title,desc,icon])=>({ title, desc, icon, bg: s.welcomeChoice===k?'var(--raised)':'var(--surface)', border: s.welcomeChoice===k?'1.5px solid #2563FF':'1px solid var(--line2)', radio: s.welcomeChoice===k?'5px solid #2563FF':'1.5px solid var(--line2)', pick:()=>this.setState({welcomeChoice:k}) }));
+    const scanLines=['Reading DHAKA-FLIX-7 / English Movies …','Matching titles with TMDB …','Reading DHAKA-FLIX-12 / TV Series …','Fetching posters …'];
+    const trayItems = [
+      { label:'Open StreamHub', icon:IC.external, color:'var(--text)', go:()=>this.setState({open:true, tray:false}) },
+      { label:'Open in browser', icon:IC.globe, color:'var(--text)', go:()=>this.setState({tray:false}) },
+      { label: s.server?'Stop server':'Start server', icon:IC.power, color:'var(--text)', go:()=>this.setState(st=>({server:!st.server})) },
+      { label:'Quit StreamHub', icon:IC.logOut, color:'#E5484D', go:()=>this.setState({open:false, tray:false, server:false, player:null}) } ];
+
+    return {
+      t: dark?DARK:LIGHT, scale: s.scale, ic: IC, open: s.open, markSrc: dark?'assets/streamhub-mark-ondark.svg':'assets/streamhub-mark.svg',
+      geo: { l:G.l+'px', t:G.t+'px', w:G.w+'px', h:G.h+'px', r:G.r+'px' }, wide, navW: wide?'232px':'60px', labelDisp: wide?'flex':'none',
+      pad: wide?'28px 32px 40px':'20px 20px 32px', padX: wide?'32px':'20px', posterW: wide?'156px':'120px', cwW: wide?'280px':'220px', heroH: wide?'340px':'240px', heroPad: wide?'32px':'20px', heroFs: wide?'44px':'30px', bdH: wide?'300px':'220px', dTop: '0px',
+      mainRadius: showNav?'8px':'0', mainBorder: showNav?'1px solid var(--line)':'0',
+      canBack: s.hist.length>0 && !playerFull, back:()=>this.back(),
+      minimize:()=>this.setState({open:false}), toggleMax:()=>this.setState(st=>({max:!st.max})),
+      closeWin:()=>{ if (s.toggles.tray) this.setState(st=>({open:false, toast:!st.toasted, toasted:true, player: st.player && {...st.player, mini:true}, playing:false})); else this.setState({open:false, server:false, player:null}); },
+      closeMenus:()=>{ if (s.menu) this.setState({menu:null}); },
+      showNav, nav, setNav: navSel('settings'), status, themeLabel: s.themeMode==='system'?'System':s.themeMode==='dark'?'Dark':'Light', themeIcon: s.themeMode==='system'?IC.monitor:s.themeMode==='dark'?IC.moon:IC.sun,
+      cycleTheme:()=>this.setState(st=>({themeMode: {system:'light',light:'dark',dark:'system'}[st.themeMode]})),
+      goSearch:()=>this.go('search'), goServer:()=>this.go('server'), goSettings:()=>this.go('settings'),
+      is: { welcome:scr==='welcome', home:scr==='home', library:scr==='library', detail:scr==='detail', search:scr==='search', downloads:scr==='downloads', server:scr==='server', settings:scr==='settings' },
+      welcomeOpts, ownServer: s.welcomeChoice==='own', ownAddr:s.ownAddr, setOwnAddr:e=>this.setState({ownAddr:e.target.value}), startScan:()=>this.startScan(),
+      scanning:s.scanning, notScanning:!s.scanning, scanPct:s.scanPct, scanW:s.scanPct+'%', scanLine: scanLines[Math.min(3,Math.floor(s.scanPct/25))],
+      hero, heroDots, hasCw: cw.length>0, cw, rows,
+      lib, sortLabel: sorts[s.sort], cycleSort:()=>this.setState(st=>({sort:(st.sort+1)%4})),
+      d, qualities, seasons, episodes, toggleAutoNext:()=>this.setState(st=>({autoNext:!st.autoNext})), autoNextBg: s.autoNext?'#2563FF':'var(--hover)', autoNextJ: s.autoNext?'flex-end':'flex-start',
+      clearProgress:()=>{ const ep={...s.epProg}; for(let e=1;e<=nEp;e++) ep[`${dc.id}-${s.season}-${e}`]=0; this.setState({epProg:ep, cw:s.cw.filter(x=>x.id!==dc.id)}); },
+      searchRef:this.searchRef, q:s.q, setQ:e=>this.setState({q:e.target.value}), clearQ:()=>this.setState({q:''}), hasQ:!!ql, noQ:!ql, recent,
+      results: res.map(c=>this.poster(c)), noResults: !!ql && res.length===0, resultLabel: `${res.length} result${res.length===1?'':'s'} across 4 servers`,
+      dlActive, dlDone,
+      streams, noStreams: streams.length===0, srvStats, sources, sysRows, qr:QR, qrOp: s.server?'1':'.25', srvCols: wide?'minmax(0,1.5fr) minmax(0,1fr)':'minmax(0,1fr)',
+      srvBtn: s.server ? { label:'Stop server', bg:'transparent', color:'#E5484D', border:'1px solid #E5484D' } : { label:'Start server', bg:'#2563FF', color:'#fff', border:'1px solid #2563FF' },
+      toggleServer:()=>this.setState(st=>({server:!st.server})), restartServer:()=>{ this.setState({server:false}); setTimeout(()=>this.setState({server:true}),900); },
+      copyUrl:()=>{ try{navigator.clipboard.writeText('http://192.168.1.20:47990');}catch(e){} this.setState({copied:true}); setTimeout(()=>this.setState({copied:false}),1600); },
+      copyLabel: s.copied?'Copied':'Copy', copyIcon: s.copied?IC.check:IC.copy,
+      toggles, themeOpts, libText:s.libText, setLibText:e=>this.setState({libText:e.target.value}),
+      playerFull, playerMini: !!p && p.mini && s.open, pl, menu, sub, subOn: s.subTrack>0, subBottom: (wide?'110px':'96px'), syncBtns,
+      subSizes: ['S','M','L'].map(k=>({label:k, bg:s.subSize===k?'#2563FF':'#182030', pick:()=>this.setState({subSize:k})})),
+      subColors: ['#FFFFFF','#F5E663','#84ADFF','#86EFAC'].map(c=>({c, ring:s.subColor===c?'#2563FF':'#263041', pick:()=>this.setState({subColor:c})})),
+      subBgT: { bg: s.subBg?'#2563FF':'#263041', j: s.subBg?'flex-end':'flex-start' }, toggleSubBg:()=>this.setState(st=>({subBg:!st.subBg})),
+      togglePlay:()=>this.setState(st=>({playing:!st.playing, ui:Date.now()})), back10:()=>this.skip(-10), fwd10:()=>this.skip(10), nextEp:()=>this.nextEp(),
+      toggleMute:()=>this.setState(st=>({muted:!st.muted})), poke:()=>{ if (Date.now()-s.ui>800) this.setState({ui:Date.now()}); },
+      menuSpeed:()=>this.setState(st=>({menu:st.menu==='speed'?null:'speed'})), menuAudio:()=>this.setState(st=>({menu:st.menu==='audio'?null:'audio'})), menuCc:()=>this.setState(st=>({menu:st.menu==='cc'?null:'cc'})),
+      stop:e=>e.stopPropagation(), seek:e=>{ const r=e.currentTarget.getBoundingClientRect(); const f=(e.clientX-r.left)/r.width; this.setState(st=>({player:{...st.player, t:f*st.player.dur}, ui:Date.now()})); },
+      shrinkPlayer:()=>this.shrink(), expandPlayer:()=>this.setState(st=>({player:{...st.player, mini:false}, ui:Date.now()})), stopPlayer:()=>this.setState({player:null}),
+      toast: s.toast && !s.open, hideToast:()=>this.setState({toast:false}),
+      tray: s.tray, trayItems, toggleTray:()=>this.setState(st=>({tray:!st.tray, toast:false})), trayBg: s.tray?'var(--raised)':'transparent',
+      taskbarApp:()=>this.setState(st=>({open:!st.open || false, tray:false, toast:false, server: st.server || !st.open})), tbBg: s.open?'var(--raised)':'transparent', tbInd: s.open?'16px':'0px'
+    };
+  }
+}
+</script>
+</body>
+</html>

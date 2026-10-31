@@ -4,24 +4,41 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MusingsofMaksudTV</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Cinzel:wght@600;700&display=swap">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
-<script>try { document.documentElement.dataset.theme = (JSON.parse(localStorage.getItem('mh.prefs')) || {}).theme || 'parchment'; } catch { document.documentElement.dataset.theme = 'parchment'; }</script>
+<link rel="stylesheet" href="streamhub.css">
+<script>
+  // Two looks: Vintage (parchment, the original) and Contemporary (StreamHub). The app picks a default
+  // (the Windows app's server marks the page "streamhub"); a choice in Settings overrides it. Each look
+  // has its own themes: Parchment/Night, or System/Light/Dark. See setLook / shTheme in app.js.
+  (() => {
+    const de = document.documentElement;
+    let p = {};
+    try { p = JSON.parse(localStorage.getItem('mh.prefs')) || {}; } catch { /* private mode */ }
+    if (p.look) de.classList.toggle('streamhub', p.look === 'contemporary');
+    const sh = de.classList.contains('streamhub');
+    if (!sh) { de.dataset.theme = p.theme || 'parchment'; return; }
+    const m = p.shTheme || 'system';
+    de.dataset.theme = (m === 'system' ? matchMedia('(prefers-color-scheme: light)').matches : m === 'light') ? 'sh-light' : 'sh-dark';
+  })();
+</script>
 </head>
 <body>
 <header id="top">
   <button id="backBtn" class="icon-btn" title="Back (⌘[)" hidden></button>
-  <a id="logo" href="#/"><img class="logo-mark" src="logo.svg" alt=""><span class="logo-text"><b>Musings of Maksud</b><small>মুসিংস অব মাকসুদ • টিভি</small></span><span class="logo-tv">TV</span></a>
+  <a id="logo" href="#/"><img class="sh-mark" src="assets/streamhub-mark.svg" alt=""><span class="sh-name">StreamHub</span><img class="logo-mark" src="logo.svg" alt=""><span class="logo-text"><b>StreamHub</b><small>মুসিংস অব মাকসুদ • টিভি</small></span></a>
   <nav id="nav"></nav>
   <div class="search">
     <span class="search-ico"></span>
     <input id="filter" type="search" placeholder="Titles, people, years…" autocomplete="off" spellcheck="false">
+    <kbd class="sh-kbd">Ctrl K</kbd>
   </div>
   <button id="refreshBtn" class="icon-btn" title="Refresh"></button>
   <button id="settingsBtn" class="icon-btn" title="Settings"></button>
+  <div id="shFoot">
+    <a id="shStatus" href="#/server"><b><i></i>Server running</b><code id="shAddr"></code></a>
+    <button id="shTheme" type="button"><span class="sh-ico"></span>Theme<small id="shThemeName"></small></button>
+  </div>
 </header>
 
 <section id="hero" hidden>
@@ -42,19 +59,110 @@
 
 <main id="main">
   <div id="welcome" hidden>
+    <img class="w-mark mh-only" src="logo.svg" alt="">
     <span class="eyebrow">✦ মুসিংস অব মাকসুদ • টিভি</span>
-    <h1>Musings of Maksud <span>TV</span></h1>
-    <p>Every movie, series and anime on your ISP’s BDIX servers — beautifully arranged, with subtitles and sound that just work.</p>
-    <div class="d-actions"><button class="btn primary big" id="welcomeDhakaflix">Use DhakaFlix servers</button><button class="btn big" id="welcomeOwn">Add my own server</button></div>
+    <h1>StreamHub</h1>
+    <p class="w-byline mh-only"><span>Musings of Maksud · মুসিংস অব মাকসুদ</span></p>
+    <p class="w-lead">Every movie, series and anime on your ISP’s BDIX servers — beautifully arranged, with subtitles and sound that just work.</p>
+    <h2 class="w-ask mh-only">Where should we find your films?<small>আপনার সিনেমা কোথায় খুঁজবো?</small></h2>
+    <div class="w-opts">
+      <button class="w-opt on" id="welcomeDhakaflix"><i data-ico="globe"></i><b>Use DhakaFlix servers</b><span>Browse the BDIX servers your ISP already gives you. Nothing to set up.</span><small>✦ Recommended on BDIX</small></button>
+      <button class="w-opt" id="welcomeOwn"><i data-ico="server"></i><b>Add my own server</b><span>Point the app at any “Index of /” or h5ai address on your network.</span><small>FTP-style or h5ai</small></button>
+      <button class="w-opt" id="welcomeFolder"><i data-ico="folder"></i><b>Add a folder from this computer</b><span>Play films and series stored on this computer, even when you’re offline.</span><small>Works offline</small></button>
+    </div>
+    <p class="w-note">You can change this later in Settings → Libraries.</p>
   </div>
   <div id="folderHead" hidden>
+    <div id="folderCover" hidden></div>
     <nav id="crumbs"></nav>
     <h1 id="folderTitle"></h1>
     <p id="folderSub"></p>
+    <p id="folderSyn" hidden></p>
+    <div class="fh-actions"><button class="btn gold" id="folderResume" hidden></button><button class="btn" id="folderShuffle" hidden></button></div>
   </div>
   <p id="status" role="status"></p>
   <div id="rows"></div>
-  <div id="grid"></div>
+  <div id="split">
+    <div id="splitMain">
+      <div id="seasonBar" hidden><img id="seasonCover" alt="" hidden><div id="seasonTabs" role="tablist"></div><span id="seasonCount"></span></div>
+      <div id="grid"></div>
+    </div>
+    <aside id="moreIn" hidden></aside>
+  </div>
+  <section id="settingsPage" hidden>
+<form id="settingsForm">
+    <h2>Settings</h2>
+    <div class="s-cols">
+      <div class="s-col">
+        <section class="s-card">
+          <h3>Libraries</h3>
+          <label><span class="lbl">Libraries</span> <small>One per line, with a name: <code>TV Series | http://172.16.50.12/</code> or a folder on this computer: <code>Movie | G:\Movie</code>. Add what it holds at the end (<code>movies</code>, <code>shows</code>, <code>music</code> or <code>books</code>): <code>Serial | G:\Serial | shows</code></small>
+            <textarea name="servers" rows="5" spellcheck="false" placeholder="Movies | http://172.16.50.7/&#10;TV Series | http://172.16.50.12/"></textarea></label>
+          <label><span class="lbl">Live TV</span> <small>M3U playlists, one per line: <code>My channels | https://example.com/list.m3u</code> or a file on this computer</small>
+            <textarea name="playlists" rows="3" spellcheck="false" placeholder="My channels | https://example.com/list.m3u"></textarea></label>
+          <div class="lib-btns"><button type="button" class="btn" id="addFolderBtn">Add folder…</button><button type="button" class="btn" id="dhakaflixBtn">Fill in DhakaFlix servers</button></div>
+          <label class="check"><input type="checkbox" name="shareTv"> Share my folders with my TV
+            <small>Your Android TV app can then play the folders on this computer (when it's on), next to the ISP servers. Only devices on your home network can see them.</small></label>
+          <div class="tv-lines" id="tvLines" hidden></div>
+        </section>
+        <section class="s-card">
+          <h3>Jellyfin apps</h3>
+          <label class="check"><input type="checkbox" name="jellyfin"> Let Jellyfin apps connect
+            <small>Apps like Streamyfin or the official Jellyfin apps can then browse and play your libraries from this computer (when it's on). Only devices on your home network can connect.</small></label>
+          <div class="jf-box" id="jfBox" hidden>
+            <label class="check"><input type="checkbox" name="jellyfinNoPass" checked> Don't ask for a password</label>
+            <label id="jfPassRow" hidden>Password for the apps <small>optional; leave empty to keep the saved one</small><input name="jellyfinPass" type="password" autocomplete="new-password"></label>
+            <div class="tv-lines" id="jfLines"></div>
+          </div>
+        </section>
+        <section class="s-card">
+          <h3>Accounts</h3>
+          <div class="two">
+            <label>Username <small>if the server asks</small><input name="username" autocomplete="off"></label>
+            <label>Password<input name="password" type="password" autocomplete="off"></label>
+          </div>
+          <label>TMDB API key <small>recommended — adds posters, backdrops, ratings and plot summaries. Free at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a></small>
+            <input name="tmdbKey" autocomplete="off" spellcheck="false" placeholder="paste API key or read access token"></label>
+        </section>
+      </div>
+      <div class="s-col">
+        <section class="s-card">
+          <fieldset class="subkeys"><legend>Online subtitles <small>for “Search online…” in the player's subtitle menu. Add either one, or both.</small></legend>
+            <label>OpenSubtitles API key <small>free at <a href="https://www.opensubtitles.com/consumers" target="_blank" rel="noopener">opensubtitles.com/consumers</a>. Signing in below allows more downloads a day.</small>
+              <input name="opensubsKey" autocomplete="off" spellcheck="false"></label>
+            <div class="two">
+              <label>OpenSubtitles username<input name="opensubsUser" autocomplete="off" placeholder="optional"></label>
+              <label>Password<input name="opensubsPass" type="password" autocomplete="off"></label>
+            </div>
+            <label>SubDL API key <small>free on your profile page at <a href="https://subdl.com" target="_blank" rel="noopener">subdl.com</a></small>
+              <input name="subdlKey" autocomplete="off" spellcheck="false"></label>
+          </fieldset>
+        </section>
+        <section class="s-card">
+          <div class="field s-row"><span class="flabel">Look</span>
+            <div class="looks">
+              <button type="button" class="look-pick" data-look="vintage"><i></i><span>Vintage<small>Parchment and maroon, the original</small></span></button>
+              <button type="button" class="look-pick" data-look="contemporary"><i></i><span>Contemporary<small>StreamHub: sidebar, flat and modern</small></span></button>
+            </div>
+          </div>
+          <div class="field s-row"><span class="flabel">Theme</span>
+            <div class="themes mh-only">
+              <button type="button" class="theme-pick" data-theme-pick="parchment"><i></i>Parchment</button>
+              <button type="button" class="theme-pick" data-theme-pick="night"><i></i>Night</button>
+            </div>
+            <div class="sh-seg sh-only">
+              <button type="button" data-sh-theme="system">System</button>
+              <button type="button" data-sh-theme="light">Light</button>
+              <button type="button" data-sh-theme="dark">Dark</button>
+            </div>
+          </div>
+        </section>
+        <p class="note" id="ffmpegNote"></p>
+        <div class="actions"><button type="button" class="btn" id="cancelBtn">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+      </div>
+    </div>
+  </form>
+  </section>
 </main>
 
 <!-- Movie details -->
@@ -82,6 +190,40 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- Book reader -->
+<div id="reader" tabindex="-1" hidden>
+  <div class="rd-bar">
+    <button class="icon-btn" id="rdClose" title="Close (Esc)"></button>
+    <div class="rd-title"><b id="rdTitle"></b><small id="rdSub"></small></div>
+    <div class="rd-ctl" id="rdCtl"></div>
+  </div>
+  <div class="rd-body" id="rdBody"></div>
+</div>
+
+<!-- Live TV viewer -->
+<div id="liveView" tabindex="-1" hidden>
+  <video id="liveVideo" playsinline autoplay></video>
+  <div class="lv-top"><button class="icon-btn" id="liveClose" title="Close (Esc)"></button>
+    <div class="lv-title"><b id="liveName"></b><small id="liveGroup"></small></div>
+    <div class="lv-ctl"><button class="icon-btn" id="livePrev" title="Previous channel (↑)"></button><button class="icon-btn" id="liveNext" title="Next channel (↓)"></button><button class="icon-btn" id="liveFull" title="Full screen (F)">⛶</button></div></div>
+  <p id="liveMsg" role="status"></p>
+</div>
+
+<!-- Music: stays at the bottom while you browse -->
+<div id="audioBar" hidden>
+  <div class="ab-now"><div class="ab-art" id="abArt"></div><div class="ab-meta"><b id="abTitle"></b><small id="abSub"></small></div></div>
+  <div class="ab-ctl">
+    <button class="icon-btn" id="abShuffle" title="Shuffle"></button>
+    <button class="icon-btn" id="abPrev" title="Previous"></button>
+    <button class="icon-btn ab-play" id="abPlay" title="Play"></button>
+    <button class="icon-btn" id="abNext" title="Next"></button>
+    <button class="icon-btn" id="abRepeat" title="Repeat"></button>
+  </div>
+  <div class="ab-seek"><span id="abCur">0:00</span><input type="range" id="abSeek" min="0" max="1000" value="0" aria-label="Seek"><span id="abDur"></span></div>
+  <div class="ab-vol"><button class="icon-btn" id="abMute" title="Mute"></button><input type="range" id="abVol" min="0" max="100" aria-label="Volume"></div>
+  <button class="icon-btn" id="abClose" title="Stop and close"></button>
 </div>
 
 <!-- Player -->
@@ -116,6 +258,7 @@
         <button class="pill-btn" id="pAudio" title="Audio track (A)"></button>
         <button class="pill-btn" id="pSubs" title="Subtitles (C)"></button>
         <button class="pill-btn" id="pSpeed" title="Playback speed"></button>
+        <button class="pill-btn" id="pStereo" title="3D movie shown in 2D" hidden></button>
         <button class="icon-btn" id="pDownload" title="Download to this Mac" hidden></button>
         <button class="icon-btn" id="pPip" title="Picture in picture"></button>
         <button class="icon-btn" id="pFull" title="Full screen (F)"></button>
@@ -139,28 +282,7 @@
 <div id="note" hidden></div>
 
 <!-- Settings -->
-<dialog id="settings">
-  <form method="dialog" id="settingsForm">
-    <h2>Settings</h2>
-    <label>Libraries <small>One per line, with a name: <code>TV Series | http://172.16.50.12/</code></small>
-      <textarea name="servers" rows="5" spellcheck="false" placeholder="Movies | http://172.16.50.7/&#10;TV Series | http://172.16.50.12/" required></textarea></label>
-    <button type="button" class="btn" id="dhakaflixBtn">Fill in DhakaFlix servers</button>
-    <div class="two">
-      <label>Username <small>if the server asks</small><input name="username" autocomplete="off"></label>
-      <label>Password<input name="password" type="password" autocomplete="off"></label>
-    </div>
-    <label>TMDB API key <small>recommended — adds posters, backdrops, ratings and plot summaries. Free at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a></small>
-      <input name="tmdbKey" autocomplete="off" spellcheck="false" placeholder="paste API key or read access token"></label>
-    <div class="field"><span class="flabel">Theme</span>
-      <div class="themes">
-        <button type="button" class="theme-pick" data-theme-pick="parchment"><i></i>Parchment</button>
-        <button type="button" class="theme-pick" data-theme-pick="night"><i></i>Night</button>
-      </div>
-    </div>
-    <p class="note" id="ffmpegNote"></p>
-    <div class="actions"><button type="button" class="btn" id="cancelBtn">Cancel</button><button type="submit" class="btn primary">Save</button></div>
-  </form>
-</dialog>
+
 <script src="app.js" type="module"></script>
 </body>
 </html>

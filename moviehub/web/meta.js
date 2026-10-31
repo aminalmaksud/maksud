@@ -28,7 +28,7 @@ function pickImage(entries, stem) {
 }
 
 async function tmdb(key, path, params) {
-  const u = new URL(`https://api.themoviedb.org/3${path}`);
+  const u = new URL(`${process.env.TMDB_API || 'https://api.themoviedb.org/3'}${path}`);
   for (const [k, v] of Object.entries(params)) if (v != null) u.searchParams.set(k, v);
   const headers = { accept: 'application/json' };
   if (key.length > 40) headers.authorization = `Bearer ${key}`; else u.searchParams.set('api_key', key);
@@ -49,6 +49,7 @@ function lookup(key, p, preferTv) {
       if (!hit && p.year) hit = await multi();
       if (!hit) return null;
       return {
+        tmdbId: hit.id, tmdbType: hit.media_type || (hit.title ? 'movie' : 'tv'),
         title: hit.title || hit.name, year: Number((hit.release_date || hit.first_air_date || '').slice(0, 4)) || p.year,
         overview: hit.overview || '', rating: hit.vote_average ? Math.round(hit.vote_average * 10) / 10 : null,
         poster: hit.poster_path ? `/tmdb/w342${hit.poster_path}` : null,
@@ -101,9 +102,29 @@ export async function metaFor(rel, list, tmdbKey) {
       overview: t?.overview || '', rating: t?.rating ?? null,
       poster: poster || t?.poster || null, backdrop: t?.backdrop || null,
       matched: t ? t.title : null,
+      tmdbId: t?.tmdbId ?? null, tmdbType: t?.tmdbType ?? null,
     };
   })();
   cache.set(key, job);
   job.catch(() => cache.delete(key));
   return job;
+}
+
+const seasonCache = new Map();
+/** One TMDB season: its poster, and its episodes (number, title, plot, runtime, air date, still). Null when TMDB doesn't know it. */
+export function seasonEpisodes(key, tvId, season) {
+  const ck = `${tvId}|${season}`;
+  if (!seasonCache.has(ck)) {
+    seasonCache.set(ck, tmdbLimit(() => tmdb(key, `/tv/${tvId}/season/${season}`, {})).then(
+      (j) => ({
+        poster: j.poster_path ? `/tmdb/w342${j.poster_path}` : null,
+        episodes: (j.episodes || []).map((e) => ({
+          episode: e.episode_number, name: e.name || '', overview: e.overview || '', runtime: e.runtime || null, air: e.air_date || null,
+          still: e.still_path ? `/tmdb/w300${e.still_path}` : null,
+        })),
+      }),
+      () => { seasonCache.delete(ck); return null; },
+    ));
+  }
+  return seasonCache.get(ck);
 }

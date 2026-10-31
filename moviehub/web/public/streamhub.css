@@ -1,0 +1,494 @@
+/* StreamHub: the Windows app's look (from the StreamHub Claude Design brand pack).
+   Everything here is scoped to html.streamhub, which the server sets when the Windows app runs it (BRAND=streamhub),
+   so the Mac app keeps its own look. Principles: content first, flat (surface steps + 1px borders, no shadows or
+   gradients), blue only for actions, focus, selection and progress. */
+
+@font-face { font-family: "Inter"; font-weight: 100 900; font-display: swap; src: url(fonts/Inter-latin.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Inter"; font-weight: 100 900; font-display: swap; src: url(fonts/Inter-latin-ext.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "JetBrains Mono"; font-weight: 100 800; font-display: swap; src: url(fonts/JetBrainsMono-latin.woff2) format("woff2"); }
+@font-face { font-family: "Hind Siliguri SH"; font-weight: 500; font-display: swap; src: url(fonts/HindSiliguri-bengali-500.woff2) format("woff2");
+  unicode-range: U+0951-0952, U+0964-0965, U+0980-09FE, U+1CD0-1CF9, U+200C-200D, U+20B9, U+25CC, U+A8F1; }
+@font-face { font-family: "Hind Siliguri SH"; font-weight: 600 700; font-display: swap; src: url(fonts/HindSiliguri-bengali-600.woff2) format("woff2");
+  unicode-range: U+0951-0952, U+0964-0965, U+0980-09FE, U+1CD0-1CF9, U+200C-200D, U+20B9, U+25CC, U+A8F1; }
+
+/* Hidden outside StreamHub, and the Mac-only bits hidden inside it */
+html:not(.streamhub) :is(#shFoot, .sh-mark, .sh-name, .sh-kbd, .sh-only) { display: none !important; }
+html.streamhub :is(.mh-only, .logo-mark, .logo-text, .logo-tv, .hint-x, .ph-frame, .ph-ico) { display: none !important; }
+
+/* ---------- tokens ---------- */
+html.streamhub {
+  --blue: #2563FF; --blue-hover: #1449E6; --blue-400: #4F86FF;
+  --ok: #22C55E; --warn: #F5A524; --danger: #E5484D;
+  --nav-w: 232px;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --display: "Inter", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Hind Siliguri SH", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --bangla: "Hind Siliguri SH", "Inter", sans-serif;
+  --radius: 8px;
+  --dot: transparent;
+  --card-shadow: none; --card-shadow-hover: none;
+  /* the Mac palette's accent names, pointed at StreamHub's colours so shared rules follow along */
+  --maroon: var(--accText); --maroon-2: var(--blue); --gold: var(--blue); --gold-2: var(--accText); --pink: var(--blue-400);
+  --crimson: var(--surface);
+  /* Vintage's newer tokens, pointed at StreamHub's colours so shared rules follow along */
+  --acc-fill: var(--blue); --acc-fill-hover: var(--blue-hover); --acc-fill-press: var(--blue-hover); --acc-fill-text: #fff;
+  --edge: var(--line2); --surface-bg: var(--surface); --sunk: var(--raised); --brand: var(--strong); --sel-bg: var(--sel); --gold-ink: var(--accText);
+  --shadow: none; --shadow-sm: none; --ring: 0 0 0 2px var(--blue); --panel-text: var(--strong); --panel-dim: var(--muted); --scrim: rgba(8, 12, 20, .6);
+}
+html.streamhub[data-theme="sh-dark"] {
+  --bg: #080C14; --surface: #0F1521; --raised: #182030; --hover: #263041; --line: #182030; --line2: #263041;
+  --text: #E9EDF3; --strong: #FFFFFF; --muted: #A9B4C4; --subtle: #7A879B; --sel: #13318A; --selText: #FFFFFF; --accText: #84ADFF;
+  --dim: var(--muted); --faint: var(--subtle); --header-bg: var(--bg); --side: #0B101A;
+  color-scheme: dark;
+}
+html.streamhub[data-theme="sh-light"] {
+  --bg: #F5F7FA; --surface: #FFFFFF; --raised: #F0F3F7; --hover: #E3E8EF; --line: #E9EDF3; --line2: #D3DAE4;
+  --text: #182030; --strong: #080C14; --muted: #3B4658; --subtle: #566377; --sel: #D9E6FF; --selText: #1139B4; --accText: #1449E6;
+  --dim: var(--muted); --faint: var(--subtle); --header-bg: var(--bg); --side: #E9EDF3;
+  color-scheme: light;
+}
+
+/* ---------- base ---------- */
+html.streamhub body { background: var(--bg); color: var(--text); font: 15px/1.47 var(--body); padding-left: var(--nav-w); font-feature-settings: "tnum" 0; }
+html.streamhub body::before { display: none; }
+html.streamhub a { color: var(--accText); }
+html.streamhub :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+html.streamhub ::-webkit-scrollbar { width: 10px; height: 10px; }
+html.streamhub ::-webkit-scrollbar-thumb { background: rgba(122, 135, 155, .35); border-radius: 10px; border: 3px solid transparent; background-clip: content-box; }
+html.streamhub code, html.streamhub kbd { font-family: var(--mono); }
+
+/* ---------- sidebar (the header, moved to the left) ---------- */
+html.streamhub header#top {
+  position: fixed; left: 0; top: 0; bottom: 0; width: var(--nav-w); z-index: 10; flex-direction: column; align-items: stretch; gap: 2px;
+  padding: 10px 8px 12px; background: var(--side); border-right: 1px solid var(--line); backdrop-filter: none; box-shadow: none; overflow-y: auto;
+}
+html.streamhub body.scrolled header { box-shadow: none; border-bottom-color: transparent; }
+html.streamhub #backBtn { order: 0; position: absolute; top: 10px; right: 8px; width: 32px; height: 32px; border-radius: 6px; }
+html.streamhub #logo { order: 1; display: flex; align-items: center; gap: 10px; padding: 6px 10px 14px; margin: 0; color: var(--strong); }
+html.streamhub .sh-mark { height: 22px; width: auto; display: block; }
+html.streamhub .sh-name { font: 700 17px/1 var(--display); letter-spacing: -.01em; }
+html.streamhub .search { order: 2; flex: none; margin: 0 0 10px; }
+html.streamhub .search-ico { left: 10px; color: var(--subtle); }
+html.streamhub .search-ico svg { width: 16px; height: 16px; }
+html.streamhub #filter { padding: 8px 64px 8px 34px; border-radius: 8px; border: 1px solid var(--line2); background: var(--surface); font: 400 13px var(--body); color: var(--text); }
+html.streamhub #filter::placeholder { color: var(--subtle); }
+html.streamhub #filter:focus { border-color: var(--blue); box-shadow: none; }
+html.streamhub .sh-kbd { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font: 500 10px var(--mono); padding: 2px 5px; border-radius: 4px; background: var(--raised); color: var(--muted); pointer-events: none; }
+html.streamhub #filter:focus + .sh-kbd, html.streamhub #filter:not(:placeholder-shown) + .sh-kbd { display: none; }
+html.streamhub #nav { order: 3; flex-direction: column; gap: 2px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; overflow: visible; }
+html.streamhub #nav a, html.streamhub #shTheme, html.streamhub #settingsBtn {
+  position: relative; display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 11px; border-radius: 6px; border: 0; background: transparent;
+  color: var(--muted); font: 500 14px var(--body); text-decoration: none; white-space: nowrap; box-shadow: none; text-align: left;
+}
+html.streamhub #nav a svg, html.streamhub #shTheme svg, html.streamhub #settingsBtn svg { width: 18px; height: 18px; flex: none; stroke-width: 1.75; }
+html.streamhub #nav a span { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+html.streamhub #nav a:hover, html.streamhub #shTheme:hover, html.streamhub #settingsBtn:hover { background: var(--raised); color: var(--strong); }
+html.streamhub #nav a.on { background: var(--raised); color: var(--strong); box-shadow: none; }
+html.streamhub #nav a.on::before { content: ""; position: absolute; left: 0; top: 12px; width: 3px; height: 16px; border-radius: 3px; background: var(--blue); }
+html.streamhub #nav em { font: 600 11px/20px var(--body); font-style: normal; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: var(--blue); color: #fff; text-align: center; }
+html.streamhub #refreshBtn { display: none; }
+html.streamhub #shFoot { order: 5; margin-top: auto; padding-top: 12px; display: flex; flex-direction: column; gap: 2px; }
+html.streamhub #shStatus { display: block; padding: 10px 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--line2); background: var(--surface); color: var(--strong); text-decoration: none; }
+html.streamhub #shStatus:hover { border-color: var(--hover); background: var(--raised); }
+html.streamhub #shStatus b { display: flex; align-items: center; gap: 8px; font: 600 13px var(--body); }
+html.streamhub #shStatus b i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+html.streamhub #shStatus code { display: block; margin-top: 3px; font-size: 11px; color: var(--subtle); }
+html.streamhub #shTheme small { margin-left: auto; font: 400 12px var(--body); color: var(--subtle); }
+html.streamhub .sh-ico { display: contents; }
+html.streamhub #settingsBtn { order: 6; width: auto; }
+html.streamhub #settingsBtn::after { content: "Settings"; }
+html.streamhub #top .icon-btn { background: transparent; border: 0; color: var(--muted); }
+html.streamhub #top .icon-btn:hover { background: var(--raised); color: var(--strong); }
+
+/* ---------- page ---------- */
+html.streamhub main { padding: 28px 32px 64px; max-width: 1600px; }
+html.streamhub #status, html.streamhub .status { color: var(--muted); }
+html.streamhub #status.error, html.streamhub .status.error { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent); border-radius: 8px; }
+/* folder / page header: a plain title, no coloured panel */
+html.streamhub #folderHead { margin: 0 0 24px; padding: 0; border-radius: 0; background: none; box-shadow: none; color: var(--text); }
+html.streamhub #folderHead::after { display: none; }
+html.streamhub #crumbs { color: var(--subtle); font-size: 13px; }
+html.streamhub #crumbs a { color: var(--muted); border: 0; padding: 0; border-radius: 0; }
+html.streamhub #crumbs a:hover { color: var(--accText); background: none; }
+html.streamhub #folderTitle { font: 600 30px/1.15 var(--display); text-transform: none; letter-spacing: -.01em; margin: 4px 0 4px; color: var(--strong); }
+html.streamhub #folderSub { color: var(--muted); font-weight: 400; font-size: 14px; }
+html.streamhub #folderSub code { background: var(--raised); color: var(--muted); font-size: 13px; }
+html.streamhub #folderSub .btn.mini { background: var(--raised); color: var(--text); border-color: var(--line2); }
+
+/* ---------- buttons ---------- */
+html.streamhub .btn {
+  gap: 8px; height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid transparent; background: var(--raised); color: var(--strong);
+  font: 600 14px var(--body); text-transform: none; letter-spacing: 0; box-shadow: none; transform: none;
+}
+html.streamhub .btn:hover { background: var(--hover); box-shadow: none; transform: none; }
+html.streamhub .btn:active { transform: scale(.98); }
+html.streamhub .btn.primary { background: var(--blue); color: #fff; box-shadow: none; }
+html.streamhub .btn.primary:hover { background: var(--blue-hover); }
+html.streamhub .btn.big { height: 44px; padding: 0 20px; font: 600 15px var(--body); text-transform: none; letter-spacing: 0; }
+html.streamhub .btn.mini { height: 30px; padding: 0 12px; font-size: 12.5px; }
+html.streamhub .btn.quiet { background: transparent; color: var(--muted); }
+html.streamhub .btn.quiet:hover { color: var(--strong); background: var(--raised); }
+html.streamhub .btn.list-btn.on { background: var(--sel); color: var(--selText); border-color: transparent; }
+html.streamhub .icon-btn:hover { background: var(--raised); }
+html.streamhub .eyebrow { padding: 0; border: 0; background: none; border-radius: 0; font: 600 11px/14px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--accText); }
+
+/* ---------- hero ---------- */
+html.streamhub #hero { margin: 28px 32px 8px; min-height: 340px; border-radius: 12px; background: var(--surface); box-shadow: none; border: 1px solid var(--line); color: #fff; }
+html.streamhub #hero::after { background: linear-gradient(90deg, rgba(8, 12, 20, .92) 0%, rgba(8, 12, 20, .7) 38%, rgba(8, 12, 20, 0) 72%); }
+html.streamhub[data-theme="sh-light"] #hero { background: #0F1521; border-color: transparent; }
+html.streamhub .hero-slides { inset: 0; -webkit-mask-image: none; mask-image: none; }
+html.streamhub .hero-text { padding: 92px 32px 64px; max-width: min(560px, 60%); }
+html.streamhub .hero-text h1 { font: 700 48px/52px var(--display); text-transform: none; letter-spacing: -.02em; margin: 10px 0 12px; text-shadow: none; }
+html.streamhub .hero-meta { color: #E9EDF3; font-weight: 500; font-size: 14px; }
+html.streamhub .hero-meta .star { color: var(--warn); }
+html.streamhub .hero-overview { color: #E9EDF3; font-size: 15px; }
+html.streamhub #hero .btn:not(.primary) { background: rgba(255, 255, 255, .14); color: #fff; border-color: transparent; }
+html.streamhub #hero .btn:not(.primary):hover { background: rgba(255, 255, 255, .22); }
+html.streamhub #hero .btn.primary { background: var(--blue); color: #fff; box-shadow: none; }
+html.streamhub .hero-poster { display: none; }
+html.streamhub .hero-dots { left: auto; right: 20px; bottom: 18px; gap: 6px; }
+html.streamhub .hero-dots button { width: 6px; height: 6px; background: rgba(255, 255, 255, .45); }
+html.streamhub .hero-dots button.on { width: 20px; background: #fff; }
+html.streamhub .hero-timer { display: none; }
+html.streamhub .hero-arrow { width: 40px; height: 40px; margin-top: -20px; background: rgba(8, 12, 20, .55); border: 0; backdrop-filter: none; }
+html.streamhub .hero-arrow:hover { background: rgba(8, 12, 20, .8); }
+
+/* ---------- rows ---------- */
+html.streamhub .row { margin: 28px 0 24px; }
+html.streamhub .row-head { gap: 10px; margin-bottom: 14px; }
+html.streamhub .row-ico { display: none; }
+html.streamhub .row-title { font: 600 18px/24px var(--display); text-transform: none; letter-spacing: -.005em; color: var(--strong); }
+html.streamhub .row-title:hover { color: var(--strong); }
+html.streamhub .see-all { display: inline; margin-left: 12px; font: 500 13px var(--body); color: var(--accText); }
+html.streamhub .row-head small { background: var(--raised); color: var(--muted); font-weight: 500; }
+html.streamhub .row-wrap { margin: 0 -32px; }
+html.streamhub .row-scroll { grid-auto-columns: 156px; gap: 14px; padding: 2px 32px 8px; scroll-padding: 0 32px; }
+html.streamhub .row-scroll.wide { grid-auto-columns: 280px; }
+html.streamhub .row-skel { border-radius: 8px; border: 0; background: var(--surface); animation: none; }
+html.streamhub .row-arrow { width: 40px; height: 40px; border: 1px solid var(--line2); background: var(--surface); color: var(--strong); box-shadow: none; }
+html.streamhub .continue { padding: 0; margin: 28px 0 24px; border-radius: 0; background: none; box-shadow: none; color: var(--text); }
+html.streamhub .continue .row-title { color: var(--strong); }
+html.streamhub .continue .row-wrap { margin: 0 -32px; }
+html.streamhub .continue .row-scroll { padding: 2px 32px 8px; }
+html.streamhub .continue .cap .t { color: var(--strong); }
+html.streamhub .continue .cap .s { color: var(--subtle); }
+
+/* ---------- poster cards ---------- */
+html.streamhub #grid { grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); gap: 24px 16px; }
+html.streamhub .card { gap: 8px; }
+html.streamhub .poster { border-radius: 8px; border: 2px solid transparent; box-shadow: none; background: var(--surface); transition: border-color .15s; }
+html.streamhub .card:hover .poster, html.streamhub .card:focus-visible .poster { transform: none; box-shadow: none; border-color: var(--blue); }
+/* titles without a poster: a flat tile in the title's colour, with the title bottom-left */
+html.streamhub .ph { padding: 12px; background: color-mix(in srgb, var(--a) 62%, #0F1521); }
+html.streamhub .ph::before { display: none; }
+html.streamhub .ph-tags i { padding: 3px 6px; border-radius: 4px; background: rgba(8, 12, 20, .6); color: #fff; box-shadow: none; font: 600 10.5px/1 var(--body); letter-spacing: .02em; }
+html.streamhub .ph-tags i + i { background: rgba(8, 12, 20, .6); color: #fff; border: 0; }
+html.streamhub .ph b { font: 700 clamp(15px, 11cqw, 20px)/1.15 var(--display); text-transform: none; letter-spacing: -.01em; text-shadow: none; }
+html.streamhub .ph b::after { display: none; }
+html.streamhub .wide-art .ph b { font-size: 16px; }
+html.streamhub .badge { top: 8px; left: 8px; padding: 3px 6px; border-radius: 4px; font: 600 10.5px var(--body); background: rgba(8, 12, 20, .72); box-shadow: none; }
+html.streamhub .badge.q { border: 0; color: #fff; backdrop-filter: none; }
+html.streamhub .badge.done { background: var(--ok); color: #04210f; }
+html.streamhub .card-act { width: 28px; height: 28px; top: 8px; right: 8px; background: rgba(8, 12, 20, .72); border: 0; backdrop-filter: none; }
+html.streamhub .card-act svg { width: 15px; height: 15px; }
+html.streamhub .card-act:hover { background: var(--blue); }
+html.streamhub .card-act.add.on { background: var(--blue); color: #fff; }
+html.streamhub .card-act.x:hover { background: var(--danger); }
+html.streamhub .progress { left: 0; right: 0; bottom: 0; height: 3px; border-radius: 0; background: rgba(255, 255, 255, .25); }
+html.streamhub .progress i { background: var(--blue); }
+html.streamhub .hover-play { background: rgba(8, 12, 20, .25); }
+html.streamhub .hover-play span { width: 44px; height: 44px; background: rgba(8, 12, 20, .78); color: #fff; box-shadow: none; }
+html.streamhub .hover-play span svg { width: 20px; height: 20px; }
+html.streamhub .cap .t { font: 600 13px var(--body); color: var(--strong); }
+html.streamhub .cap .s { font: 400 12px var(--body); color: var(--subtle); }
+html.streamhub .star { color: var(--warn); }
+
+/* episode list */
+html.streamhub #grid.list { gap: 8px; background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
+html.streamhub .ep { grid-template-columns: 60px 1fr auto; border-bottom: 1px solid var(--line); border-radius: 8px; background: var(--surface); border: 1px solid var(--line); box-shadow: none; padding: 12px 16px; transform: none; }
+html.streamhub .ep:hover, html.streamhub .ep:focus-visible { transform: none; border-color: var(--blue); box-shadow: none; background: var(--raised); }
+html.streamhub .ep:last-child { border-bottom: 1px solid var(--line); }
+html.streamhub .ep .num { font: 600 15px var(--mono); width: 44px; height: 44px; border-radius: 6px; background: var(--raised); color: var(--strong); -webkit-text-stroke: 0; box-shadow: none; }
+html.streamhub .ep .num::after { display: none; }
+html.streamhub .ep:hover .num { background: var(--blue); color: #fff; }
+html.streamhub .ep .t { font-weight: 600; color: var(--strong); }
+html.streamhub .ep .s { color: var(--subtle); font-size: 12.5px; }
+html.streamhub .ep .bar { height: 3px; background: var(--line2); }
+html.streamhub .ep .bar i { background: var(--blue); }
+html.streamhub .ep .check { color: var(--ok); }
+html.streamhub .ep-x { border-color: var(--line2); color: var(--subtle); }
+html.streamhub .ep-x:hover { color: var(--strong); border-color: var(--hover); }
+
+/* ---------- welcome ---------- */
+html.streamhub #welcome { max-width: 640px; margin: 12vh auto 0; padding: 40px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); box-shadow: none; color: var(--text); text-align: left; }
+html.streamhub #welcome h1 { font: 700 40px/1.1 var(--display); text-transform: none; letter-spacing: -.02em; margin: 10px 0 10px; color: var(--strong); }
+html.streamhub #welcome h1 span { color: var(--blue); }
+html.streamhub #welcome p { color: var(--muted); font-size: 15px; }
+html.streamhub #welcome :is(.eyebrow, .w-lead) { display: block; }
+html.streamhub #welcome .eyebrow { display: inline-flex; }
+html.streamhub .w-opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+html.streamhub .w-opt { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 6px; border: 1px solid var(--line); color: var(--text); font: 600 14px var(--body); }
+html.streamhub .w-opt.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+html.streamhub .w-opt:hover { border-color: var(--blue); }
+html.streamhub .w-opt :is(span, small) { display: none; }
+html.streamhub .w-opt b { font: inherit; text-transform: none; letter-spacing: 0; color: inherit; }
+html.streamhub .w-opt i { display: grid; width: 18px; height: 18px; margin: 0; border-radius: 0; background: none; color: inherit; }
+html.streamhub .w-opt i svg { width: 18px; height: 18px; }
+html.streamhub .w-note { color: var(--muted); font-size: 13px; margin: 14px 0 0; }
+html.streamhub #welcome .d-actions { justify-content: flex-start; }
+html.streamhub #welcome .btn:not(.primary) { background: var(--raised); color: var(--strong); border-color: transparent; }
+html.streamhub #welcome .btn.primary { background: var(--blue); color: #fff; }
+
+/* ---------- title details ---------- */
+html.streamhub .sheet { left: var(--nav-w); padding: 0; place-items: stretch; }
+html.streamhub .sheet-backdrop { background: rgba(8, 12, 20, .6); backdrop-filter: none; }
+html.streamhub .sheet-card { width: 100%; max-height: 100vh; height: 100vh; border-radius: 0; background: var(--bg); box-shadow: none; animation: fade .15s; }
+html.streamhub .sheet-card > .hero { height: 300px; background-color: var(--surface); }
+html.streamhub .sheet-card > .hero::after { background: linear-gradient(rgba(8, 12, 20, .1), rgba(8, 12, 20, .35) 55%, var(--bg)); }
+html.streamhub .sheet-close { top: 14px; right: 14px; width: 36px; height: 36px; border-radius: 8px; background: rgba(8, 12, 20, .6) !important; color: #fff !important; }
+html.streamhub .d-body { grid-template-columns: 216px 1fr; gap: 32px; padding: 0 32px 40px; margin-top: -120px; max-width: 1200px; }
+html.streamhub .d-poster { border-radius: 8px; border: 4px solid var(--bg); box-shadow: none; }
+html.streamhub .d-info { padding-top: 120px; }
+html.streamhub .d-info h2 { font: 700 40px/1.1 var(--display); text-transform: none; letter-spacing: -.02em; color: var(--strong); margin: 0 0 10px; }
+html.streamhub .d-meta { color: var(--muted); font-weight: 500; font-size: 14px; }
+html.streamhub .d-overview { color: var(--text); font-size: 15px; line-height: 1.6; }
+html.streamhub .d-file { font: 400 12px var(--mono); color: var(--subtle); }
+html.streamhub .d-versions > span { font: 600 11px var(--body); letter-spacing: .1em; color: var(--subtle); }
+html.streamhub .d-versions { gap: 0; padding: 4px; border-radius: 8px; background: var(--raised); width: max-content; }
+html.streamhub .d-versions > span { padding: 0 10px 0 8px; }
+html.streamhub .d-versions .chip { padding: 6px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-weight: 600; }
+html.streamhub .d-versions .chip:hover { color: var(--strong); }
+html.streamhub .d-versions .chip.on { background: var(--surface); color: var(--strong); }
+html.streamhub .d-versions .chip small, html.streamhub .d-versions .chip.on small { color: var(--subtle); }
+
+/* ---------- player ---------- */
+html.streamhub #player { font-family: var(--body); }
+html.streamhub .p-top { padding: 14px 20px 48px; background: linear-gradient(rgba(5, 8, 13, .85), transparent); }
+html.streamhub #pClose { background: rgba(255, 255, 255, .1); }
+html.streamhub .p-title b { font: 600 16px/1.3 var(--body); text-transform: none; letter-spacing: 0; }
+html.streamhub .p-title small { color: #A9B4C4; font-weight: 400; font-size: 12px; }
+html.streamhub .p-bottom { padding: 60px 20px 14px; background: linear-gradient(transparent, rgba(5, 8, 13, .9)); }
+html.streamhub #pPlay { width: 40px; height: 40px; background: var(--blue); color: #fff; }
+html.streamhub #pPlay:hover { background: var(--blue-hover); filter: none; }
+html.streamhub #pPlay svg { width: 18px; height: 18px; }
+html.streamhub .p-row .icon-btn svg { width: 20px; height: 20px; stroke-width: 1.75; }
+html.streamhub .p-time { font: 400 13px var(--mono); color: #E9EDF3; }
+html.streamhub .pill-btn { height: 32px; border-radius: 6px; border: 0; background: rgba(255, 255, 255, .08); font: 600 12.5px var(--body); }
+html.streamhub .pill-btn:hover { background: rgba(255, 255, 255, .16); }
+html.streamhub .pill-btn.on { background: var(--blue); }
+html.streamhub #pVol { accent-color: #fff; }
+html.streamhub .seek-track { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .2); }
+html.streamhub .seek:hover .seek-track { height: 6px; }
+html.streamhub #seekBuf { background: rgba(255, 255, 255, .3); }
+html.streamhub #seekPlayed { background: var(--blue); }
+html.streamhub #seekKnob { width: 14px; height: 14px; margin: -7px 0 0 -7px; background: #fff; box-shadow: none; }
+html.streamhub .seek-tip { background: #182030; font: 500 12px var(--mono); border-radius: 4px; }
+html.streamhub #spinner { border-color: rgba(255, 255, 255, .12); border-top-color: var(--blue); border-right-color: var(--blue); }
+html.streamhub #pBanner { background: rgba(15, 21, 33, .95); border: 1px solid #263041; color: #E9EDF3; border-radius: 8px; }
+html.streamhub #toast { background: rgba(15, 21, 33, .92); border: 1px solid #263041; border-radius: 8px; font-weight: 600; }
+html.streamhub .menu { border-radius: 12px; background: rgba(15, 21, 33, .97); backdrop-filter: none; border: 1px solid #263041; box-shadow: none; }
+html.streamhub .menu h4 { font: 600 11px var(--body); letter-spacing: .1em; color: #7A879B; }
+html.streamhub .menu .opt { border-radius: 6px; }
+html.streamhub .menu .opt:hover, html.streamhub .menu .opt:focus-visible { background: #182030; }
+html.streamhub .menu .opt .tick { color: #84ADFF; }
+html.streamhub .menu .opt .lbl small { color: #7A879B; }
+html.streamhub .menu .tabs { border-radius: 8px; background: #182030; }
+html.streamhub .menu .tabs button { border-radius: 6px; color: #A9B4C4; }
+html.streamhub .menu .tabs button.on { background: #263041; color: #fff; }
+html.streamhub .menu .chip { border-radius: 6px; border-color: #263041; color: #E9EDF3; }
+html.streamhub .menu .chip:hover { border-color: #4F86FF; }
+html.streamhub .menu .chip.on { border-color: var(--blue); background: var(--blue); color: #fff; }
+html.streamhub .menu .swatch.on { border-color: var(--blue); box-shadow: none; }
+html.streamhub .menu .sync button, html.streamhub .menu .stepper button { border-radius: 6px; background: #182030; }
+html.streamhub .menu .sync button:hover, html.streamhub .menu .stepper button:hover { background: #263041; }
+html.streamhub .menu .sync output { font: 500 16px var(--mono); color: #fff; }
+html.streamhub .menu .stepper output { color: #A9B4C4; font-family: var(--mono); }
+html.streamhub .menu .hint { color: #A9B4C4; }
+html.streamhub .menu .hint a { color: #84ADFF; }
+html.streamhub .sub-preview { border-radius: 8px; background: #182030; }
+html.streamhub .p-top #pList.on { color: #84ADFF; }
+html.streamhub #upNext { border-radius: 12px; background: rgba(15, 21, 33, .97); border: 1px solid #263041; }
+html.streamhub #upNext small { font: 600 11px var(--body); letter-spacing: .1em; color: #7A879B; }
+html.streamhub #upNext .btn:not(.primary) { background: #182030; color: #fff; border-color: transparent; }
+/* mini player */
+html.streamhub #player.mini { border-radius: 8px; border: 1px solid var(--line2); box-shadow: none; }
+html.streamhub .mini-title { font: 600 13px/1.2 var(--body); text-transform: none; letter-spacing: 0; background: linear-gradient(rgba(5, 8, 13, .8), transparent); }
+html.streamhub .mini-btns { background: rgba(5, 8, 13, .4); }
+html.streamhub .mini-btns .icon-btn { background: rgba(5, 8, 13, .7); border: 0; }
+html.streamhub .mini-btns .icon-btn:hover { background: #263041; }
+html.streamhub .mini-btns #mPlay { background: var(--blue); color: #fff; }
+html.streamhub .mini-bar { height: 3px; }
+html.streamhub .mini-bar i { background: var(--blue); }
+html.streamhub #note { border-radius: 8px; background: var(--raised); color: var(--strong); border: 1px solid var(--line2); box-shadow: none; font-weight: 600; }
+
+/* ---------- settings ---------- */
+html.streamhub dialog { width: min(640px, 94vw); border: 1px solid var(--line2); border-radius: 12px; background: var(--surface); box-shadow: none; }
+html.streamhub dialog::backdrop { background: rgba(8, 12, 20, .6); backdrop-filter: none; }
+html.streamhub dialog form { padding: 24px 28px; }
+html.streamhub dialog h2 { font: 600 24px var(--display); text-transform: none; letter-spacing: -.01em; color: var(--strong); }
+html.streamhub dialog label, html.streamhub .field { font-weight: 500; font-size: 13px; color: var(--text); }
+html.streamhub dialog label small { color: var(--subtle); font-weight: 400; }
+html.streamhub dialog :is(input, textarea) { border-radius: 8px; border-color: var(--line2); background: var(--bg); font: 13px/1.55 var(--mono); }
+html.streamhub dialog :is(input, textarea):focus { border-color: var(--blue); box-shadow: none; }
+html.streamhub dialog code { background: var(--raised); border: 0; font-size: 12px; }
+html.streamhub .note { border-radius: 8px; background: var(--raised); border-color: var(--line2); color: var(--muted); }
+html.streamhub .sh-seg { display: inline-flex; gap: 2px; padding: 4px; border-radius: 8px; background: var(--raised); }
+html.streamhub .sh-seg button { all: unset; cursor: pointer; padding: 6px 14px; border-radius: 6px; font: 600 13px var(--body); color: var(--muted); }
+html.streamhub .sh-seg button:hover { color: var(--strong); }
+html.streamhub .sh-seg button.on { background: var(--surface); color: var(--strong); }
+html.streamhub .sh-seg button:focus-visible { outline: 2px solid var(--blue); }
+
+/* ---------- downloads ---------- */
+html.streamhub .dl { border-radius: 12px; background: var(--surface); border: 1px solid var(--line); box-shadow: none; padding: 14px 16px; }
+html.streamhub .dl-main b { font-weight: 600; color: var(--strong); }
+html.streamhub .dl-main small { color: var(--subtle); font-weight: 400; }
+html.streamhub .dl-bar { height: 4px; background: var(--line2); }
+html.streamhub .dl-bar i { background: var(--blue); }
+html.streamhub .dl-pct { font: 500 13px var(--mono); color: var(--muted); }
+html.streamhub .dl-del { background: rgba(8, 12, 20, .72); border-radius: 6px; }
+html.streamhub .dl-del:hover { background: var(--danger); }
+
+/* ---------- server page ---------- */
+html.streamhub .sv-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+html.streamhub .sv-card { padding: 20px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); min-width: 0; }
+html.streamhub .sv-card.wide { grid-column: 1 / -1; }
+html.streamhub .sv-card h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; font: 600 18px/24px var(--display); color: var(--strong); }
+html.streamhub .sv-card h3 small { margin-left: auto; font: 400 13px var(--body); color: var(--subtle); }
+html.streamhub .sv-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); }
+html.streamhub .sv-link { margin-left: auto; font: 500 13px var(--body); color: var(--accText); cursor: pointer; }
+html.streamhub .sv-stats { display: grid; grid-template-columns: repeat(3, 1fr); }
+html.streamhub .sv-stats div { padding: 4px 14px; border-left: 1px solid var(--line2); }
+html.streamhub .sv-stats div:first-child { border-left: 0; padding-left: 0; }
+html.streamhub .sv-stats span { display: block; font-size: 13px; color: var(--muted); }
+html.streamhub .sv-stats b { font: 600 22px/1.4 var(--display); color: var(--strong); }
+html.streamhub .sv-kv { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+html.streamhub .sv-kv:first-of-type { border-top: 0; }
+html.streamhub .sv-kv code { color: var(--strong); font-size: 13px; text-align: right; overflow-wrap: anywhere; }
+html.streamhub .sv-lib { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line); }
+html.streamhub .sv-lib b { display: block; font-weight: 600; color: var(--strong); }
+html.streamhub .sv-lib code { font-size: 12.5px; color: var(--subtle); overflow-wrap: anywhere; }
+html.streamhub .sv-ping { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+html.streamhub .sv-ping i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+html.streamhub .sv-ping.slow i { background: var(--warn); }
+html.streamhub .sv-ping.bad i { background: var(--danger); }
+html.streamhub .sv-empty { color: var(--muted); margin: 0; }
+
+/* ---------- narrow windows: collapse the sidebar to icons ---------- */
+@media (max-width: 960px) {
+  html.streamhub { --nav-w: 64px; }
+  html.streamhub :is(.sh-name, #nav a span, #nav em, #shTheme small, #shStatus code, .sh-kbd) { display: none; }
+  html.streamhub #settingsBtn::after { content: none; }
+  html.streamhub #logo { justify-content: center; padding: 8px 0 14px; }
+  html.streamhub #backBtn { position: static; order: 1; margin: 0 auto 6px; }
+  html.streamhub .search { display: none; }
+  html.streamhub #nav { display: flex; } /* style.css hides the Mac tab bar on narrow windows */
+  html.streamhub .hero-text h1 { font-size: 32px; line-height: 38px; }
+  html.streamhub #nav a, html.streamhub #shTheme, html.streamhub #settingsBtn { justify-content: center; padding: 0; font-size: 0; gap: 0; }
+  html.streamhub #shStatus { padding: 10px 0; display: flex; justify-content: center; font-size: 0; }
+  html.streamhub #shStatus b { font-size: 0; gap: 0; }
+  html.streamhub main { padding: 20px 20px 56px; }
+  html.streamhub #hero { margin: 20px 20px 8px; }
+  html.streamhub .hero-text { max-width: 100%; padding: 56px 24px 48px; }
+  html.streamhub .row-wrap, html.streamhub .continue .row-wrap { margin: 0 -20px; }
+  html.streamhub .row-scroll, html.streamhub .continue .row-scroll { padding: 2px 20px 8px; }
+  html.streamhub .d-body { grid-template-columns: 1fr; margin-top: -80px; }
+  html.streamhub .d-poster { width: 150px; }
+  html.streamhub .d-info { padding-top: 0; }
+  html.streamhub .sv-grid { grid-template-columns: 1fr; }
+}
+
+/* online subtitles */
+html.streamhub .subkeys { border-top-color: var(--line2); }
+html.streamhub .subkeys legend { font-weight: 600; font-size: 15px; color: var(--strong); }
+html.streamhub .subkeys legend small { color: var(--subtle); font-weight: 400; }
+html.streamhub .menu .ss-form input { border-radius: 8px; border-color: #263041; background: #080C14; font-family: var(--body); }
+html.streamhub .menu .ss-form input:focus { border-color: var(--blue); }
+html.streamhub .menu .ss-go { border-radius: 8px; background: var(--blue); }
+html.streamhub .menu .ss-go:hover { background: var(--blue-hover); }
+
+/* look picker */
+html.streamhub .look-pick { border-radius: 8px; border: 1px solid var(--line2); font-weight: 600; }
+html.streamhub .look-pick small { color: var(--subtle); font-weight: 400; }
+html.streamhub .look-pick.on { border-color: var(--blue); background: var(--sel); color: var(--selText); }
+
+/* Mac app (Electron, hidden title bar): keep the sidebar clear of the window buttons, and let it drag the window */
+html.electron.streamhub header#top { padding-left: 8px; padding-top: 44px; -webkit-app-region: drag; }
+html.electron.streamhub #backBtn { top: 40px; }
+
+/* TV share */
+html.streamhub dialog label.check input { accent-color: var(--blue); }
+html.streamhub .tv-lines { border-radius: 8px; background: var(--raised); border-color: var(--line2); color: var(--muted); }
+html.streamhub .tv-lines pre { border-radius: 6px; border-color: var(--line2); background: var(--bg); font-family: var(--mono); }
+html.streamhub .sv-card .tv-lines { background: none; border: 0; padding: 0; }
+
+/* series page: season tabs and "More in …" */
+html.streamhub #split.has-more { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+html.streamhub #seasonBar { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; flex-wrap: wrap; }
+html.streamhub #seasonTabs { display: flex; gap: 6px; flex-wrap: wrap; }
+html.streamhub .stab { all: unset; cursor: pointer; padding: 7px 14px; border-radius: 6px; border: 1px solid var(--line); color: var(--text); font: 600 13px var(--body); }
+html.streamhub .stab:hover { border-color: var(--blue); }
+html.streamhub .stab.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+html.streamhub #seasonCount { margin-left: auto; color: var(--muted); font-size: 13px; }
+html.streamhub #moreIn .more-head { margin: 0 0 12px; font: 600 16px var(--display); color: var(--strong); }
+html.streamhub .more-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 10px; }
+html.streamhub .more-grid .cap .s, html.streamhub .more-grid .badge, html.streamhub .more-grid .card-act { display: none; }
+@media (max-width: 1100px) { html.streamhub #split.has-more { display: block; } html.streamhub #moreIn { margin-top: 24px; } }
+html.streamhub #moreIn .more-head::before { background-color: var(--raised); border-radius: 6px; width: 28px; height: 28px; }
+
+/* synopsis */
+html.streamhub .syn { background: linear-gradient(transparent, rgba(8, 12, 20, .94) 40%); color: #E9EDF3; font: 400 11.5px/1.4 var(--body); }
+html.streamhub #folderSyn { color: var(--muted); font-size: 14px; }
+html.streamhub #folderSyn a, html.streamhub .d-overview a { color: var(--accText); }
+html.streamhub .d-overview.none { color: var(--subtle); }
+
+/* Settings page */
+html.streamhub #settingsPage { max-width: 1100px; }
+html.streamhub #settingsPage h2 { font: 600 28px var(--display); text-transform: none; letter-spacing: -.01em; color: var(--strong); margin: 0 0 18px; }
+html.streamhub #settingsPage .s-card { border-radius: 12px; padding: 20px 22px 8px; background: var(--surface); }
+html.streamhub #settingsPage .s-card > h3, html.streamhub #settingsPage .subkeys legend, html.streamhub #settingsPage .s-row .flabel { font: 600 15px var(--display); text-transform: none; letter-spacing: 0; color: var(--strong); }
+html.streamhub #settingsPage label, html.streamhub #settingsPage .field { font-weight: 500; font-size: 13px; color: var(--text); }
+html.streamhub #settingsPage label small { color: var(--subtle); font-weight: 400; }
+html.streamhub #settingsPage :is(input, textarea) { border-radius: 8px; border-color: var(--line2); background: var(--bg); font: 13px/1.55 var(--mono); color: var(--text); }
+html.streamhub #settingsPage :is(input, textarea):focus { border-color: var(--blue); box-shadow: none; }
+html.streamhub #settingsPage code { background: var(--raised); border: 0; font-size: 12px; }
+html.streamhub #settingsPage .s-card, html.streamhub #settingsPage .s-card > h3 { box-shadow: none; }
+html.streamhub #settingsPage .look-pick { border-radius: 8px; }
+html.streamhub #settingsPage .look-pick.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+html.streamhub #settingsPage label.check input { accent-color: var(--blue); }
+html.streamhub #top .icon-btn.on, html.streamhub #settingsBtn.on { background: var(--sel); color: var(--selText); }
+html.streamhub .ep-syn { color: var(--muted); font-size: 12.5px; }
+html.streamhub .fh-actions button { margin-top: 14px; text-transform: none; letter-spacing: 0; font-family: var(--body); font-weight: 600; box-shadow: none; }
+html.streamhub #folderResume { background: var(--blue); border-color: var(--blue); color: #fff; }
+html.streamhub #folderResume:hover { background: var(--blue-hover); color: #fff; box-shadow: none; transform: none; }
+html.streamhub #folderShuffle { background: transparent; color: var(--text); border-color: var(--line2); }
+html.streamhub #folderShuffle:hover { border-color: var(--blue); color: var(--strong); }
+
+/* covers: a big initial for titles without a poster; the cover beside a title's name; episode stills */
+html.streamhub .ph-mono { top: 14%; transform: translateX(-50%); font: 700 58cqw/1 var(--display); -webkit-text-stroke: 0; color: rgba(255, 255, 255, .14); }
+html.streamhub .ph-mono::after { display: none; }
+html.streamhub #folderCover .poster { border: 0; border-radius: 8px; transform: none; box-shadow: none; width: 132px; }
+html.streamhub .ep .num.has-still { width: 124px; height: 70px; border-radius: 6px; background: var(--still) center / cover no-repeat, var(--raised); color: #fff; font: 600 12px var(--mono); place-items: end start; padding: 0 0 6px 8px; }
+html.streamhub .ep:has(.has-still) { grid-template-columns: 132px 1fr auto; }
+html.streamhub #seasonCover { border-radius: 4px; border-color: var(--line2); }
+
+/* music and books */
+html.streamhub .tracks { border-radius: 10px; box-shadow: none; background: var(--surface); }
+html.streamhub .trk { padding: 9px 16px; }
+html.streamhub .trk:hover { background: var(--raised); }
+html.streamhub .trk.on { background: var(--sel); }
+html.streamhub .trk.on .trk-t { color: var(--selText); }
+html.streamhub .trk-eq i { background: var(--blue); }
+html.streamhub .trk:focus-visible { box-shadow: inset 0 0 0 2px var(--blue); }
+html.streamhub body.has-audio { padding-bottom: 84px; }
+html.streamhub #audioBar { left: var(--nav-w); background: var(--side); box-shadow: none; border-top-color: var(--line); }
+html.streamhub .ab-art { background: var(--raised); color: var(--accText); border-radius: 6px; }
+html.streamhub .ab-ctl .icon-btn.on { color: var(--blue-400); background: var(--sel); }
+html.streamhub .ab-play { background: var(--blue) !important; color: #fff !important; }
+html.streamhub #audioBar input[type="range"], html.streamhub .rd-pdf { accent-color: var(--blue); }
+html.streamhub #reader { left: 0; }
+html.streamhub .rd-title b { font: 600 16px var(--display); text-transform: none; letter-spacing: 0; }
+html.streamhub .rd-ctl .icon-btn { border-radius: 6px; border-color: var(--line2); }
+html.streamhub .rd-ctl select, html.streamhub .rd-pg input { border-radius: 6px; border-color: var(--line2); }
+@media (max-width: 960px) { html.streamhub #audioBar { left: 56px; } }

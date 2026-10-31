@@ -1,12 +1,15 @@
-# MusingsofMaksudTV
+# StreamHub
 
-<img src="web/public/logo.svg" width="96" alt="MusingsofMaksudTV logo">
+<img src="web/public/assets/streamhub-icon.svg" width="96" alt="StreamHub logo">
 
 Watch the movies, TV series and anime on your ISP's media servers (BDIX / FTP-style "Index of /"
 or h5ai servers) on:
 
 - **Mac**: a real app (`mac/`). You don't need a browser or anything else installed, because ffmpeg is built in.
+- **Windows**: **StreamHub** (`windows/`), the same app for Windows PCs, with ffmpeg built in too.
 - **Android TV**: a native app (`android-tv/`).
+
+What Maksud built, and what was added on top, one line each: [ENHANCEMENTS.md](ENHANCEMENTS.md).
 
 The Mac app looks like Netflix: a slideshow of featured titles at the top, then a row of posters for every
 category on every server (English Movies, Hindi Movies, TV & Web Series, Anime…). Movie folders open straight
@@ -46,9 +49,62 @@ Anime | http://172.16.50.14/
 To find the right addresses, open your ISP's media portal in a browser. Copy the address of each
 server or folder that holds videos.
 
+**Folders on this computer** work as libraries too, next to the ISP servers. In Settings click **Add folder…**
+(or type a line such as `Movie | G:\Movie` or `Movies | /Users/you/Movies`). Movies and series in them get posters,
+sections, search, resume and the full player. Name a folder library the same as an ISP library (for example
+`Movies`) to show both as one section. Download is hidden for these, because they're already on your computer.
+
+**Look:** Settings → **Look** switches between **Vintage** (parchment and maroon, the original) and **Contemporary**
+(StreamHub: sidebar, flat and modern) on both the Mac and Windows apps. The Mac app starts in Vintage and the Windows app in
+Contemporary. Each look has its own themes: Parchment / Night, or System / Light / Dark. Both looks bring their fonts
+with them, so they look the same offline. The Vintage design sources are in `design/vintage/`, and the Contemporary ones in `windows/design/`.
+
+**Books and music:** add a folder of books or music like any other library (for example `Music | G:\Music` and `Books | G:\Book`), and
+files show up next to your films.
+- **Music** (mp3, flac, m4a, aac, ogg, opus, wav; wma and ape are converted on the fly): an album folder shows its tracks, with Play and Shuffle. A bar
+  at the bottom keeps playing while you browse, with previous/next, shuffle, repeat, seek, volume, the album cover, and your keyboard's media keys.
+  Track and album names come from the file and folder names, and the cover from a picture in the folder or inside the file.
+- **Books** (pdf, epub, cbz comics): a book opens full screen. PDFs and comics open as a **flipbook**: a cover, then two-page spreads whose pages turn like paper
+  (click a page's edge, drag a corner, use the arrow keys or the buttons). A button in the top bar switches to a plain single-page view and back, and
+  remembers your choice. PDFs use the bundled pdf.js and the flipbook uses StPageFlip (both bundled, so it works offline). EPUBs open chapter by chapter with a
+  contents list and text size (no page turning yet, because their text reflows). The app remembers your place in each book.
+  Not supported yet: CBR comics, DRM-protected books, and book or music tags (titles come from names).
+
+**Jellyfin apps (preview):** Settings → **Let Jellyfin apps connect** makes the app answer like a Jellyfin server on port 8096, so
+Jellyfin apps on phones, tablets and TVs can browse and play your libraries while this computer is on. In the app, add a server at
+`http://<this computer's IP>:8096` and sign in as `streamhub` (no password unless you set one in Settings). It's off until you
+switch it on, and only devices on your home network get answers. Windows may ask once to allow incoming connections (choose Allow, private networks).
+A section named like movies (Movies, Films…) shows as a Movies library, and one named like series (TV, Series, Web, Anime…) as a TV Shows library
+with Series, Seasons and Episodes. Anything else shows as a library of folders. The titles are found by reading your folders in the
+background (Season folders, S01E02 names, a folder per film), so a big server may show fewer titles the first time you open it. With a TMDB
+key, plots, posters, episode titles and stills come along too. Every file plays directly, without converting it, so a player has to handle
+the file's own video and audio formats. mpv-based apps (Streamyfin) get what they need for that: the real track numbers, the video's `.srt`/`.vtt`
+files offered as subtitle tracks, and a direct stream URL. There's no music, no books, no live TV, and no "Recently added" row yet.
+It passes the official Jellyfin SDK's sign-in, browse, series/season/episode, playback-info, ranged-stream, Next Up and progress calls, but it hasn't been tried in
+Streamyfin or the other apps yet. Streamyfin's README says it has no music support, and I couldn't confirm an Android TV release of it,
+so the official Jellyfin app is the surer choice on a TV.
+
+**Synopsis:** with a free [TMDB](https://www.themoviedb.org/settings/api) key in Settings, every movie and series shows its plot: under the title on its page, in the details sheet, and when you hover a poster. Each episode of a series also shows its own title, plot, length and still, and a movie's or series' page has its cover beside the title (a season's own poster shows next to its tabs, or beside the title when you open a Season folder). Servers that keep every episode in its own folder get a grid of episode stills. Titles without a poster get a drawn cover in both looks. Without a key, the page says how to add one.
+
+**Online subtitles** (optional): to use **Search online…** in the player's subtitle menu (like VLC), add a free API key
+from [OpenSubtitles.com](https://www.opensubtitles.com/consumers), from [SubDL](https://subdl.com) (on your profile page), or from both.
+Signing in with your OpenSubtitles account allows more downloads a day. Results that match the exact file come first,
+and a season pack gives you the right episode.
+
+**3D movies** (side by side or top and bottom) play in 2D automatically. Use the **3D → 2D** button in the player to switch.
+
 **TMDB API key** (Mac app, recommended): adds real posters, backdrops, ratings and plot summaries. To get one for free,
 create an account at themoviedb.org, then go to Settings → API. Without a key the app still uses any
 poster images it finds on the server (`poster.jpg`, `folder.jpg`, …) and draws a colored card otherwise.
+
+
+## Live TV (IPTV)
+
+Add M3U or M3U8 playlists under **Settings → Live TV**, one per line (`My channels | https://example.com/list.m3u`,
+or a playlist file on this computer). A **Live TV** tab appears with the channels grouped as the playlist groups them,
+a search box, logos and favourites (★). Click a channel to watch; ↑ / ↓ change channel, F is full screen, Esc closes.
+StreamHub only plays the streams your playlist links to. Channels are converted with ffmpeg on the way, so HLS, MPEG-TS and
+most other streams play with sound, but live streams can't be paused or rewound. There is no programme guide yet.
 
 ## Mac app
 
@@ -86,15 +142,53 @@ seeks, and the sync controls.
   reading ahead as you watch. Image subtitles (PGS/VobSub) can't be shown on the Mac; the TV app shows them.
 - **Themes:** Parchment (default) or Night, in Settings.
 
-### Downloads (Mac app only)
+### Downloads (Mac and Windows apps)
 Press **⬇** in the player, or **Download** on a movie's page. Movies (with their subtitle files) are saved to
-`Downloads/MusingsofMaksudTV` and appear under **⬇ Downloads** in the top bar, where you can watch them without
-the internet, delete them, or open the folder in Finder. Interrupted downloads continue where they stopped.
+`Downloads/MusingsofMaksudTV` (`Downloads\StreamHub` on Windows) and appear under **⬇ Downloads** in the top bar, where
+you can watch them without the internet, delete them, or open the folder in Finder or File Explorer. Interrupted downloads continue where they stopped.
 
 ### Running from source (developers)
 `cd mac && npm install && npm start`. The Mac app is a small Electron wrapper around `web/`.
 You can also run `web/` alone with `node web/server.js` and open http://localhost:8080 in a browser.
 Install ffmpeg first (`brew install ffmpeg`) to get sound for every file. Tests: `node web/test.js`.
+
+## Windows app (StreamHub)
+
+StreamHub is the Windows version of the Mac app, with the same library, player, downloads and keys. It has its own
+look: sidebar navigation, light and dark themes that follow Windows, and a Server page (see `windows/design/`). It's built with
+[Tauri](https://tauri.app): a small Rust program shows the app in Windows' built-in browser engine (WebView2) and
+runs the same server as the Mac app in the background, with ffmpeg included. You never have to start anything yourself.
+
+### Install
+1. On GitHub, open **Releases** and download `StreamHub_1.0.5_x64-setup.exe` from the newest **StreamHub** pre-release.
+   Every build is published there. It's also in **Actions → StreamHub Windows app** as the zipped
+   **StreamHub-windows-x64** artifact.
+2. Run the setup. It installs for your user only, so you don't need admin rights.
+   Windows 10 PCs without WebView2 get it during setup. Windows 11 already has it.
+3. The app isn't signed by a registered publisher yet, so Windows SmartScreen may warn the first time.
+   Click **More info → Run anyway**. Chrome can also block a new, unsigned download. If it does, open
+   `chrome://downloads` and choose **Keep** / **Download dangerous file**, or use Edge or Firefox.
+
+**Why the warning, and the real fix.** Browsers and SmartScreen trust programs by their publisher's code-signing
+certificate, and by reputation they build up over time. StreamHub doesn't have a certificate yet. (Builds before
+this fix also carried Node's broken signature inside the bundled server, which made Chrome call them dangerous. The
+build now removes it, and CI checks for it.) To stop the warnings, buy a code-signing certificate, for example
+[Certum's open-source certificate](https://shop.certum.eu/open-source-code-signing.html), which is available to
+individuals. Then CI can sign each build.
+
+Your settings live in `%APPDATA%\com.musingsofmaksud.streamhub`, and downloads go to `Downloads\StreamHub`.
+If the app ever can't start, the error message points to `server.log` in the settings folder.
+
+### Building it (developers)
+You need Node 24.22.1 (exactly, see `scripts/build-server.mjs`), Rust and the Visual Studio C++ build tools.
+
+```
+cd windows
+npm ci
+npm run build      # server + ffmpeg sidecars, then the installer in src-tauri/target/release/bundle/nsis
+```
+
+`npm run dev` opens the app without making an installer.
 
 ## Android TV
 
@@ -117,6 +211,18 @@ The TV app works like the Mac app: one *Movies* section for Movies + Movies 1080
 - A movie that's on two servers asks which quality to play (1080p, 720p…), starting with the one you were watching.
 - **Back** in the player shrinks the video into the corner of the home screen and it keeps playing.
   **▶ Now playing** in the top bar makes it full screen again; **■ Stop** ends it. The remote's play/pause key works too.
+
+### Watch your computer's folders on the TV
+The TV app plays the ISP servers by itself, without your computer. When your Mac or PC is on, it can also play that
+computer's own folders (the ones added with **Add folder…**):
+1. On the computer, open **Settings**, tick **Share my folders with my TV**, then click **Save**. Allow incoming connections if
+   Windows or macOS asks (private networks).
+2. Settings (and the **Server** page) then list one line per folder, such as `Movie (PC) | http://192.168.0.105:8090/Movie/`.
+   Add those lines to the TV app's **Settings → Libraries**.
+
+They show as their own sections. When the computer is off, those sections just can't be reached, and everything else
+works as normal. Only devices on your home network get answers. The folders are shared read-only, and only video,
+subtitle and poster files.
 
 ### Remote
 OK = play/pause and show controls · ◀ ▶ = skip 10 s · Back = up one folder / shrink the player to the corner.

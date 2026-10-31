@@ -1,6 +1,14 @@
 // MusingsofMaksudTV UI: library browser with posters, details sheet, and a player with audio/subtitle menus.
+import { createMusic } from './music.js';
+import { createReader } from './reader.js';
+import { createLive } from './live.js';
 const $ = (id) => document.getElementById(id);
 if (navigator.userAgent.includes('Electron')) document.documentElement.classList.add('electron');
+const WIN = navigator.userAgent.includes('Windows');
+const DEVICE = WIN ? 'PC' : 'Mac'; // "save it to this Mac / PC"
+// The Windows app (StreamHub) has its own look: sidebar navigation, blue on slate, light/dark themes.
+const SH = document.documentElement.classList.contains('streamhub');
+const INSTALL_FFMPEG = WIN ? '<code>winget install ffmpeg</code>' : '<code>brew install ffmpeg</code>';
 
 /* ---------------- icons ---------------- */
 const P = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -28,6 +36,7 @@ const I = {
   full: P('<path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>'),
   unfull: P('<path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/>'),
   close: P('<path d="M18 6L6 18M6 6l12 12"/>'),
+  live: P('<circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/>'),
   tv: P('<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M17 2l-5 5-5-5"/>'),
   spark: P('<path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/>'),
   calendar: P('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
@@ -40,6 +49,13 @@ const I = {
   down: P('<path d="M6 9l6 6 6-6"/>'),
   expand: P('<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>'),
   undo: P('<path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/>'),
+  home: P('<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>'),
+  monitor: P('<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>'),
+  sun: P('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+  shuffle: P('<path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>'),
+  repeat: P('<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>'),
+  book: P('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5V21h16"/>'),
+  moon: P('<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'),
 };
 const setIcon = (el, name) => { el.innerHTML = I[name]; };
 setIcon($('backBtn'), 'back'); setIcon($('settingsBtn'), 'gear'); setIcon($('refreshBtn'), 'refresh');
@@ -59,18 +75,20 @@ const fmt = (s) => {
 // "Dune.Part.Two.2024.1080p.mkv" -> { title: "Dune Part Two", year: "2024", quality: "1080p" }
 const QUAL_RE = /\b(2160p|4k|1440p|1080p|720p|576p|480p)\b/i;
 function niceName(raw) {
-  const s = String(raw).replace(/\.(mkv|mp4|m4v|avi|mov|webm|ts|wmv|flv|mpg|mpeg)$/i, '').replace(/[._]+/g, ' ').trim();
+  const s = String(raw).replace(/\.(mkv|mp4|m4v|avi|mov|webm|ts|wmv|flv|mpg|mpeg|pdf|epub|cbz|mp3|flac|m4a|aac|ogg|opus|wav|wma)$/i, '').replace(/[._]+/g, ' ').trim();
   const year = (/\b(?:19|20)\d{2}\b/.exec(s) || [''])[0];
   const q = (QUAL_RE.exec(s) || ['', ''])[1];
   const title = s.replace(/\s*[([][^)\]]*\b(?:19|20)\d{2}\b.*$/, '').replace(/\s(?:19|20)\d{2}\b.*$/, '').replace(QUAL_RE, '').replace(/[\s\-–:([]+$/, '').trim();
   return { title: title || s, year: title ? year : '', quality: q.toLowerCase() === '4k' ? '4K' : q.toLowerCase() };
 }
 
-/** Cover for a title without a poster: a palette from the website, a pattern, a big serif initial and a gold frame. */
+/** Cover for a title without a poster: a book jacket (design: moviehub/design/vintage/VintageJacket.dc.html), in one of
+ *  these deep jewel-tone palettes, with a gold initial, frame and tags. Contemporary uses the first colour only. */
 const PALETTES = [
-  ['#a3242f', '#2a070b', '#f5cf5b'], ['#127052', '#06231a', '#f5cf5b'], ['#2f4fb0', '#0d1330', '#f0c94e'],
-  ['#6d2bb0', '#1c0a2c', '#ffc9e0'], ['#c06a1c', '#3a1708', '#ffe2a8'], ['#0e7c8c', '#05262c', '#ffd27a'],
-  ['#b0285f', '#2c0716', '#ffd0e0'], ['#7a6a16', '#1c1806', '#f5e6a0'], ['#c23b22', '#350d06', '#ffd38a'],
+  ['#8a2457', '#3a0c24', '#f5cf5b'], ['#1f5a3e', '#0d2a1e', '#f5cf5b'], ['#0f5560', '#082a33', '#f5cf5b'],
+  ['#23338f', '#101a4e', '#f5cf5b'], ['#6b5a14', '#2e2608', '#f5cf5b'], ['#9a4a12', '#3f1a06', '#f5cf5b'],
+  ['#4b3a8a', '#1d1640', '#f5cf5b'], ['#7a1820', '#2e080b', '#f5cf5b'], ['#1a3a5c', '#0a1828', '#f5cf5b'],
+  ['#5c2a14', '#241006', '#f5cf5b'], ['#3b4a55', '#151d24', '#f5cf5b'], ['#2f6b2a', '#11300f', '#f5cf5b'],
 ];
 function coverHtml(name, { icon = I.film, cls = '' } = {}) {
   const n = niceName(name);
@@ -93,6 +111,10 @@ const store = {
   get(k, d) { try { return JSON.parse(localStorage.getItem('mh.' + k)) ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem('mh.' + k, JSON.stringify(v)); } catch { /* private mode */ } },
 };
+// Music keeps playing while you browse; the reader opens books over the page (see music.js, reader.js)
+const music = createMusic({ I, $, esc, enc, fmt, api, pauseVideo: () => { const v = $('video'); if (v && !v.paused) v.pause(); } });
+const reader = createReader({ I, $, esc, enc, api, store });
+const live = createLive({ I, $, esc, enc, api, store, pauseAudio: () => music.pause() });
 
 /* ---------------- watch history ---------------- */
 const history_ = store.get('history', {});
@@ -146,12 +168,18 @@ async function fillCard(card) {
   if (!m || !card.isConnected) return;
   const img = card.querySelector('img');
   const src = card.classList.contains('wide-art') ? m.backdrop || m.poster : m.poster;
-  if (img && src) { img.onload = () => img.classList.add('ok'); img.src = src; }
+  if (img && src && !card.dataset.still) { img.onload = () => img.classList.add('ok'); img.src = src; }
   // Clean title ("Oppenheimer" instead of "Oppenheimer 2023 2160p"); keep the raw name as a tooltip.
+  if (card.dataset.ep) return; // an episode folder keeps its episode title and still
   const title = m.show && m.episode != null ? null : m.matched || m.title;
   if (title && !card.classList.contains('tile')) {
     card.querySelector('.t').textContent = title;
     card.querySelector('.ph b').textContent = title;
+  }
+  if (m.overview) {
+    card.querySelector('.syn').textContent = m.overview;
+    card.classList.add('has-syn');
+    card.title = `${m.matched || m.title || card.title}\n\n${m.overview}`;
   }
   const s = card.querySelector('.s');
   if (s && !card.dataset.keepSub) {
@@ -193,22 +221,22 @@ function listFolder(path, { refresh = false } = {}) {
 const isYearFolder = (n) => /^[([]?\s*(?:19|20)\d{2}(?:\s*[-–&,]\s*(?:19|20)?\d{2,4})?\s*[)\]]?(?:\s*(?:1080p|720p|480p|2160p|4k|hd))?\s*$/i.test(n.trim());
 const yearOf = (n) => Math.max(0, ...(n.match(/(?:19|20)\d{2}/g) || ['0']).map(Number));
 const isTitleFolder = (n) => (/\b(?:19|20)\d{2}\b/.test(n) && !isYearFolder(n)) || /\bS\d{1,2}\b|\bseason\b/i.test(n);
-const playable = (items) => items.filter((i) => i.kind === 'dir' || i.kind === 'video');
+const playable = (items) => items.filter((i) => i.kind === 'dir' || i.kind === 'video' || i.kind === 'book' || i.kind === 'audio');
 
 /** A folder of categories ("English Movies", "Hindi Movies", year folders…) is shown as rows; anything else as a grid. */
 function isCategoryFolder(items) {
-  const dirs = items.filter((i) => i.isDir), vids = items.filter((i) => i.kind === 'video');
+  const dirs = items.filter((i) => i.isDir), vids = items.filter((i) => i.kind === 'video' || i.kind === 'audio' || i.kind === 'book');
   if (!dirs.length || vids.length || dirs.length > 60) return false;
   return dirs.filter((d) => !isTitleFolder(d.name)).length >= dirs.length * 0.7;
 }
 const sortCategories = (dirs) => (dirs.every((d) => isYearFolder(d.name)) ? [...dirs].sort((a, b) => yearOf(b.name) - yearOf(a.name)) : dirs);
 
 /** What a row for `dirPath` shows: its titles, or for a folder of years, the newest year's titles. */
-async function rowContent(dirPath) {
+async function rowContent(dirPath, typed = false) {
   const l = await listFolder(dirPath);
   let items = playable(l.items), note = '';
   const dirs = items.filter((i) => i.isDir);
-  if (dirs.length && dirs.every((d) => isYearFolder(d.name) || !isTitleFolder(d.name)) && !items.some((i) => i.kind === 'video')) {
+  if (!typed && dirs.length && dirs.every((d) => isYearFolder(d.name) || !isTitleFolder(d.name)) && !items.some((i) => i.kind === 'video' || i.kind === 'audio' || i.kind === 'book')) {
     const newest = dirs.some((d) => isYearFolder(d.name)) ? [...dirs].sort((a, b) => yearOf(b.name) - yearOf(a.name))[0] : dirs[0];
     items = playable((await listFolder(newest.path)).items);
     note = newest.name.replace(/[()[\]]/g, '').trim();
@@ -237,11 +265,12 @@ function cardHtml(it, { wideArt = false, sub = '', forgettable = false } = {}) {
   const quals = (it.versions || []).map((v) => v.quality).filter(Boolean);
   return `<button class="card${wideArt ? ' wide-art' : ''}" data-path="${esc(it.path)}" title="${esc(name)}"${sub ? ' data-keep-sub="1"' : ''}>
     <div class="poster">
-      ${coverHtml(name, { icon: isDir && !isTitleFolder(name) ? I.folder : I.film })}
+      ${coverHtml(name, { icon: isDir && !isTitleFolder(name) ? I.folder : it.kind === 'book' ? I.file : it.kind === 'audio' ? I.audio : I.film })}
       <img alt="" loading="lazy">
       ${quals.length > 1 ? `<span class="badge q">${esc(quals.join(' · '))}</span>` : ''}
       ${prog?.done ? `<span class="badge done">${I.check}Watched</span>` : ''}
       ${pct ? `<div class="progress"><i style="width:${pct}%"></i></div>` : ''}
+      <div class="syn"></div>
       <div class="hover-play"><span>${I.play}</span></div>
       ${forgettable ? `<span class="card-act x" role="button" data-forget="${esc(it.path)}" title="Remove from Continue watching">${I.close}</span>` : listButton(it)}
     </div>
@@ -262,7 +291,7 @@ const rowObserver = new IntersectionObserver((entries) => {
 const TILE_COLORS = ['#f08a1c', '#b3262d', '#1f8a5b', '#2f6fd1', '#8b3fd1', '#d4a33f', '#e23d6d', '#138a9e'];
 function rowIcon(title) {
   const t = title.toLowerCase();
-  const icon = isYearFolder(title) ? I.calendar : /anime|cartoon|animation/.test(t) ? I.spark : /series|tv|show|season|drama/.test(t) ? I.tv
+  const icon = isYearFolder(title) ? I.calendar : /music|audio|song|album|nasheed|gazal|ghazal/.test(t) ? I.audio : /\bbooks?\b|novel|comic|magazine|ebook|library|story|stories/.test(t) ? I.book : /anime|cartoon|animation/.test(t) ? I.spark : /series|tv|show|season|drama/.test(t) ? I.tv
     : /foreign|korean|hindi|bangla|tamil|telugu|english|chinese|japanese|dubbed/.test(t) ? I.globe : /top|imdb|best|award/.test(t) ? I.star : I.film;
   return `<span class="row-ico" style="--c:${TILE_COLORS[hue(title) % TILE_COLORS.length]}">${icon}</span>`;
 }
@@ -275,8 +304,8 @@ const PANELS = [
   'linear-gradient(118deg, #1c0a2c 0%, #43166b 40%, #8b3fd1 78%, #c08bff 100%)',
 ];
 
-function rowShell({ title, sub = '', path = '' }) {
-  return `<section class="row" data-row="${esc(path)}">
+function rowShell({ title, sub = '', path = '', typed = false }) {
+  return `<section class="row" data-row="${esc(path)}"${typed ? ' data-typed="1"' : ''}>
     <div class="row-head">${rowIcon(title)}${path ? `<a class="row-title" data-go="${esc(path)}">${esc(title)}<span class="see-all">See all ›</span></a>` : `<h2 class="row-title">${esc(title)}</h2>`}${sub ? `<small>${esc(sub)}</small>` : ''}</div>
     <div class="row-wrap"><button class="row-arrow left" aria-label="Scroll left">${I.back}</button>
       <div class="row-scroll"><div class="row-skel"></div><div class="row-skel"></div><div class="row-skel"></div><div class="row-skel"></div><div class="row-skel"></div><div class="row-skel"></div></div>
@@ -287,7 +316,7 @@ function rowShell({ title, sub = '', path = '' }) {
 async function fillRow(section) {
   const scroller = section.querySelector('.row-scroll');
   try {
-    const { items, note } = await rowContent(section.dataset.row);
+    const { items, note } = await rowContent(section.dataset.row, !!section.dataset.typed);
     if (!items.length) { section.remove(); return; }
     if (note) section.querySelector('.row-head').insertAdjacentHTML('beforeend', `<small>Newest · ${esc(note)}</small>`);
     scroller.innerHTML = items.map((it) => cardHtml(it)).join('');
@@ -393,8 +422,13 @@ function resetView(view) {
   state.view = view;
   $('rows').innerHTML = ''; $('grid').innerHTML = ''; $('grid').className = '';
   $('status').textContent = ''; $('status').className = '';
-  $('folderHead').hidden = view === 'home';
+  $('folderHead').hidden = view === 'home' || view === 'settings';
   $('welcome').hidden = true;
+  $('folderSyn').hidden = true; $('folderSyn').textContent = ''; $('folderResume').hidden = true; $('folderShuffle').hidden = true;
+  $('folderCover').hidden = true; $('folderCover').innerHTML = ''; $('folderHead').classList.remove('has-cover'); coverBase = '';
+  $('seasonCover').hidden = true; $('seasonBar').hidden = true; $('moreIn').hidden = true; $('moreIn').innerHTML = ''; $('split').classList.remove('has-more');
+  $('settingsPage').hidden = view !== 'settings';
+  $('settingsBtn').classList.toggle('on', view === 'settings');
   if (view !== 'search') $('filter').value = ''; // a search left in the box must not hide a folder's contents
   hideHero();
   window.scrollTo({ top: 0 });
@@ -432,6 +466,7 @@ async function showHome() {
   renderNav();
   let c;
   try { c = state.config = await api('/api/config'); } catch (e) { $('status').textContent = e.message; $('status').className = 'error'; return; }
+  if (!c.servers.length && c.playlists?.length) { location.hash = '#/live'; return; }
   if (!c.servers.length) { $('welcome').hidden = false; hideHero(); return; }
   $('status').textContent = 'Loading your libraries…';
   let libs;
@@ -447,16 +482,27 @@ async function showHome() {
   listings.forEach((l, i) => {
     const g = groups[i];
     if (!l) { html += `<p class="status error">Can’t reach “${esc(g.name)}” right now.</p>`; return; }
-    if (isCategoryFolder(l.items)) {
+    if (!l.rootType && isCategoryFolder(l.items)) {
       for (const d of sortCategories(l.items.filter((x) => x.isDir))) html += rowShell({ title: d.name, sub: groups.length > 1 ? g.name : '', path: d.path });
     } else {
-      html += rowShell({ title: g.name, path: l.path });
+      html += rowShell({ title: g.name, path: l.path, typed: !!l.rootType });
     }
   });
   $('rows').innerHTML = html;
   $('rows').querySelectorAll('.row[data-row]').forEach((r) => rowObserver.observe(r));
   $('rows').querySelectorAll('.continue .card, .mylist .card').forEach((c2) => lazy.observe(c2));
   heroOffer(myList.slice(0, 6));
+}
+
+async function showLive({ refresh = false } = {}) {
+  resetView('live');
+  if (!state.config) { try { state.config = await api('/api/config'); } catch { /* the page shows its own error */ } }
+  renderNav();
+  $('crumbs').innerHTML = '<a href="#/">Home</a>';
+  $('folderTitle').textContent = 'Live TV';
+  $('folderSub').textContent = 'Channels from your playlists';
+  $('backBtn').hidden = false;
+  await live.render($('rows'), { refresh });
 }
 
 function showList() {
@@ -474,6 +520,68 @@ function showList() {
   $('status').textContent = myList.length ? '' : 'Nothing saved yet. Press + on any poster, or “My List” on a movie, to keep it here for later.';
 }
 
+/** An album or a shelf of books: its cover, and Play / Shuffle for music. */
+async function showAlbum(path, items) {
+  const audio = items.filter((i) => i.kind === 'audio');
+  if (!audio.length && items.filter((i) => i.kind === 'book').length !== 1) return; // a cover suits an album or a single book, not a whole shelf
+  setCover(lastSeg(path));
+  const m = await meta(path).catch(() => null);
+  if (state.view !== 'folder' || state.path !== path) return;
+  const first = audio[0];
+  if (m?.poster) coverImage(m.poster); else if (first) coverImage(`/api/art?path=${enc(first.path)}`);
+  if (!audio.length) return;
+  const go = (shuffle) => {
+    const list = audio;
+    const i = shuffle ? Math.floor(Math.random() * list.length) : 0;
+    if (shuffle !== music.shuffleOn()) music.setShuffle(shuffle);
+    music.play(list, i);
+  };
+  $('folderResume').innerHTML = `${I.play}Play`; $('folderResume').onclick = () => go(false); $('folderResume').hidden = false;
+  $('folderShuffle').innerHTML = `${I.shuffle}Shuffle`; $('folderShuffle').onclick = () => go(true); $('folderShuffle').hidden = false;
+}
+/** The plot of a movie or series folder, under its title. Says what's missing when there's none. */
+async function showSynopsis(path) {
+  const el = $('folderSyn');
+  setCover(lastSeg(path));
+  const m = await meta(path);
+  if (state.view !== 'folder' || state.path !== path) return;
+  if (m?.poster) { coverBase = m.poster; coverImage(m.poster); }
+  el.hidden = false;
+  // A folder that holds one episode: that episode's title and plot, when TMDB has them
+  const name = lastSeg(path);
+  if (EP_DIR_RE.test(name) && !isTitleFolder(name.replace(EP_DIR_RE, ''))) {
+    const parent = parentPath(path.replace(/\/$/, '') + '/');
+    const season = Number(/\bS(\d{1,2}) ?E\d/i.exec(name)?.[1] ?? seasonNum(lastSeg(parent)) ?? 1);
+    const info = await api(`/api/episodes?path=${enc(path)}&season=${season}`).catch(() => null);
+    const e = info?.episodes.find((x) => x.episode === epNumber(name, 0));
+    if (state.view !== 'folder' || state.path !== path) return;
+    if (e) { $('folderTitle').textContent = `E${e.episode} · ${e.name}`; if (e.overview) { el.textContent = e.overview; el.classList.remove('none'); return; } }
+  }
+  if (m?.overview) {
+    el.textContent = m.overview; el.classList.remove('none');
+    if (m.rating) $('folderSub').innerHTML += `  ·  <span class="star">★</span> ${m.rating}`;
+  } else {
+    el.classList.add('none');
+    el.innerHTML = state.config?.tmdbKey ? 'No synopsis found for this title.' : 'No synopsis yet. <a href="#/settings">Add a free TMDB key in Settings</a> to see the plot of every movie and series.';
+  }
+}
+/** The cover beside a title's name: a drawn jacket straight away, then the poster once it's known. */
+let coverBase = ''; // the series' (or movie's) own poster, for seasons that have none of their own
+function setCover(title, src) {
+  const el = $('folderCover');
+  el.innerHTML = `<div class="poster">${coverHtml(title)}<img alt=""></div>`;
+  el.hidden = false; $('folderHead').classList.add('has-cover');
+  if (src) coverImage(src);
+}
+function coverImage(src) {
+  const img = $('folderCover').querySelector('img');
+  if (!img) return;
+  img.classList.remove('ok');
+  img.onload = () => img.classList.add('ok');
+  img.src = src;
+}
+const lastSeg = (p) => { try { return decodeURIComponent(p.replace(/\/$/, '').split('/').pop()); } catch { return p; } };
+
 async function showFolder(path, { refresh = false } = {}) {
   resetView('folder');
   $('status').textContent = 'Loading…';
@@ -486,12 +594,116 @@ async function showFolder(path, { refresh = false } = {}) {
   state.path = l.path; state.items = l.items;
   renderNav(); renderHead();
   $('status').textContent = '';
-  if (isCategoryFolder(l.items)) {
+  if (!l.rootType && isCategoryFolder(l.items)) {
     $('rows').innerHTML = sortCategories(l.items.filter((x) => x.isDir)).map((d) => rowShell({ title: d.name, path: d.path })).join('');
     $('rows').querySelectorAll('.row[data-row]').forEach((r) => rowObserver.observe(r));
   } else {
-    renderGrid(playable(l.items));
+    const seasons = seasonsOf(l.items);
+    if (seasons) { showSynopsis(l.path); return showSeasons(l.path, seasons); }
+    renderGrid(playable(l.items), { folder: l.path });
+    showSiblingSeasons(l.path);
+    const bookish = l.items.some((i) => i.kind === 'audio' || i.kind === 'book');
+    if (bookish) showAlbum(l.path, l.items);
+    else if (isTitleFolder(lastSeg(l.path)) || EP_DIR_RE.test(lastSeg(l.path)) || isEpisodeFolder(l.items.filter((i) => i.kind === 'video'))) showSynopsis(l.path);
   }
+}
+
+/* ----- series page: season tabs, and "More in …" beside the episodes ----- */
+const SEASON_RE = /^(?:(?:season|series|s)[ ._-]*\d{1,2}\b|specials?\b)/i;
+const seasonNum = (n) => { const m = /^(?:season|series|s)[ ._-]*(\d{1,2})\b/i.exec(n.trim()); return m ? Number(m[1]) : null; };
+const seasonLabel = (n) => { const k = seasonNum(n); return k != null ? `Season ${k}` : n.replace(/\s*\b(?:1080p|720p|2160p|4k)\b.*$/i, '').trim() || n; };
+function seasonsOf(items) {
+  const dirs = items.filter((i) => i.isDir);
+  if (!dirs.length || dirs.length > 40 || items.some((i) => i.kind === 'video')) return null;
+  const name = (d) => d.name.replace(/\/$/, '');
+  if (!dirs.every((d) => SEASON_RE.test(name(d).trim()))) return null;
+  return dirs.slice().sort((a, b) => (seasonNum(name(a)) ?? 999) - (seasonNum(name(b)) ?? 999));
+}
+const parentPath = (p) => p.replace(/[^/]+\/?$/, '');
+function seasonTabsHtml(seasons, active) {
+  return seasons.map((d) => `<button role="tab" class="stab${d.path === active ? ' on' : ''}" aria-selected="${d.path === active}" data-season="${esc(d.path)}">${esc(seasonLabel(d.name.replace(/\/$/, '')))}</button>`).join('');
+}
+function seasonCountText(videos) {
+  const watched = videos.filter((v) => progressFor(v)?.done).length;
+  return `${videos.length} episode${videos.length === 1 ? '' : 's'}${watched ? ` · ${watched} watched` : ''}`;
+}
+/** "More in TV & Web Series": the other titles in the folder this series sits in. */
+async function showMoreIn(path) {
+  const parent = parentPath(path.replace(/\/$/, '') + '/');
+  if (!parent || parent === path) return;
+  let l;
+  try { l = await listFolder(parent); } catch { return; }
+  if (state.view !== 'folder' || state.path !== path && !state.path.startsWith(path)) return;
+  const norm = (p) => p.replace(/\/$/, '');
+  const more = l.items.filter((i) => i.isDir && norm(i.path) !== norm(path) && isTitleFolder(i.name)).slice(0, 6);
+  if (!more.length) return;
+  const name = trail.get(parent)?.name || state.groups.find((g) => g.root === parent)?.name || 'this library';
+  $('moreIn').innerHTML = `<h3 class="more-head">More in ${esc(name)}</h3><div class="more-grid">${more.map((it) => cardHtml(it)).join('')}</div>`;
+  $('moreIn').querySelectorAll('.card').forEach((c) => lazy.observe(c));
+  $('moreIn').hidden = false; $('split').classList.add('has-more');
+}
+/** A series folder holding Season folders: tabs on top, the chosen season's episodes below. */
+async function showSeasons(path, seasons) {
+  const watched = (d) => Math.max(0, ...Object.values(history_).filter((h) => h.path.startsWith(d.path)).map((h) => h.at));
+  const start = seasons.slice().sort((a, b) => watched(b) - watched(a))[0];
+  const active = watched(start) ? start : seasons[0];
+  const n = niceName(decodeURIComponent(path.replace(/\/$/, '').split('/').pop()));
+  if (n.title) $('folderTitle').textContent = n.title;
+  $('folderSub').textContent = [n.year && `${n.year}${/series|show/i.test(path) ? '–' : ''}`, `${seasons.length} season${seasons.length === 1 ? '' : 's'}`].filter(Boolean).join(' · ');
+  const pick = async (d) => {
+    $('seasonTabs').innerHTML = seasonTabsHtml(seasons, d.path); $('seasonBar').hidden = false;
+    $('seasonTabs').onclick = (e) => { const b = e.target.closest('[data-season]'); if (b) pick(seasons.find((x) => x.path === b.dataset.season)); };
+    $('status').textContent = 'Loading…'; $('seasonCount').textContent = '';
+    let l;
+    try { l = await listFolder(d.path); } catch (e) { if (state.view === 'folder') { $('status').textContent = e.message; $('status').className = 'error'; } return; }
+    if (state.view !== 'folder' || state.path !== path || $('seasonTabs').querySelector('.on')?.dataset.season !== d.path) return;
+    $('status').textContent = '';
+    renderGrid(playable(l.items), { folder: d.path });
+    $('seasonCount').textContent = seasonCountText(l.items.filter((i) => i.kind === 'video' || (i.isDir && EP_DIR_RE.test(i.name))));
+  };
+  showMoreIn(path);
+  showResume(path, seasons);
+  await pick(active);
+}
+/** "Resume S2 · E5" in a series' header: the episode you were last watching, else the first episode. */
+async function showResume(path, seasons) {
+  const btn = $('folderResume');
+  const last = Object.values(history_).filter((h) => h.path.startsWith(path)).sort((a, b) => b.at - a.at)[0];
+  let item = null, label = '';
+  if (last && !last.done && last.pos > 30) {
+    item = known.get(last.path) || { path: last.path, name: last.name, kind: 'video' };
+    const m = /\bS(\d{1,2}) ?E(\d{1,3})\b/i.exec(last.name);
+    label = `Resume${m ? ` S${Number(m[1])} · E${Number(m[2])}` : ''}`;
+  } else {
+    let l;
+    try { l = await listFolder(seasons[0].path); } catch { return; }
+    const first = l.items.filter((i) => i.kind === 'video')[0];
+    if (!first) return;
+    item = first;
+    const m = /\bS(\d{1,2}) ?E(\d{1,3})\b/i.exec(first.name);
+    label = `${last ? 'Start over' : 'Play'}${m ? ` S${Number(m[1])} · E${Number(m[2])}` : ''}`;
+  }
+  if (state.view !== 'folder' || state.path !== path) return;
+  btn.innerHTML = `${I.play}${esc(label)}`;
+  btn.onclick = () => startPlayback(item);
+  btn.hidden = false;
+}
+/** Opened on a Season folder itself (from search or Continue watching): tabs for its sibling seasons, which open that folder. */
+async function showSiblingSeasons(path) {
+  const last = path.replace(/\/$/, '').split('/').pop();
+  if (!SEASON_RE.test(decodeURIComponent(last).trim())) return;
+  const parent = parentPath(path.replace(/\/$/, '') + '/');
+  let l;
+  try { l = await listFolder(parent); } catch { return; }
+  if (state.view !== 'folder' || state.path !== path) return;
+  const seasons = seasonsOf(l.items);
+  if (!seasons || seasons.length < 2) return;
+  const norm = (p) => p.replace(/\/$/, '');
+  $('seasonTabs').innerHTML = seasonTabsHtml(seasons, seasons.find((d) => norm(d.path) === norm(path))?.path);
+  $('seasonTabs').onclick = (e) => { const b = e.target.closest('[data-season]'); if (b) go(b.dataset.season); };
+  $('seasonCount').textContent = seasonCountText(state.items.filter((i) => i.kind === 'video' || (i.isDir && EP_DIR_RE.test(i.name))));
+  $('seasonBar').hidden = false;
+  showMoreIn(parent);
 }
 
 async function showSearch(q) {
@@ -531,37 +743,115 @@ function epTitle(name, i) {
   return rest && rest.length > 2 ? rest : `Episode ${epNumber(name, i)}`;
 }
 
-let gridItems = [], gridSub = null;
-function renderGrid(items, { sub = null } = {}) {
+let gridItems = [], gridSub = null, gridFolder = '';
+function renderGrid(items, { sub = null, folder = undefined } = {}) {
   gridItems = items; gridSub = sub;
+  if (folder !== undefined) gridFolder = folder;
   const grid = $('grid');
   const q = state.view === 'folder' ? $('filter').value.trim().toLowerCase() : '';
   const visible = items.filter((i) => !q || i.name.toLowerCase().includes(q));
   const videos = visible.filter((i) => i.kind === 'video');
   const episodes = state.view === 'folder' && !visible.some((i) => i.isDir) && isEpisodeFolder(videos);
-  grid.className = episodes ? 'list' : '';
+  // Servers that keep every episode in its own folder: a grid of episode stills instead of posters
+  const epDirs = state.view === 'folder' && visible.length > 0 && visible.every((i) => i.isDir && EP_DIR_RE.test(i.name));
+  const audio = state.view === 'folder' ? visible.filter((i) => i.kind === 'audio') : [];
+  grid.className = audio.length ? 'album' : episodes ? 'list' : epDirs ? 'eps' : '';
+  if (audio.length) {
+    const others = visible.filter((i) => i.kind !== 'audio');
+    grid.innerHTML = (others.length ? `<div class="grid-sub">${others.map((it) => cardHtml(it, { sub: sub ? sub(it) : '' })).join('')}</div>` : '') + music.renderTracks(audio);
+    grid.querySelectorAll('.card').forEach((c) => lazy.observe(c));
+    music.markNow?.();
+    return;
+  }
   if (episodes) {
     grid.innerHTML = videos.map((v, i) => {
       const p = progressFor(v);
       const pct = p && !p.done && p.dur ? (p.pos / p.dur) * 100 : 0;
       return `<button class="ep" data-path="${esc(v.path)}"><span class="num">${epNumber(v.name, i)}</span>
-        <span><div class="t">${esc(epTitle(v.name, i))}</div><div class="s">${p?.done ? 'Watched' : pct ? `${fmt(p.dur - p.pos)} left` : esc(stem(v.name))}</div></span>
+        <span><div class="t">${esc(epTitle(v.name, i))}</div><div class="ep-syn"></div><div class="s">${p?.done ? 'Watched' : pct ? `${fmt(p.dur - p.pos)} left` : esc(stem(v.name))}</div></span>
         <span class="ep-end">${p?.done ? `<span class="check">${I.check}</span>` : pct ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}${p ? `<span class="ep-x" role="button" data-forget="${esc(p.path)}" title="${p.done ? 'Mark as unwatched' : 'Remove progress'}">${I.undo}</span>` : ''}</span></button>`;
     }).join('');
+    fillEpisodeInfo(gridFolder, videos);
   } else {
-    grid.innerHTML = visible.map((it) => cardHtml(it, { sub: sub ? sub(it) : '' })).join('');
+    grid.innerHTML = visible.map((it) => cardHtml(it, { sub: sub ? sub(it) : '', wideArt: epDirs })).join('');
+    if (epDirs) grid.querySelectorAll('.card').forEach((c) => { c.dataset.ep = '1'; });
     grid.querySelectorAll('.card').forEach((c) => lazy.observe(c));
+    if (epDirs) fillEpisodeFolders(gridFolder, visible);
   }
   if (state.view === 'folder') $('status').textContent = !visible.length ? (q ? 'Nothing here matches your search.' : 'This folder is empty.') : '';
+}
+const EP_DIR_RE = /\bS\d{1,2} ?E\d{1,3}\b|\b(?:ep|episode|e)[ ._-]?\d{1,3}\b/i;
+/** Episode folders: each card gets its episode's still, title and length from TMDB. */
+async function fillEpisodeFolders(folder, dirs) {
+  if (!folder) return;
+  const season = seasonNum(lastSeg(folder)) ?? Number(/\bS(\d{1,2}) ?E\d/i.exec(dirs[0].name)?.[1] ?? 1);
+  const key = `${folder}|${season}`;
+  if (!epInfo.has(key)) epInfo.set(key, api(`/api/episodes?path=${enc(folder)}&season=${season}`).then((r) => ({ poster: r.poster, byNum: new Map(r.episodes.map((e) => [e.episode, e])) }), () => ({ poster: null, byNum: new Map() })));
+  const { byNum } = await epInfo.get(key);
+  if (gridFolder !== folder) return;
+  dirs.forEach((d, i) => {
+    const e = byNum.get(epNumber(d.name, i)), card = [...$('grid').querySelectorAll('.card')].find((c) => c.dataset.path === d.path);
+    if (!e || !card) return;
+    if (e.still) { card.dataset.still = e.still; const img = card.querySelector('img'); img.onload = () => img.classList.add('ok'); img.src = e.still; }
+    if (e.name) { card.querySelector('.t').textContent = e.name; card.querySelector('.ph b').textContent = e.name; }
+    card.querySelector('.s').textContent = [`E${epNumber(d.name, i)}`, e.runtime && `${e.runtime} min`].filter(Boolean).join(' · ');
+    if (e.overview) card.title = `${e.name || d.name}\n\n${e.overview}`;
+  });
+}
+/** Episode titles and plots (TMDB) for the season on screen. The list shows first, the plots fill in. */
+const epInfo = new Map();
+async function fillEpisodeInfo(folder, videos) {
+  if (!folder || !videos.length) return;
+  const season = seasonNum(lastSeg(folder)) ?? Number(/\bS(\d{1,2}) ?E\d/i.exec(videos[0].name)?.[1] ?? 1);
+  const key = `${folder}|${season}`;
+  if (!epInfo.has(key)) epInfo.set(key, api(`/api/episodes?path=${enc(folder)}&season=${season}`).then((r) => ({ poster: r.poster, byNum: new Map(r.episodes.map((e) => [e.episode, e])) }), () => ({ poster: null, byNum: new Map() })));
+  const { poster, byNum: info } = await epInfo.get(key);
+  if (gridFolder !== folder) return;
+  const sc = $('seasonCover');
+  sc.hidden = !poster || $('seasonBar').hidden; if (poster) sc.src = poster;
+  // On a Season folder's own page the big cover is the season's; on a series page it stays the series'.
+  if (!$('folderCover').hidden && seasonNum(lastSeg(state.path)) != null && (poster || coverBase)) coverImage(poster || coverBase);
+  if (!info.size) return;
+  const rows = $('grid').querySelectorAll('.ep');
+  videos.forEach((v, i) => {
+    const e = info.get(epNumber(v.name, i)), row = rows[i];
+    if (!e || !row || row.dataset.path !== v.path) return;
+    if (e.overview) row.querySelector('.ep-syn').textContent = e.overview;
+    if (e.still) { const num = row.querySelector('.num'); num.style.setProperty('--still', `url("${e.still}")`); num.classList.add('has-still'); row.classList.add('has-still'); }
+    // A real episode title replaces the generic "Episode 4", and the runtime joins the file name line
+    if (e.name && /^Episode \d+$/.test(row.querySelector('.t').textContent)) row.querySelector('.t').textContent = e.name;
+    if (e.runtime && !row.querySelector('.s').textContent.includes('left') && row.querySelector('.s').textContent !== 'Watched') row.querySelector('.s').textContent = `${e.runtime} min · ${row.querySelector('.s').textContent}`;
+  });
 }
 const render = () => { if (state.view === 'folder' || state.view === 'search') renderGrid(gridItems, { sub: gridSub }); };
 
 function renderNav() {
   const cur = state.view === 'home' ? -1 : state.view === 'folder' ? groupIdxOf(state.path) : -2;
+  if (SH) return renderSideNav(cur);
   $('nav').innerHTML = `<a href="#/" class="${cur === -1 ? 'on' : ''}">Home</a>` +
     state.groups.map((g, i) => `<a data-go="${esc(g.root)}" class="${cur === i ? 'on' : ''}">${esc(g.name)}</a>`).join('') +
+    (state.config?.playlists?.length ? `<a href="#/live" class="${state.view === 'live' ? 'on' : ''}">Live TV</a>` : '') +
     `<a href="#/list" class="${state.view === 'list' ? 'on' : ''}">My List</a>` +
     (state.config?.downloads ? `<a href="#/downloads" class="${state.view === 'downloads' ? 'on' : ''}">⬇ Downloads</a>` : '');
+}
+
+/** StreamHub's sidebar: the same places as the Mac app's tabs, with icons, plus the Server page. */
+function renderSideNav(cur) {
+  const item = (on, attrs, icon, label, extra = '') => `<a ${attrs} class="${on ? 'on' : ''}" title="${esc(label)}">${icon}<span>${esc(label)}</span>${extra}</a>`;
+  const sectionIcon = (name) => (/music|audio|song|album/i.test(name) ? I.audio : /\bbooks?\b|novel|comic|magazine|ebook|library/i.test(name) ? I.book : /anime|cartoon|animation/i.test(name) ? I.spark : /series|tv|show|season|drama/i.test(name) ? I.tv : I.film);
+  $('nav').innerHTML = item(cur === -1, 'href="#/"', I.home, 'Home') +
+    state.groups.map((g, i) => item(cur === i, `data-go="${esc(g.root)}"`, sectionIcon(g.name), g.name)).join('') +
+    (state.config?.playlists?.length ? item(state.view === 'live', 'href="#/live"', I.live, 'Live TV') : '') +
+    item(state.view === 'list', 'href="#/list"', I.bookmark, 'My List') +
+    (state.config?.downloads ? item(state.view === 'downloads', 'href="#/downloads"', I.download, 'Downloads', '<em id="dlBadge" hidden></em>') : '') +
+    item(state.view === 'server', 'href="#/server"', I.server, 'Server');
+  if (state.config?.downloads) {
+    api('/api/downloads').then((d) => {
+      const n = d.active.filter((j) => j.status === 'downloading').length;
+      const b = $('dlBadge');
+      if (b) { b.textContent = n; b.hidden = !n; }
+    }).catch(() => {});
+  }
 }
 
 function renderHead() {
@@ -592,8 +882,9 @@ function renderHead() {
   $('crumbs').innerHTML = crumbs.slice(0, -1).map(([l, p]) => (p ? `<a data-go="${esc(p)}">${esc(l)}</a>` : `<a href="#/">${esc(l)}</a>`)).join('<span>›</span>');
   $('folderTitle').textContent = crumbs[crumbs.length - 1][0];
   $('folderHead').style.setProperty('--panel', PANELS[Math.max(0, idx) % PANELS.length]);
-  const dirs = state.items.filter((i) => i.isDir).length, vids = state.items.filter((i) => i.kind === 'video').length;
-  $('folderSub').textContent = [dirs && `${dirs} folder${dirs > 1 ? 's' : ''}`, vids && `${vids} video${vids > 1 ? 's' : ''}`].filter(Boolean).join(' · ');
+  const count = (k) => state.items.filter((i) => i.kind === k).length, dirs = count('dir'), vids = count('video'), tracks = count('audio'), books = count('book');
+  const n = (c, one, many) => c && `${c} ${c > 1 ? many : one}`;
+  $('folderSub').textContent = [n(dirs, 'folder', 'folders'), n(vids, 'video', 'videos'), n(tracks, 'track', 'tracks'), n(books, 'book', 'books')].filter(Boolean).join(' · ');
   $('backBtn').hidden = false;
 }
 
@@ -606,6 +897,9 @@ function route({ refresh = false } = {}) {
   if (h.startsWith('search/')) return showSearch(decodeURIComponent(h.slice(7)));
   if (h === 'downloads') return showDownloads();
   if (h === 'list') return showList();
+  if (h === 'live') return showLive();
+  if (h === 'settings') return showSettings();
+  if (h === 'server' && SH) return showServer();
   return showHome();
 }
 window.addEventListener('hashchange', () => route());
@@ -630,6 +924,8 @@ $('filter').addEventListener('keydown', (e) => {
 
 /** Click on a card: folders open; a folder holding just a movie opens that movie's details directly. */
 async function activate(item, { play = false } = {}) {
+  if (item.kind === 'book') return reader.open(item);
+  if (item.kind === 'audio') return music.play([item], 0);
   if (!item.isDir) return play ? startPlayback(item) : showDetails(item);
   let l = null;
   try { l = await listFolder(item.path); } catch { /* open it anyway and show the error there */ }
@@ -680,7 +976,7 @@ function toast2(msg) {
   clearTimeout(toast2Timer); toast2Timer = setTimeout(() => t.classList.add('out'), 1800);
 }
 
-/* ---------------- downloads (Mac app) ---------------- */
+/* ---------------- downloads (Mac and Windows apps) ---------------- */
 const fmtBytes = (n) => (n >= 1e9 ? (n / 1e9).toFixed(2) + ' GB' : n >= 1e6 ? (n / 1e6).toFixed(0) + ' MB' : Math.round(n / 1e3) + ' KB');
 let dlTimer = 0;
 async function downloadItem(item) {
@@ -701,7 +997,7 @@ async function showDownloads() {
     if (state.view !== 'downloads') return;
     let d;
     try { d = await api('/api/downloads'); } catch (e) { $('status').textContent = e.message; return; }
-    $('folderSub').innerHTML = `Saved in <code>${esc(d.dir.replace(/^\/Users\/[^/]+/, '~'))}</code> · watch them without the internet <button class="btn mini" id="revealBtn">Show in Finder</button>`;
+    $('folderSub').innerHTML = `Saved in <code>${esc(d.dir.replace(/^\/Users\/[^/]+|^[A-Z]:\\Users\\[^\\]+/i, '~'))}</code> · watch them without the internet <button class="btn mini" id="revealBtn">Show in ${WIN ? 'Explorer' : 'Finder'}</button>`;
     $('revealBtn').onclick = () => api('/api/reveal').catch(() => {});
     $('rows').innerHTML = d.active.length ? `<div class="dl-list">${d.active.map((j) => {
       const pct = j.total ? Math.floor((j.received / j.total) * 100) : 0;
@@ -716,7 +1012,7 @@ async function showDownloads() {
     $('grid').innerHTML = gridItems.map((it) => cardHtml(it, { sub: fmtBytes(it.size) }).replace('<div class="hover-play">',
       `<span class="dl-del" data-del="${esc(it.name)}" title="Delete download">${I.trash}</span><div class="hover-play">`)).join('');
     $('grid').querySelectorAll('.card').forEach((c) => lazy.observe(c));
-    $('status').textContent = !d.active.length && !d.done.length ? 'Nothing downloaded yet. Press ⬇ in the player or on a movie to save it to this Mac.' : '';
+    $('status').textContent = !d.active.length && !d.done.length ? `Nothing downloaded yet. Press ⬇ in the player or on a movie to save it to this ${DEVICE}.` : '';
     clearTimeout(dlTimer);
     if (d.active.some((j) => j.status === 'downloading')) dlTimer = setTimeout(tick, 1500);
   };
@@ -728,9 +1024,42 @@ document.addEventListener('click', async (e) => {
   e.stopPropagation(); e.preventDefault();
   if (c.dataset.cancel) await api(`/api/downloads?id=${enc(c.dataset.cancel)}`, { method: 'DELETE' });
   if (c.dataset.retry) await api('/api/downloads', { method: 'POST', body: JSON.stringify({ path: c.dataset.retry }) });
-  if (c.dataset.del && confirm('Delete this download from your Mac?')) await api(`/api/downloads?name=${enc(c.dataset.del)}`, { method: 'DELETE' });
+  if (c.dataset.del && confirm(`Delete this download from your ${DEVICE}?`)) await api(`/api/downloads?name=${enc(c.dataset.del)}`, { method: 'DELETE' });
   if (state.view === 'downloads') showDownloads();
 }, true);
+
+/* ---------------- server page (StreamHub) ---------------- */
+const fmtUptime = (sec) => (sec >= 3600 ? `${Math.floor(sec / 3600)} h ${Math.floor((sec % 3600) / 60)} min` : `${Math.max(1, Math.floor(sec / 60))} min`);
+async function showServer() {
+  resetView('server');
+  renderNav();
+  $('crumbs').innerHTML = '';
+  $('folderTitle').textContent = 'Server';
+  $('folderSub').textContent = 'StreamHub runs a small server on this PC that reads your libraries and plays them.';
+  $('backBtn').hidden = false;
+  $('status').textContent = 'Checking your libraries…';
+  let st;
+  try { state.config = await api('/api/config'); } catch { /* keep the old one */ }
+  try { st = await api('/api/status'); } catch (e) { $('status').textContent = e.message; $('status').className = 'error'; return; }
+  if (state.view !== 'server') return;
+  $('status').textContent = '';
+  const ok = st.libraries.filter((l) => l.ms !== null || l.local).length;
+  const row = (k, v) => `<div class="sv-kv"><span>${esc(k)}</span><code>${esc(v)}</code></div>`;
+  const lib = (l) => `<div class="sv-lib"><div><b>${esc(l.name)}</b><code>${esc(l.url)}</code></div>
+    ${l.local !== undefined ? `<span class="sv-ping ${l.local ? 'ok' : 'bad'}"><i></i>${l.local ? 'On this PC' : 'Folder missing'}</span>`
+    : `<span class="sv-ping ${l.ms === null ? 'bad' : l.ms > 300 ? 'slow' : 'ok'}"><i></i>${l.ms === null ? 'Can’t reach' : l.ms > 300 ? `Slow · ${l.ms} ms` : `${l.ms} ms`}</span>`}</div>`;
+  $('rows').innerHTML = `<div class="sv-grid">
+    <section class="sv-card"><h3><i class="sv-dot"></i>Running<small>Up ${esc(fmtUptime(st.uptime))}</small></h3>
+      <div class="sv-stats"><div><span>Libraries</span><b>${ok}/${st.libraries.length}</b></div><div><span>Sound fix</span><b>${st.ffmpeg ? 'On' : 'Off'}</b></div>
+      <div><span>Downloads</span><b>${st.downloads ? 'On' : 'Off'}</b></div></div></section>
+    <section class="sv-card"><h3>System</h3>
+      ${row('Address', location.host)}${row('FFmpeg', st.ffmpeg ? `${st.ffmpeg} · ready` : 'not found')}${st.downloads ? row('Downloads', st.downloads) : ''}${st.version ? row('Version', st.version) : ''}</section>
+    ${state.config?.share?.enabled ? `<section class="sv-card wide"><h3>Shared with your TV<small>${state.config.share.running ? 'On' : 'Starting'}</small></h3><div class="tv-lines">${tvLinesHtml(state.config.share)}</div></section>` : ''}
+    <section class="sv-card wide"><h3>Libraries<a class="sv-link" id="svManage">Manage</a></h3>
+      ${st.libraries.length ? st.libraries.map(lib).join('') : '<p class="sv-empty">No libraries yet. Add a server in Settings.</p>'}</section>
+  </div>`;
+  $('svManage').onclick = openSettings;
+}
 
 /* ---------------- details sheet ---------------- */
 let detailsItem = null, detailsFolder = null, detailsVersion = 0;
@@ -756,6 +1085,12 @@ function renderDetailsActions() {
   $('dList').classList.toggle('on', inList(listIt.path));
   $('dFile').textContent = item.name;
 }
+function setOverview(text) {
+  const el = $('dOverview');
+  el.classList.toggle('none', !text);
+  if (text) el.textContent = text;
+  else el.innerHTML = state.config?.tmdbKey ? 'No synopsis found for this title.' : 'No synopsis yet. <a href="#/settings" data-close>Add a free TMDB key in Settings</a> to see plots.';
+}
 async function showDetails(item, { metaPath = item.path, folder = null } = {}) {
   detailsItem = item; detailsFolder = folder;
   // Start on the version last watched, else the best one.
@@ -769,15 +1104,16 @@ async function showDetails(item, { metaPath = item.path, folder = null } = {}) {
   $('dPoster').innerHTML = coverHtml(name);
   renderDetailsActions();
   $('dFolder').hidden = !folder;
-  $('dDownload').hidden = !state.config?.downloads || item.path.startsWith('local/');
+  $('dDownload').hidden = !state.config?.downloads || !canDownload(item.path);
   $('dDownload').innerHTML = `${I.download}Download`;
   $('details').hidden = false;
   $('dPlay').focus();
   const m = await meta(metaPath);
-  if (!m || detailsItem !== item) return;
+  if (detailsItem !== item) return;
+  if (!m) { setOverview(''); return; }
   $('dTitle').textContent = m.matched || m.title;
   $('dMeta').innerHTML = [m.year, m.rating && `<span class="star">★</span> ${m.rating}`, m.show && esc(m.show), esc(libraryName(item.path))].filter(Boolean).join('  ·  ');
-  $('dOverview').textContent = m.overview || '';
+  setOverview(m.overview);
   if (m.backdrop) $('dHero').style.backgroundImage = `url("${m.backdrop}")`;
   if (m.poster) {
     $('dPoster').innerHTML = `<img src="${esc(m.poster)}" alt="">`;
@@ -809,17 +1145,34 @@ const DHAKAFLIX = [
   'Anime & Cartoons | http://172.16.50.10/DHAKA-FLIX-10/',
 ].join('\n');
 
+let settingsReturn = '#/';
+/** Settings is a page (#/settings) in both looks. */
 async function openSettings() {
+  if (location.hash !== '#/settings') { settingsReturn = location.hash || '#/'; location.hash = '#/settings'; } else showSettings();
+}
+async function showSettings() {
+  resetView('settings');
+  renderNav();
+  await fillSettings();
+}
+const closeSettings = () => { location.hash = settingsReturn === '#/settings' ? '#/' : settingsReturn; };
+async function fillSettings() {
   const c = await api('/api/config');
   state.config = c;
   const f = $('settingsForm');
+  f.playlists.value = (c.playlists || []).join('\n');
   f.servers.value = c.servers.join('\n'); f.username.value = c.username; f.password.value = ''; f.tmdbKey.value = c.tmdbKey || '';
   f.password.placeholder = c.hasPassword ? '•••••• (saved)' : '';
-  markTheme();
+  f.opensubsKey.value = c.opensubsKey || ''; f.opensubsUser.value = c.opensubsUser || ''; f.opensubsPass.value = ''; f.subdlKey.value = c.subdlKey || '';
+  f.opensubsPass.placeholder = c.hasOpensubsPass ? '•••••• (saved)' : 'optional';
+  f.shareTv.checked = !!c.share?.enabled;
+  renderTvLines(c.share);
+  f.jellyfin.checked = !!c.jellyfin?.enabled; f.jellyfinNoPass.checked = !c.jellyfin?.hasPassword; f.jellyfinPass.value = '';
+  renderJellyfin(c.jellyfin);
+  markTheme(); markLook();
   $('ffmpegNote').innerHTML = c.ffmpeg
     ? '✓ Sound &amp; format fix is on — every file plays with sound, and you can switch audio tracks and built-in subtitles.'
-    : '⚠ ffmpeg was not found, so some files may play without sound and audio-track switching is off. Install it with <code>brew install ffmpeg</code> (the Mac app includes it).';
-  if (!$('settings').open) $('settings').showModal();
+    : `⚠ ffmpeg was not found, so some files may play without sound and audio-track switching is off. Install it with ${INSTALL_FFMPEG} (the Mac and Windows apps include it).`;
 }
 async function saveConfig(body) {
   await api('/api/config', { method: 'POST', body: JSON.stringify(body) });
@@ -829,22 +1182,121 @@ async function saveConfig(body) {
 }
 function markTheme() {
   document.querySelectorAll('[data-theme-pick]').forEach((b) => b.classList.toggle('on', b.dataset.themePick === document.documentElement.dataset.theme));
+  if (!SH) return;
+  const m = prefs.shTheme || 'system';
+  document.querySelectorAll('[data-sh-theme]').forEach((b) => b.classList.toggle('on', b.dataset.shTheme === m));
+  $('shThemeName').textContent = m[0].toUpperCase() + m.slice(1);
+  $('shTheme').querySelector('.sh-ico').innerHTML = { system: I.monitor, light: I.sun, dark: I.moon }[m];
 }
+// StreamHub: System (follows Windows) / Light / Dark. The page applies it before first paint too (index.html).
+const lightQuery = matchMedia('(prefers-color-scheme: light)');
+function applyShTheme() {
+  const m = prefs.shTheme || 'system';
+  document.documentElement.dataset.theme = (m === 'system' ? lightQuery.matches : m === 'light') ? 'sh-light' : 'sh-dark';
+  markTheme();
+}
+function setShTheme(m) { prefs.shTheme = m; savePrefs(); applyShTheme(); }
+document.querySelectorAll('[data-sh-theme]').forEach((b) => { b.onclick = () => setShTheme(b.dataset.shTheme); });
+$('shTheme').onclick = () => setShTheme({ system: 'light', light: 'dark', dark: 'system' }[prefs.shTheme || 'system']);
+lightQuery.addEventListener('change', () => { if (SH) applyShTheme(); });
 document.querySelectorAll('[data-theme-pick]').forEach((b) => {
   b.onclick = () => { document.documentElement.dataset.theme = b.dataset.themePick; prefs.theme = b.dataset.themePick; savePrefs(); markTheme(); };
 });
+// Looks: switching swaps the whole layout, so the page reloads in the new one (your place is kept in the URL).
+const markLook = () => document.querySelectorAll('[data-look]').forEach((b) => b.classList.toggle('on', (b.dataset.look === 'contemporary') === SH));
+document.querySelectorAll('[data-look]').forEach((b) => {
+  b.onclick = () => { if ((b.dataset.look === 'contemporary') === SH) return; prefs.look = b.dataset.look; savePrefs(); location.reload(); };
+});
 $('settingsBtn').onclick = openSettings;
-$('cancelBtn').onclick = () => $('settings').close();
+$('cancelBtn').onclick = closeSettings;
 $('dhakaflixBtn').onclick = () => { $('settingsForm').servers.value = DHAKAFLIX; };
+const LIB_KINDS = [['movies', 'Movies', 'Films, one folder or file each'], ['shows', 'TV series', 'One folder per series, with seasons or episodes'], ['music', 'Music', 'Artists and albums'], ['books', 'Books', 'PDF, EPUB and comics'], ['auto', 'Mixed / not sure', 'StreamHub guesses from the folders']];
+/** Guess from the folder's name, to preselect the choice. */
+const guessKind = (name) => (/movie|film|cinema/i.test(name) ? 'movies' : /\b(tv|series|serial|show|shows|anime|drama|dramas|cartoons?)\b/i.test(name) ? 'shows' : /music|song|album|audio/i.test(name) ? 'music' : /book|comic|pdf|epub/i.test(name) ? 'books' : 'auto');
+/** Asks what a folder holds (like Jellyfin's library type). Answers a type, or null if cancelled. */
+function askLibraryType(name) {
+  return new Promise((resolve) => {
+    const d = document.createElement('dialog');
+    d.className = 'type-dlg';
+    const pre = guessKind(name);
+    d.innerHTML = `<form method="dialog"><h3>What’s in “${esc(name)}”?</h3><p>This decides how StreamHub shows it, and how Jellyfin apps see it.</p>
+      ${LIB_KINDS.map(([v, t, h]) => `<label class="kind"><input type="radio" name="kind" value="${v}"${v === pre ? ' checked' : ''}><span><b>${esc(t)}</b><small>${esc(h)}</small></span></label>`).join('')}
+      <div class="kind-btns"><button type="button" class="btn" value="cancel">Cancel</button><button class="btn gold" value="ok">Add</button></div></form>`;
+    document.body.append(d);
+    const done = (v) => { d.close(); d.remove(); resolve(v); };
+    d.querySelector('[value=cancel]').onclick = () => done(null);
+    d.addEventListener('cancel', (e) => { e.preventDefault(); done(null); });
+    d.querySelector('form').onsubmit = (e) => { e.preventDefault(); done(d.querySelector('input:checked').value); };
+    d.showModal();
+  });
+}
+// Local folders: the system's folder picker (Mac and Windows apps), else type the path. Gives a "Name | path | type" line.
+async function pickFolderLine() {
+  let picked = '';
+  try { picked = (await api('/api/pick-folder', { method: 'POST' })).path; } catch {
+    picked = prompt('Folder with movies or series (for example G:\\Movie or /Users/you/Movies):') || '';
+  }
+  if (!picked) return '';
+  const name = picked.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || picked;
+  const kind = await askLibraryType(name);
+  if (!kind) return '';
+  return `${name} | ${picked}${kind === 'auto' ? '' : ` | ${kind}`}`;
+}
+$('addFolderBtn').onclick = async () => {
+  const ta = $('settingsForm').servers, line = await pickFolderLine();
+  if (line) ta.value = `${ta.value.replace(/\s+$/, '')}${ta.value.trim() ? '\n' : ''}${line}`;
+};
+/** The lines to type into the TV app's Settings, one per shared folder. */
+function tvLinesHtml(sh) {
+  if (!sh?.enabled) return '';
+  if (!sh.lines.length) return '<p>Add a folder above first, then save.</p>';
+  return `<p>${sh.running ? 'Shared.' : 'Starting…'} In the TV app, open <b>Settings → Libraries</b> and add:</p>
+    <pre>${sh.lines.map(esc).join('\n')}</pre><button type="button" class="btn mini" data-copy-tv>Copy</button>
+    ${sh.addresses.length > 1 ? `<p>This computer has more than one address (${sh.addresses.map(esc).join(', ')}). Use the one on the same Wi-Fi as the TV.</p>` : ''}
+    <p>Windows or macOS may ask once to allow incoming connections. Choose Allow (private networks).</p>`;
+}
+function renderTvLines(sh) { $('tvLines').innerHTML = tvLinesHtml(sh); $('tvLines').hidden = !sh?.enabled; }
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-copy-tv]');
+  if (!b) return;
+  navigator.clipboard?.writeText(b.previousElementSibling.textContent).then(() => { b.textContent = 'Copied'; }, () => {});
+});
+/** Where to point a Jellyfin app: this computer's address on the home network, and the user name. */
+function renderJellyfin(j) {
+  const f = $('settingsForm');
+  $('jfBox').hidden = !f.jellyfin.checked;
+  $('jfPassRow').hidden = f.jellyfinNoPass.checked;
+  if (!j) return;
+  const addr = (j.addresses || []).map((a) => `http://${a}:${j.port}`);
+  $('jfLines').innerHTML = j.error ? `<p class="bad">Couldn’t start: ${esc(j.error)}</p>` : j.enabled
+    ? `<p>${j.running ? 'Ready.' : 'Starting…'} In the app, add a server at ${addr.length ? addr.map((a) => `<b>${esc(a)}</b>`).join(' or ') : `<b>http://&lt;this computer’s IP&gt;:${j.port}</b>`}.<br>User name: <b>${esc(j.user)}</b>${j.hasPassword ? ', and the password above' : ' (no password)'}.</p>
+      ${j.note ? `<p>${esc(j.note)}</p>` : ''}
+      <p>Windows or macOS may ask once to allow incoming connections: choose Allow (private networks).</p>`
+    : '<p>Save to start it.</p>';
+}
+$('settingsForm').jellyfin.onchange = $('settingsForm').jellyfinNoPass.onchange = () => renderJellyfin(null);
+$('settingsForm').shareTv.onchange = (e) => { if (!e.target.checked) renderTvLines(null); else renderTvLines({ ...(state.config?.share || {}), enabled: true, lines: state.config?.share?.lines || [] }); };
+/** Downloads make no sense for files that are already on this computer. */
+const canDownload = (p) => !String(p).startsWith('local/') && !(state.config?.localLibs || []).includes(Number(realPath(p).split('/')[0]));
 $('welcomeOwn').onclick = openSettings;
+$('welcomeFolder').onclick = async () => {
+  const line = await pickFolderLine();
+  if (line) saveConfig({ servers: line, keepPassword: true }).catch((e) => alert(e.message));
+};
+document.querySelectorAll('#welcome [data-ico]').forEach((i) => { i.innerHTML = I[i.dataset.ico]; });
 $('welcomeDhakaflix').onclick = () => saveConfig({ servers: DHAKAFLIX, keepPassword: true }).catch((e) => alert(e.message));
 $('settingsForm').onsubmit = async (e) => {
   e.preventDefault();
   const f = e.target;
   try {
     const keepPw = !f.password.value && state.config?.hasPassword && f.username.value === state.config.username;
-    await saveConfig({ servers: f.servers.value, username: f.username.value, password: f.password.value, keepPassword: keepPw, tmdbKey: f.tmdbKey.value });
-    $('settings').close();
+    await saveConfig({
+      servers: f.servers.value, playlists: f.playlists.value, username: f.username.value, password: f.password.value, keepPassword: keepPw, tmdbKey: f.tmdbKey.value,
+      opensubsKey: f.opensubsKey.value, opensubsUser: f.opensubsUser.value, opensubsPass: f.opensubsPass.value,
+      shareTv: f.shareTv.checked,
+      jellyfin: f.jellyfin.checked, jellyfinPass: f.jellyfinNoPass.checked ? '' : (f.jellyfinPass.value || undefined),
+      keepOpensubsPass: !f.opensubsPass.value && state.config?.hasOpensubsPass && f.opensubsUser.value === state.config.opensubsUser, subdlKey: f.subdlKey.value,
+    });
   } catch (err) { alert(err.message); }
 };
 
@@ -855,7 +1307,7 @@ const video = $('video');
 const player = $('player');
 const prefs = Object.assign({
   volume: 1, muted: false, subLang: '', audioLang: '', speed: 1,
-  subSize: 1, subBg: 0, subFont: 'sans', subColor: '#ffffff', subEdge: 'shadow', subPos: 'low',
+  subSize: 1, subBg: 0, subFont: 'sans', subColor: '#ffffff', subEdge: 'shadow', subPos: 'low', subSearchLangs: ['en', 'bn'],
 }, store.get('prefs', {}));
 const savePrefs = () => store.set('prefs', prefs);
 // Audio / subtitle sync are properties of a particular file, so they're remembered per video.
@@ -869,10 +1321,12 @@ function saveSync() {
 
 const S = {
   item: null, list: [], probe: null, mode: 'direct', fmt: 'mkv', offset: 0, duration: 0, audio: 0, adelay: 0, adelayTimer: 0,
-  subs: { id: 'off', label: 'Off', cues: [], delay: 0 }, subOptions: [], subTab: 'tracks', pendingSeek: null, seekTimer: 0, saveTick: 0,
+  subs: { id: 'off', label: 'Off', cues: [], delay: 0 }, subOptions: [], online: [], subTab: 'tracks', pendingSeek: null, seekTimer: 0, saveTick: 0,
 };
 
 ['pClose:down', 'mExpand:expand', 'mClose:close', 'pPlay:play', 'pBack:rew', 'pFwd:fwd', 'pNext:next', 'pMute:vol', 'pPip:pip', 'pFull:full', 'pDownload:download'].forEach((p) => { const [id, ic] = p.split(':'); setIcon($(id), ic); });
+$('pDownload').title = `Download to this ${DEVICE}`;
+if (WIN) $('backBtn').title = 'Back (Ctrl+[)';
 
 const now = () => (S.pendingSeek ?? (S.mode === 'remux' ? S.offset + video.currentTime : video.currentTime));
 const duration = () => S.duration || (Number.isFinite(video.duration) ? video.duration : 0);
@@ -885,13 +1339,14 @@ function toast(msg, ms = 1400) {
 function banner(html) { $('pBanner').innerHTML = html || ''; $('pBanner').hidden = !html; }
 
 async function startPlayback(item, { from } = {}) {
-  closeMenu();
+  closeMenu(); music.pause();
   S.item = item;
   S.folder = []; S.list = [];
   S.probe = null; S.duration = 0; S.offset = 0; S.pendingSeek = null;
   const sync = syncOf(item.path);
   S.adelay = sync.a;
   S.subs = { id: 'off', label: 'Off', cues: [], delay: sync.s };
+  S.online = [];
   $('pTitle').textContent = stem(item.name); $('pSub').textContent = '';
   banner(''); $('upNext').hidden = true;
   player.hidden = false; player.classList.remove('mini'); player.classList.add('loading');
@@ -920,7 +1375,11 @@ async function startPlayback(item, { from } = {}) {
   S.mode = !pr?.ffmpeg || (pr.direct && S.audio === 0 && !S.adelay) ? 'direct' : 'remux';
   // Converted streams are Matroska (exact sync, true timestamps); MP4 only where Matroska can't play.
   S.fmt = video.canPlayType('video/webm') ? 'mkv' : 'mp4';
-  if (pr && !pr.ffmpeg) banner('Some files may play without sound. Install ffmpeg (<code>brew install ffmpeg</code>) or use the MusingsofMaksudTV Mac app, which includes it.');
+  if (pr && !pr.ffmpeg) banner(`Some files may play without sound. Install ffmpeg (${INSTALL_FFMPEG}) or use the MusingsofMaksudTV Mac or Windows app, which includes it.`);
+
+  S.stereo = stereos[item.path] || detectStereo(item.name, pr?.video);
+  layoutStereo();
+  if (S.stereo !== 'off' && !stereos[item.path]) toast('3D movie: showing it in 2D', 2200);
 
   buildSubOptions();
   const h = progressOf(item.path);
@@ -929,6 +1388,48 @@ async function startPlayback(item, { from } = {}) {
   autoPickSubtitle();
   updateButtons();
 }
+
+/* ----- 3D movies: show one eye, so a side-by-side or top-and-bottom file plays as a normal 2D picture ----- */
+// 3D releases pack both eyes into each frame. "Half" ones (HSBS, HOU) squeeze each eye into half of a 16:9 frame;
+// "full" ones are twice as wide (3840×1080) or tall. Detected from the file name and frame shape; you can override it
+// per video from the speed menu.
+const stereos = store.get('stereo', {});
+function detectStereo(name, v) {
+  const n = String(name).replace(/[._]+/g, ' ');
+  const is3d = /\b3D\b/i.test(n);
+  if (/\b(?:H ?SBS|HSBS|Half ?SBS|F ?SBS|Full ?SBS|SBS|Side ?by ?Side)\b/i.test(n)) return 'sbs';
+  if (is3d && /\b(?:H ?OU|HOU|H ?TAB|Half ?OU|F ?OU|Full ?OU|OU|TAB|Top ?(?:and|&)? ?Bottom|Over ?Under)\b/i.test(n)) return 'tab';
+  if (v?.width && v?.height && v.width / v.height >= 3.2) return 'sbs';
+  if (is3d) return 'sbs'; // most 3D releases are side by side
+  return 'off';
+}
+const STEREO_NAMES = { off: 'Off: show the file as it is', sbs: 'Side by side → 2D', tab: 'Top and bottom → 2D' };
+/** Sizes the video so only the left (or top) eye shows, at its true shape, centred in the player. */
+function layoutStereo() {
+  const st = video.style;
+  const mode = S.stereo || 'off';
+  const vw = video.videoWidth || S.probe?.video?.width, vh = video.videoHeight || S.probe?.video?.height;
+  if (mode === 'off' || !vw || !vh) {
+    for (const k of ['inset', 'left', 'top', 'width', 'height', 'objectFit', 'clipPath']) st[k] = '';
+    return;
+  }
+  // A "full" file's eye is half the frame; a "half" file's eye was squeezed and is meant to be shown at the frame's shape.
+  const eye = mode === 'sbs' ? (vw / vh >= 3.2 ? vw / 2 / vh : vw / vh) : (vh / vw >= 0.9 ? vw / (vh / 2) : vw / vh);
+  const W = player.clientWidth, H = player.clientHeight;
+  const dw = Math.min(W, H * eye), dh = dw / eye;
+  Object.assign(st, {
+    inset: 'auto', left: `${(W - dw) / 2}px`, top: `${(H - dh) / 2}px`, objectFit: 'fill',
+    width: `${mode === 'sbs' ? dw * 2 : dw}px`, height: `${mode === 'tab' ? dh * 2 : dh}px`,
+    clipPath: mode === 'sbs' ? 'inset(0 50% 0 0)' : 'inset(0 0 50% 0)',
+  });
+}
+function setStereo(mode, { remember = true } = {}) {
+  S.stereo = mode;
+  if (remember) { stereos[S.item.path] = mode; store.set('stereo', stereos); }
+  layoutStereo(); updateButtons();
+}
+new ResizeObserver(() => { if (S.stereo && S.stereo !== 'off') layoutStereo(); }).observe(player);
+video.addEventListener('loadedmetadata', layoutStereo);
 
 function sourceUrl(t) {
   return S.mode === 'direct' ? `/stream?path=${enc(S.item.path)}` : `/remux?path=${enc(S.item.path)}&t=${t}&audio=${S.audio}&adelay=${S.adelay}&fmt=${S.fmt}`;
@@ -1090,8 +1591,10 @@ function updateButtons() {
   $('pSubs').innerHTML = `${I.cc}<span>${esc(S.subs.id === 'off' ? 'Subtitles' : S.subs.label)}</span>`;
   $('pSubs').classList.toggle('on', S.subs.id !== 'off');
   $('pSpeed').innerHTML = `${I.speed}<span>${prefs.speed === 1 ? '1×' : prefs.speed + '×'}</span>`;
+  $('pStereo').hidden = !S.stereo || S.stereo === 'off';
+  $('pStereo').innerHTML = '<span>3D → 2D</span>';
   $('pPip').hidden = !document.pictureInPictureEnabled;
-  $('pDownload').hidden = !state.config?.downloads || !S.item || S.item.path.startsWith('local/');
+  $('pDownload').hidden = !state.config?.downloads || !S.item || !canDownload(S.item.path);
 }
 
 function updateTime() {
@@ -1153,13 +1656,13 @@ $('pMute').onclick = () => { video.muted = !video.muted; prefs.muted = video.mut
 $('pVol').oninput = (e) => { video.volume = Number(e.target.value); video.muted = false; prefs.volume = video.volume; prefs.muted = false; savePrefs(); updateButtons(); };
 video.volume = prefs.volume; video.muted = prefs.muted; $('pVol').value = prefs.volume;
 $('pFull').onclick = toggleFull;
-// Download the movie that's playing (Mac app), showing progress on the button.
+// Download the movie that's playing (Mac and Windows apps), showing progress on the button.
 $('pDownload').onclick = async () => {
   const item = S.item;
   if (!item) return;
   const r = await downloadItem(item);
   if (!r) return;
-  toast('Downloading to your Mac — find it in Downloads', 2500);
+  toast(`Downloading to your ${DEVICE} — find it in Downloads`, 2500);
   const btn = $('pDownload');
   const poll = async () => {
     if (S.item !== item) return;
@@ -1217,7 +1720,7 @@ $('pAudio').onclick = () => openMenu('audio', audioMenuHtml());
 
 /** Audio sync: restart the converted stream with the sound shifted (debounced while clicking). */
 function setAudioDelay(v) {
-  if (!S.probe?.ffmpeg) return toast('Audio sync needs ffmpeg (built into the Mac app)', 2500);
+  if (!S.probe?.ffmpeg) return toast('Audio sync needs ffmpeg (built into the Mac and Windows apps)', 2500);
   S.adelay = Math.max(-20, Math.min(20, +v.toFixed(1)));
   saveSync();
   toast(`Audio ${signed(S.adelay)}`, 900);
@@ -1226,8 +1729,11 @@ function setAudioDelay(v) {
 }
 
 $('pSpeed').onclick = () => {
-  openMenu('speed', `<h4>Playback speed</h4>${[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => opt(s, s === 1 ? 'Normal' : s + '×', '', prefs.speed === s)).join('')}`);
+  openMenu('speed', `<h4>Playback speed</h4>${[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => opt(s, s === 1 ? 'Normal' : s + '×', '', prefs.speed === s)).join('')}
+    <h4>3D movie</h4>${stereoOpts()}`);
 };
+const stereoOpts = () => Object.entries(STEREO_NAMES).map(([k, l]) => opt(`st:${k}`, l, k === 'off' ? '' : 'Shows one eye of a 3D file', (S.stereo || 'off') === k)).join('');
+$('pStereo').onclick = () => openMenu('stereo', `<h4>3D movie</h4>${stereoOpts()}`);
 
 $('pSubs').onclick = () => openMenu('subs', subsMenuHtml());
 
@@ -1262,7 +1768,69 @@ function subsMenuHtml() {
   return `${tabs}${opt('off', 'Off', '', S.subs.id === 'off')}
     ${ext.length ? `<h4>From the server</h4>${ext.map((o) => opt(o.id, o.label, o.sub, S.subs.id === o.id)).join('')}` : ''}
     ${emb.length ? `<h4>Built into the file</h4>${emb.map((o) => opt(o.id, o.label, o.text ? o.sub : 'Image subtitles — can’t be shown', S.subs.id === o.id, !o.text)).join('')}` : ''}
-    <h4>More</h4>${opt('load', 'Load a subtitle file…', '.srt or .vtt from your Mac', false)}`;
+    ${S.online.length ? `<h4>Found online</h4>${S.online.map((o) => opt(o.id, o.label, o.sub, S.subs.id === o.id)).join('')}` : ''}
+    <h4>More</h4>${opt('search', 'Search online…', 'OpenSubtitles and SubDL, like VLC', false)}${opt('load', 'Load a subtitle file…', `.srt or .vtt from your ${DEVICE}`, false)}`;
+}
+
+/* ----- online subtitle search (OpenSubtitles, SubDL) ----- */
+$('menu').addEventListener('submit', (e) => {
+  if (!e.target.matches('[data-ss]')) return;
+  e.preventDefault();
+  subFind.q = e.target.q.value.trim();
+  runSubSearch();
+});
+const SEARCH_LANGS = [['en', 'English'], ['bn', 'বাংলা'], ['hi', 'हिन्दी'], ['ar', 'العربية'], ['es', 'Español'], ['fr', 'Français']];
+let subFind = { q: '', busy: false, results: [], errors: [], needsKey: false, query: '' };
+function subSearchHtml() {
+  const langs = prefs.subSearchLangs;
+  const f = subFind;
+  const body = f.needsKey
+    ? `<p class="hint">Add a free API key from OpenSubtitles.com or SubDL in <a data-act="sskeys">Settings</a> to search for subtitles online.</p>`
+    : f.busy ? '<p class="hint">Searching…</p>'
+    : `${f.errors.map((e) => `<p class="hint">⚠ ${esc(e)}</p>`).join('')}${f.results.length
+      ? f.results.map((r, i) => opt(`r:${i}`, r.name || 'Subtitle', [langName(r.lang) || r.lang, r.provider, r.hashMatch ? 'Exact match for this file' : '', r.downloads ? `${r.downloads.toLocaleString()} downloads` : '', r.hi ? 'Hearing impaired' : '', r.machine ? 'Machine translated' : ''].filter(Boolean).join(' · '), false)).join('')
+      : f.query ? '<p class="hint">Nothing found. Try another name or language.</p>' : ''}`;
+  return `<h4>Search subtitles online</h4>
+    <form class="ss-form" data-ss><input name="q" placeholder="${esc(f.query || 'Movie or series name')}" value="${esc(f.q)}" autocomplete="off" spellcheck="false"><button class="ss-go" type="submit">Search</button></form>
+    <div class="chips">${SEARCH_LANGS.map(([c, l]) => chip(`sslang:${c}`, l, langs.includes(c))).join('')}</div>
+    ${body}`;
+}
+async function runSubSearch() {
+  const item = S.item;
+  subFind = { ...subFind, busy: true, results: [], errors: [] };
+  if (menuFor === 'subsearch') $('menu').innerHTML = subSearchHtml();
+  try {
+    const r = await api(`/api/subsearch?path=${enc(item.path)}&langs=${prefs.subSearchLangs.join(',')}&q=${enc(subFind.q)}`);
+    if (S.item !== item) return;
+    subFind = { ...subFind, busy: false, results: r.results, errors: r.errors, needsKey: r.needsKey, query: r.query || '' };
+  } catch (e) {
+    subFind = { ...subFind, busy: false, errors: [e.message] };
+  }
+  if (menuFor === 'subsearch') $('menu').innerHTML = subSearchHtml();
+}
+function openSubSearch() {
+  subFind = { q: '', busy: false, results: [], errors: [], needsKey: false, query: '' };
+  openMenu('subsearch', subSearchHtml());
+  runSubSearch();
+}
+async function useOnlineSub(r) {
+  const item = S.item;
+  closeMenu();
+  toast('Downloading subtitles…', 8000);
+  try {
+    const ep = S.item && meta(S.item.path);
+    const m = ep ? await ep : null;
+    const res = await fetch(`/api/subget?id=${enc(r.id)}${m?.episode != null ? `&ep=${m.episode}` : ''}`);
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Download failed');
+    const cues = parseCues(await res.text());
+    if (S.item !== item) return;
+    const id = 'o:' + r.id;
+    if (!S.online.some((o) => o.id === id)) S.online.push({ id, label: `${langName(r.lang) || r.lang} — ${r.provider}`, sub: r.name, cues });
+    S.subs = { ...S.subs, id, label: langName(r.lang) || 'Online', cues, type: 'file' };
+    prefs.subLang = r.lang; savePrefs();
+    toast(cues.length ? 'Subtitles loaded' : 'That file had no subtitles in it', 1800);
+  } catch (e) { toast(e.message, 3000); }
+  updateButtons();
 }
 
 $('menu').addEventListener('click', (e) => {
@@ -1274,6 +1842,11 @@ $('menu').addEventListener('click', (e) => {
     else if (/^s[+-]/.test(act)) setSubDelay(S.subs.delay + Number(act.slice(1)));
     else if (act === 's0') setSubDelay(0);
     else if (k === 'tab') S.subTab = v;
+    else if (k === 'sslang') {
+      const l = prefs.subSearchLangs;
+      prefs.subSearchLangs = l.includes(v) ? (l.length > 1 ? l.filter((x) => x !== v) : l) : [...l, v];
+      savePrefs(); runSubSearch(); return;
+    } else if (act === 'sskeys') { closeMenu(); minimizePlayer(); openSettings(); return; }
     else {
       if (act === 'size-') prefs.subSize = Math.max(0.6, +(prefs.subSize - 0.1).toFixed(1));
       if (act === 'size+') prefs.subSize = Math.min(2.2, +(prefs.subSize + 0.1).toFixed(1));
@@ -1301,11 +1874,19 @@ $('menu').addEventListener('click', (e) => {
     toast('Switching audio…');
     load(now());
     updateButtons();
+  } else if (id.startsWith('st:')) {
+    setStereo(id.slice(3)); closeMenu();
   } else if (menuFor === 'speed') {
     prefs.speed = Number(id); savePrefs(); video.playbackRate = prefs.speed; closeMenu(); updateButtons();
+  } else if (menuFor === 'subsearch') {
+    const r = subFind.results[Number(id.slice(2))];
+    if (r) useOnlineSub(r);
   } else if (menuFor === 'subs') {
+    if (id === 'search') return openSubSearch();
     closeMenu();
     if (id === 'load') return $('subFile').click();
+    const on = S.online.find((o) => o.id === id);
+    if (on) { S.subs = { ...S.subs, id, label: on.label, cues: on.cues, type: 'file' }; return updateButtons(); }
     selectSubtitle(id);
   }
 });
@@ -1472,7 +2053,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && e.target.id === 'filter') { e.target.value = ''; render(); e.target.blur(); }
     return;
   }
-  if ((e.metaKey || e.ctrlKey) && e.key === 'f' && !playerFull()) { e.preventDefault(); $('filter').focus(); return; }
+  if ((e.metaKey || e.ctrlKey) && (e.key === 'f' || e.key === 'k') && !playerFull()) { e.preventDefault(); $('filter').focus(); return; }
   if (e.key === '/' && !playerFull() && $('details').hidden) { e.preventDefault(); $('filter').focus(); return; }
   if ((e.metaKey || e.ctrlKey) && e.key === '[') { e.preventDefault(); if (playerFull()) minimizePlayer(); else history.back(); return; }
   if (!playerFull()) {
@@ -1503,5 +2084,17 @@ window.__mh = { now: () => now(), state: () => ({ mode: S.mode, offset: S.offset
 /* ----- boot ----- */
 if (!location.hash) history.replaceState(null, '', '#/');
 api('/api/config').then((c) => { state.config = c; renderNav(); }).catch(() => {});
+document.title = SH ? 'StreamHub' : 'MusingsofMaksudTV';
+document.querySelector('link[rel="icon"]').href = SH ? 'assets/streamhub-icon.svg' : 'logo.svg';
+if (SH) {
+  applyShTheme();
+  $('shAddr').textContent = location.host;
+  $('filter').placeholder = 'Search';
+  document.querySelector('#hero .eyebrow').textContent = 'Featured';
+  document.querySelector('#welcome .eyebrow').textContent = 'Welcome';
+  document.querySelector('#welcome h1').innerHTML = 'Stream<span>Hub</span>';
+  document.querySelector('#welcome .w-lead').textContent = 'Every movie, series and anime on your ISP’s BDIX servers, ready to play on this PC.';
+}
+music.init(); reader.init(); live.init();
 route();
 window.addEventListener('scroll', () => document.body.classList.toggle('scrolled', window.scrollY > 30), { passive: true });
