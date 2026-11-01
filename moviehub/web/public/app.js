@@ -2,6 +2,7 @@
 import { createMusic } from './music.js';
 import { createReader } from './reader.js';
 import { createLive } from './live.js';
+import { castHtml, createMatcher } from './matcher.js';
 const $ = (id) => document.getElementById(id);
 if (navigator.userAgent.includes('Electron')) document.documentElement.classList.add('electron');
 const WIN = navigator.userAgent.includes('Windows');
@@ -115,6 +116,7 @@ const store = {
 // Music keeps playing while you browse; the reader opens books over the page (see music.js, reader.js)
 const music = createMusic({ I, $, esc, enc, fmt, api, pauseVideo: () => { const v = $('video'); if (v && !v.paused) v.pause(); } });
 const reader = createReader({ I, $, esc, enc, api, store });
+const matcher = createMatcher({ esc, enc, api, I });
 const live = createLive({ I, $, esc, enc, api, store, pauseAudio: () => music.pause() });
 
 /* ---------------- watch history ---------------- */
@@ -156,6 +158,16 @@ const meta = (path) => {
   if (!metaCache.has(path)) metaCache.set(path, api(`/api/meta?path=${enc(path)}`).catch(() => null));
   return metaCache.get(path);
 };
+const castCache = new Map();
+const castFor = (path) => {
+  if (!castCache.has(path)) castCache.set(path, api(`/api/cast?path=${enc(path)}`).catch(() => null));
+  return castCache.get(path);
+};
+/** After a match was changed by hand: forget what we knew about the title and draw the page again. */
+function matchChanged() {
+  metaCache.clear(); castCache.clear(); folderCache.clear();
+  if (!$('details').hidden && detailsItem) showDetails(detailsItem, detailsOpts); else route();
+}
 const lazy = new IntersectionObserver((entries) => {
   for (const e of entries) {
     if (!e.isIntersecting) continue;
@@ -425,6 +437,7 @@ function resetView(view) {
   $('status').textContent = ''; $('status').className = '';
   $('folderHead').hidden = view === 'home' || view === 'settings';
   $('welcome').hidden = true;
+  $('folderCast').hidden = true; $('folderCast').innerHTML = ''; $('folderEdit').hidden = true;
   $('folderSyn').hidden = true; $('folderSyn').textContent = ''; $('folderResume').hidden = true; $('folderShuffle').hidden = true;
   $('folderCover').hidden = true; $('folderCover').innerHTML = ''; $('folderHead').classList.remove('has-cover'); coverBase = '';
   $('seasonCover').hidden = true; $('seasonBar').hidden = true; $('moreIn').hidden = true; $('moreIn').innerHTML = ''; $('split').classList.remove('has-more');
@@ -541,6 +554,14 @@ async function showAlbum(path, items) {
   $('folderShuffle').innerHTML = `${I.shuffle}Shuffle`; $('folderShuffle').onclick = () => go(true); $('folderShuffle').hidden = false;
 }
 /** The plot of a movie or series folder, under its title. Says what's missing when there's none. */
+/** Cast under a series or movie page, and the button to fix the match. */
+async function fillFolderCast(path, title) {
+  const c = await castFor(path);
+  if (state.view !== 'folder' || state.path !== path) return;
+  $('folderCast').innerHTML = castHtml(c, esc); $('folderCast').hidden = !$('folderCast').innerHTML;
+  $('folderEdit').hidden = false;
+  $('folderEdit').onclick = () => matcher.open({ path, title, pinned: !!c?.pinned, type: c?.tmdbType || '', onChanged: matchChanged });
+}
 async function showSynopsis(path) {
   const el = $('folderSyn');
   setCover(lastSeg(path));
@@ -550,7 +571,9 @@ async function showSynopsis(path) {
   el.hidden = false;
   // A folder that holds one episode: that episode's title and plot, when TMDB has them
   const name = lastSeg(path);
-  if (EP_DIR_RE.test(name) && !isTitleFolder(name.replace(EP_DIR_RE, ''))) {
+  const isEpisodeFolder = EP_DIR_RE.test(name) && !isTitleFolder(name.replace(EP_DIR_RE, ''));
+  if (!isEpisodeFolder && state.config?.tmdbKey) fillFolderCast(path, niceName(name).title);
+  if (isEpisodeFolder) {
     const parent = parentPath(path.replace(/\/$/, '') + '/');
     const season = Number(/\bS(\d{1,2}) ?E\d/i.exec(name)?.[1] ?? seasonNum(lastSeg(parent)) ?? 1);
     const info = await api(`/api/episodes?path=${enc(path)}&season=${season}`).catch(() => null);
@@ -1092,8 +1115,12 @@ function setOverview(text) {
   if (text) el.textContent = text;
   else el.innerHTML = state.config?.tmdbKey ? 'No synopsis found for this title.' : 'No synopsis yet. <a href="#/settings" data-close>Add a free TMDB key in Settings</a> to see plots.';
 }
-async function showDetails(item, { metaPath = item.path, folder = null } = {}) {
+let detailsOpts = {};
+async function showDetails(item, opts = {}) {
+  const { metaPath = item.path, folder = null } = opts;
+  detailsOpts = opts;
   detailsItem = item; detailsFolder = folder;
+  $('dCast').innerHTML = ''; $('dEdit').hidden = true;
   // Start on the version last watched, else the best one.
   const vs = item.versions || [];
   detailsVersion = Math.max(0, vs.findIndex((v) => v.path === progressFor(item)?.path));
@@ -1120,6 +1147,13 @@ async function showDetails(item, { metaPath = item.path, folder = null } = {}) {
     $('dPoster').innerHTML = `<img src="${esc(m.poster)}" alt="">`;
     if (!m.backdrop) $('dHero').style.backgroundImage = `linear-gradient(rgba(20,22,29,.35), rgba(20,22,29,.35)), url("${m.poster}")`;
   } else $('dPoster').querySelector('.ph b').textContent = m.matched || m.title;
+  if (state.config?.tmdbKey) {
+    const c = await castFor(metaPath);
+    if (detailsItem !== item) return;
+    $('dCast').innerHTML = castHtml(c, esc);
+    $('dEdit').hidden = false;
+    $('dEdit').onclick = () => matcher.open({ path: metaPath, title: m.matched || m.title, pinned: !!c?.pinned, type: c?.tmdbType || '', onChanged: matchChanged });
+  }
 }
 const closeDetails = () => { $('details').hidden = true; detailsItem = null; };
 $('details').addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeDetails(); });

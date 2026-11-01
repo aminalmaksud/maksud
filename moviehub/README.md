@@ -86,6 +86,12 @@ so the official Jellyfin app is the surer choice on a TV.
 
 **Synopsis:** with a free [TMDB](https://www.themoviedb.org/settings/api) key in Settings, every movie and series shows its plot: under the title on its page, in the details sheet, and when you hover a poster. Each episode of a series also shows its own title, plot, length and still, and a movie's or series' page has its cover beside the title (a season's own poster shows next to its tabs, or beside the title when you open a Season folder). Servers that keep every episode in its own folder get a grid of episode stills. Titles without a poster get a drawn cover in both looks. Without a key, the page says how to add one.
 
+**Cast and fixing a wrong match (needs the TMDB key):** a title's page and its details sheet show the cast with photos, the
+director, genres and links to TMDB and IMDb. If a title was matched to the wrong film, press **Edit match**: search TMDB by name and
+pick the right one, or paste a TMDB id (`603`), a themoviedb.org address or an IMDb id (`tt0133093`). The choice is kept per title
+(and is followed by the episodes inside a series folder); **Back to automatic** undoes it. IMDb has no free official data service, so IMDb
+ids are looked up through TMDB, and IMDb's own ratings aren't shown.
+
 **Online subtitles** (optional): to use **Search online…** in the player's subtitle menu (like VLC), add a free API key
 from [OpenSubtitles.com](https://www.opensubtitles.com/consumers), from [SubDL](https://subdl.com) (on your profile page), or from both.
 Signing in with your OpenSubtitles account allows more downloads a day. Results that match the exact file come first,

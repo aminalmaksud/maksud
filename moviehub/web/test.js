@@ -105,6 +105,11 @@ const tmdbFake = http.createServer((req, res) => {
   res.setHeader('content-type', 'application/json');
   if (u.pathname === '/search/tv') return res.end(JSON.stringify({ results: [{ id: 42, name: 'Some Show', overview: 'The show.', first_air_date: '2020-05-01' }] }));
   if (u.pathname === '/tv/42/season/2') return res.end(JSON.stringify({ poster_path: '/season2.jpg', episodes: [{ episode_number: 1, name: 'Pilot', overview: 'It begins.', runtime: 44, air_date: '2021-01-01', still_path: '/pilot.jpg' }, { episode_number: 2, name: 'Two', overview: '' }] }));
+  if (u.pathname === '/movie/603') return res.end(JSON.stringify({ id: 603, title: 'The Matrix', overview: 'A hacker wakes up.', release_date: '1999-03-30', vote_average: 8.2, poster_path: '/matrix.jpg', genres: [{ name: 'Action' }],
+    credits: { cast: [{ name: 'Keanu Reeves', character: 'Neo', profile_path: '/keanu.jpg' }, { name: 'Carrie-Anne Moss', character: 'Trinity', profile_path: null }], crew: [{ name: 'Lana Wachowski', job: 'Director' }, { name: 'Someone', job: 'Editor' }] },
+    external_ids: { imdb_id: 'tt0133093' } }));
+  if (u.pathname === '/find/tt0133093') return res.end(JSON.stringify({ movie_results: [{ id: 603 }], tv_results: [] }));
+  if (u.pathname === '/search/multi') return res.end(JSON.stringify({ results: [{ id: 603, media_type: 'movie', title: 'The Matrix', release_date: '1999-03-30', poster_path: '/matrix.jpg', overview: 'A hacker wakes up.' }, { id: 1, media_type: 'person', name: 'Neo' }] }));
   res.statusCode = 404; res.end('{}');
 });
 await new Promise((r) => tmdbFake.listen(0, '127.0.0.1', r));
@@ -299,7 +304,6 @@ assert.equal((await (await get(`/api/episodes?path=${epPath}&season=2`)).json())
 assert.deepEqual((await (await get(`/api/episodes?path=${epPath}&season=9`)).json()).episodes, [], 'unknown season');
 assert.deepEqual((await (await get(`/api/episodes?path=${epPath}&season=abc`)).json()).episodes, []);
 assert.equal((await get('/api/episodes?path=0%2F..%2F..%2Fx%2F&season=1')).status, 400);
-tmdbFake.close();
 
 // --- Jellyfin-compatible API: sign in, browse the library as folders, play with byte ranges, keep resume positions
 await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, jellyfin: false }) });
@@ -477,4 +481,35 @@ assert.equal(chs[0].url, 'http://h/a.m3u8');
   await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: movies, playlists: '', jellyfin: false }) });
   tvHost.close(); fs.rmSync(clip, { force: true });
 }
-server.close(); isp.close(); fs.rmSync(path.dirname(process.env.CONFIG_FILE), { recursive: true, force: true });
+// --- matching a title by hand: TMDB id, IMDb id or address; cast; clearing it again
+{
+  const own = fs.mkdtempSync(path.join(os.tmpdir(), 'mh-pin-'));
+  fs.mkdirSync(path.join(own, 'Weird Name'));
+  fs.writeFileSync(path.join(own, 'Weird Name', 'x.mkv'), FILE);
+  await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Films | ${own} | movies`, tmdbKey: 'KEY', jellyfin: false }) });
+  const rel = '0/Weird%20Name/';
+  const post = (body) => fetch(base + '/api/meta-id', { method: 'POST', body: JSON.stringify({ path: rel, ...body }) });
+  assert.equal((await (await get(`/api/meta?path=${encodeURIComponent(rel)}`)).json()).tmdbId, null, 'nothing matches the odd name by itself');
+  assert.equal((await post({ tmdb: 'abc' })).status, 400, 'junk is refused');
+  assert.equal((await post({ tmdb: '999999' })).status, 404, 'an id TMDB does not know is refused');
+  let m = await (await post({ tmdb: '603' })).json(); if (m.error) console.log('POST error:', m.error);
+  assert.deepEqual([m.tmdbId, m.tmdbType, m.matched, m.year], [603, 'movie', 'The Matrix', 1999], 'a TMDB id picks the title');
+  const c = await (await get(`/api/cast?path=${encodeURIComponent(rel)}`)).json();
+  assert.deepEqual(c.cast.map((x) => [x.name, x.role, x.photo]), [['Keanu Reeves', 'Neo', '/tmdb/w185/keanu.jpg'], ['Carrie-Anne Moss', 'Trinity', null]]);
+  assert.deepEqual([c.imdbId, c.director, c.genres, c.pinned], ['tt0133093', ['Lana Wachowski'], ['Action'], true]);
+  assert.equal(JSON.parse(fs.readFileSync(process.env.CONFIG_FILE, 'utf8')).metaIds[Object.keys(JSON.parse(fs.readFileSync(process.env.CONFIG_FILE, 'utf8')).metaIds)[0]].id, 603, 'kept in the config');
+  assert.equal((await (await get('/api/meta?path=' + encodeURIComponent(rel + 'x.mkv'))).json()).tmdbId, 603, 'a file inside follows its folder');
+  await post({ clear: true });
+  assert.equal((await (await get(`/api/meta?path=${encodeURIComponent(rel)}`)).json()).tmdbId, null, 'cleared');
+  m = await (await post({ imdb: 'https://www.imdb.com/title/tt0133093/' })).json();
+  assert.equal(m.tmdbId, 603, 'an IMDb id or address works too');
+  await post({ clear: true });
+  m = await (await post({ tmdb: 'https://www.themoviedb.org/movie/603-the-matrix' })).json();
+  assert.equal(m.tmdbId, 603, 'and a themoviedb.org address');
+  const found = await (await get('/api/meta-search?q=matrix')).json();
+  assert.deepEqual(found.results.map((x) => [x.id, x.type, x.title, x.year]), [[603, 'movie', 'The Matrix', 1999]], 'people are left out of the search');
+  await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Films | ${own} | movies`, jellyfin: false }) });
+  assert.equal(Object.keys(JSON.parse(fs.readFileSync(process.env.CONFIG_FILE, 'utf8')).metaIds).length, 1, 'saving Settings keeps the matches');
+  fs.rmSync(own, { recursive: true, force: true });
+}
+server.close(); isp.close(); tmdbFake.close(); fs.rmSync(path.dirname(process.env.CONFIG_FILE), { recursive: true, force: true });

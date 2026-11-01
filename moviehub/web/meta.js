@@ -48,13 +48,7 @@ function lookup(key, p, preferTv) {
       let hit = preferTv ? (await tv()) || (await movie()) : (await movie()) || (await tv());
       if (!hit && p.year) hit = await multi();
       if (!hit) return null;
-      return {
-        tmdbId: hit.id, tmdbType: hit.media_type || (hit.title ? 'movie' : 'tv'),
-        title: hit.title || hit.name, year: Number((hit.release_date || hit.first_air_date || '').slice(0, 4)) || p.year,
-        overview: hit.overview || '', rating: hit.vote_average ? Math.round(hit.vote_average * 10) / 10 : null,
-        poster: hit.poster_path ? `/tmdb/w342${hit.poster_path}` : null,
-        backdrop: hit.backdrop_path ? `/tmdb/w1280${hit.backdrop_path}` : null,
-      };
+      return shapeHit(hit, hit.media_type || (hit.title ? 'movie' : 'tv'), p.year);
     });
     job.catch(() => tmdbCache.delete(ck));
     tmdbCache.set(ck, job);
@@ -62,13 +56,71 @@ function lookup(key, p, preferTv) {
   return tmdbCache.get(ck).catch(() => null);
 }
 
+const shapeHit = (hit, type, fallbackYear) => ({
+  tmdbId: hit.id, tmdbType: type,
+  title: hit.title || hit.name, year: Number((hit.release_date || hit.first_air_date || '').slice(0, 4)) || fallbackYear || null,
+  overview: hit.overview || '', rating: hit.vote_average ? Math.round(hit.vote_average * 10) / 10 : null,
+  poster: hit.poster_path ? `/tmdb/w342${hit.poster_path}` : null,
+  backdrop: hit.backdrop_path ? `/tmdb/w1280${hit.backdrop_path}` : null,
+});
+
+const idCache = new Map(), castCache = new Map();
+/** A title picked by its TMDB id ("movie" or "tv"): the same details a search would give. Null when TMDB doesn't know it. */
+export function tmdbById(key, type, id) {
+  const ck = `${type}|${id}`;
+  if (!idCache.has(ck)) {
+    const job = tmdbLimit(() => tmdb(key, `/${type}/${id}`, { append_to_response: 'credits,external_ids' })).then(
+      (j) => { castCache.set(ck, castShape(j)); return shapeHit(j, type); },
+      () => null,
+    );
+    job.then((v) => { if (!v) idCache.delete(ck); });
+    idCache.set(ck, job);
+  }
+  return idCache.get(ck);
+}
+
+/** An IMDb id (tt0133093) to a TMDB movie or series, through TMDB's find. */
+export async function findByImdb(key, imdb) {
+  const r = await tmdbLimit(() => tmdb(key, `/find/${encodeURIComponent(imdb)}`, { external_source: 'imdb_id' })).catch(() => null);
+  const m = r?.movie_results?.[0], t = r?.tv_results?.[0];
+  return m ? { type: 'movie', id: m.id } : t ? { type: 'tv', id: t.id } : null;
+}
+
+/** Search for the "pick the right title" dialog. */
+export async function searchTmdb(key, q, type) {
+  const r = await tmdbLimit(() => tmdb(key, type === 'movie' || type === 'tv' ? `/search/${type}` : '/search/multi', { query: q }));
+  return (r.results || []).filter((x) => x.media_type !== 'person').slice(0, 12).map((x) => {
+    const ty = x.media_type || type || (x.title ? 'movie' : 'tv');
+    return { id: x.id, type: ty, title: x.title || x.name, year: Number((x.release_date || x.first_air_date || '').slice(0, 4)) || null,
+      poster: x.poster_path ? `/tmdb/w185${x.poster_path}` : null, overview: (x.overview || '').slice(0, 220) };
+  });
+}
+
+const castShape = (j) => ({
+  imdbId: j.external_ids?.imdb_id || j.imdb_id || null,
+  tagline: j.tagline || '',
+  genres: (j.genres || []).map((g) => g.name),
+  cast: (j.credits?.cast || []).slice(0, 14).map((c) => ({ name: c.name, role: c.character || '', photo: c.profile_path ? `/tmdb/w185${c.profile_path}` : null })),
+  director: (j.credits?.crew || []).filter((c) => c.job === 'Director').map((c) => c.name).slice(0, 3),
+});
+/** Cast, director, genres and the IMDb id of a TMDB title. */
+export async function castOf(key, type, id) {
+  const ck = `${type}|${id}`;
+  if (!castCache.has(ck)) await tmdbById(key, type, id);
+  return castCache.get(ck) || { imdbId: null, tagline: '', genres: [], cast: [], director: [] };
+}
+
+export function forgetMeta() { cache.clear(); tmdbCache.clear(); seasonCache.clear(); }
+
 /**
  * @param rel     client path ("0/Movies/Dune (2021)/")
  * @param list    async (dirRel) => entries, cached by the caller
  * @param tmdbKey optional
+ * @param pinned  optional (rel) => { type, id } | null: a title the user picked by its TMDB id, which wins over searching by name
  */
-export async function metaFor(rel, list, tmdbKey) {
-  const key = `${rel}|${tmdbKey ? 1 : 0}`;
+export async function metaFor(rel, list, tmdbKey, pinned) {
+  const pin = tmdbKey && pinned ? pinned(rel) : null;
+  const key = `${rel}|${tmdbKey ? 1 : 0}|${pin ? pin.type + pin.id : ''}`;
   if (cache.has(key)) return cache.get(key);
   const job = (async () => {
     const isDir = rel.endsWith('/');
@@ -93,7 +145,7 @@ export async function metaFor(rel, list, tmdbKey) {
       }
     } catch { /* listing failed: fall through to TMDB */ }
 
-    const t = tmdbKey && !titleSource.generic ? await lookup(tmdbKey, titleSource, looksTv) : null;
+    const t = !tmdbKey ? null : pin ? await tmdbById(tmdbKey, pin.type, pin.id) : !titleSource.generic ? await lookup(tmdbKey, titleSource, looksTv) : null;
     return {
       title: p.generic ? name.replace(/\.[^.]+$/, '') : p.title,
       show: titleSource !== p ? t?.title || titleSource.title : null,

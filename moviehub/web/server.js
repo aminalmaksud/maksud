@@ -10,7 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT, mediaKind } from './listing.js';
 import { openZip } from './zip.js';
 import { hasFfmpeg, ffmpegVersion, probe, remux, extractSubtitle, keyframeBefore, audioAsMp3, embeddedArt } from './media.js';
-import { metaFor, seasonEpisodes } from './meta.js';
+import { metaFor, seasonEpisodes, tmdbById, findByImdb, searchTmdb, castOf, forgetMeta } from './meta.js';
 import { createJellyfin } from './jellyfin.js';
 import { loadPlaylist, forgetPlaylists } from './iptv.js';
 import { movieHash, searchSubtitles, fetchSubtitle } from './subsearch.js';
@@ -51,6 +51,7 @@ function loadConfig() {
     // online subtitles (see subsearch.js)
     opensubsKey: c.opensubsKey ?? '', opensubsUser: c.opensubsUser ?? '', opensubsPass: c.opensubsPass ?? '', subdlKey: c.subdlKey ?? '',
     shareTv: !!c.shareTv, // share local folders with the Android TV app (see shareServer)
+    metaIds: c.metaIds && typeof c.metaIds === 'object' ? c.metaIds : {}, // titles the user matched by hand: address -> { type, id } (TMDB)
     playlists: splitServers(c.playlists), // Live TV: M3U playlists, one per line (see iptv.js)
     jellyfin: !!c.jellyfin, jellyfinPass: c.jellyfinPass ?? '', // Jellyfin-compatible API for Jellyfin apps (see jellyfin.js)
   };
@@ -517,12 +518,77 @@ async function handleEmbeddedSub(url, res) {
   }
 }
 
-async function handleMeta(url, res) {
+/** Where a hand-picked match is kept: the title's real address, so reordering libraries doesn't lose it. */
+function metaKeyOf(rel) {
+  if (!rel || rel.startsWith('local/')) return null;
+  try { return resolveUnderBase(rel).url.href; } catch { return null; }
+}
+/** The match picked by hand for this folder or file, or for the nearest folder above it (an episode follows its series). */
+function pinnedFor(rel) {
+  const segs = rel.replace(/\/$/, '').split('/');
+  for (let n = segs.length; n >= 2; n--) {
+    const r = segs.slice(0, n).join('/') + (n === segs.length && !rel.endsWith('/') ? '' : '/');
+    const hit = config.metaIds[metaKeyOf(r)];
+    if (hit) return hit;
+  }
+  return null;
+}
+const metaOf = (rel) => metaFor(rel, async (dir) => (await listDir(dir)).items, config.tmdbKey, pinnedFor);
+function metaPathOf(url) {
   let rel = url.searchParams.get('path') || '';
   if (rel.startsWith('v:')) rel = decodeV(rel)?.[0] || ''; // a joined folder: its first copy has the poster as well as any
   if (!rel.startsWith('local/')) resolveUnderBase(rel);
-  const m = await metaFor(rel, async (dir) => (await listDir(dir)).items, config.tmdbKey);
-  json(res, 200, m);
+  return rel;
+}
+async function handleMeta(url, res) {
+  json(res, 200, await metaOf(metaPathOf(url)));
+}
+/** Cast, director, genres and the IMDb id for the title's page. */
+async function handleCast(url, res) {
+  const m = await metaOf(metaPathOf(url));
+  if (!config.tmdbKey || !m?.tmdbId) return json(res, 200, { tmdbId: null, cast: [], director: [] });
+  const c = await castOf(config.tmdbKey, m.tmdbType, m.tmdbId);
+  json(res, 200, { tmdbId: m.tmdbId, tmdbType: m.tmdbType, pinned: !!pinnedFor(metaPathOf(url)), ...c });
+}
+/** Search TMDB by name, for the "pick the right title" dialog. */
+async function handleMetaSearch(url, res) {
+  if (!config.tmdbKey) throw httpError(400, 'Add a TMDB key in Settings first');
+  const q = (url.searchParams.get('q') || '').trim();
+  if (q.length < 2) return json(res, 200, { results: [] });
+  json(res, 200, { results: await searchTmdb(config.tmdbKey, q, url.searchParams.get('type') || '') });
+}
+/** Pin a title to a TMDB id (or an IMDb id), or clear the pin: POST { path, tmdb?, imdb?, type?, clear? }. */
+async function handleMetaId(req, res) {
+  if (!config.tmdbKey) throw httpError(400, 'Add a TMDB key in Settings first');
+  const b = JSON.parse((await readBody(req)) || '{}');
+  let rel = String(b.path || '');
+  if (rel.startsWith('v:')) rel = decodeV(rel)?.[0] || '';
+  const k = metaKeyOf(rel);
+  if (!k) throw httpError(400, 'This item can’t be matched by hand');
+  if (b.clear) delete config.metaIds[k];
+  else {
+    let type = b.type === 'tv' ? 'tv' : b.type === 'movie' ? 'movie' : '', id = '';
+    const imdb = /tt\d{5,10}/i.exec(String(b.imdb || ''));
+    const raw = String(b.tmdb || '').trim();
+    const url = /themoviedb\.org\/(movie|tv)\/(\d+)/i.exec(raw);
+    if (url) { type = url[1].toLowerCase(); id = url[2]; }
+    else if (/^\d+$/.test(raw)) id = raw;
+    else if (imdb) {
+      const f = await findByImdb(config.tmdbKey, imdb[0].toLowerCase());
+      if (!f) throw httpError(404, 'TMDB has no title with that IMDb id');
+      type = f.type; id = String(f.id);
+    } else throw httpError(400, 'Give a TMDB id, a themoviedb.org address or an IMDb id (tt1234567)');
+    // an id alone doesn't say movie or series: try the likelier one first, then the other
+    const tries = type ? [type] : [/(S\d{1,2}|season|\(TV)/i.test(rel) ? 'tv' : 'movie', /(S\d{1,2}|season|\(TV)/i.test(rel) ? 'movie' : 'tv'];
+    let found = null;
+    for (const t of tries) { if (await tmdbById(config.tmdbKey, t, id)) { found = t; break; } }
+    if (!found) throw httpError(404, 'TMDB doesn’t know that id');
+    config.metaIds[k] = { type: found, id: Number(id) };
+  }
+  forgetMeta();
+  fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
+  json(res, 200, await metaOf(rel));
 }
 
 /** Plots and titles for the episodes of one season of a series (TMDB). `path` is the season folder or one of its files. */
@@ -532,7 +598,7 @@ async function handleEpisodes(url, res) {
   if (rel.startsWith('v:')) rel = decodeV(rel)?.[0] || '';
   if (!rel.startsWith('local/')) resolveUnderBase(rel);
   if (!config.tmdbKey || !Number.isInteger(season) || season < 0 || season > 99) return json(res, 200, { episodes: [] });
-  const m = await metaFor(rel, async (dir) => (await listDir(dir)).items, config.tmdbKey).catch(() => null);
+  const m = await metaOf(rel).catch(() => null);
   if (!m?.tmdbId || m.tmdbType !== 'tv') return json(res, 200, { episodes: [] });
   const r = await seasonEpisodes(config.tmdbKey, m.tmdbId, season);
   json(res, 200, { episodes: r?.episodes || [], poster: r?.poster || null });
@@ -704,6 +770,7 @@ async function handleConfig(req, res) {
       opensubsPass: b.keepOpensubsPass || b.opensubsPass === undefined ? config.opensubsPass : String(b.opensubsPass),
       subdlKey: b.subdlKey === undefined ? config.subdlKey : String(b.subdlKey).trim(),
       shareTv: b.shareTv === undefined ? config.shareTv : !!b.shareTv,
+      metaIds: config.metaIds,
       playlists: b.playlists === undefined ? config.playlists : splitServers(b.playlists),
       jellyfin: b.jellyfin === undefined ? config.jellyfin : !!b.jellyfin,
       jellyfinPass: b.jellyfinPass === undefined ? config.jellyfinPass : String(b.jellyfinPass),
@@ -737,7 +804,7 @@ const subKeys = () => ({ opensubsKey: config.opensubsKey, opensubsUser: config.o
 async function handleSubSearch(url, res) {
   const rel = url.searchParams.get('path') || '';
   const m = media(rel);
-  const meta = rel.startsWith('local/') ? {} : await metaFor(rel, async (dir) => (await listDir(dir)).items, config.tmdbKey).catch(() => ({}));
+  const meta = rel.startsWith('local/') ? {} : await metaOf(rel).catch(() => ({}));
   const langs = (url.searchParams.get('langs') || 'en').split(',').map((l) => l.trim().toLowerCase()).filter((l) => /^[a-z]{2}(-[a-z]{2})?$/.test(l)).slice(0, 5);
   const typed = (url.searchParams.get('q') || '').trim();
   let hash = null;
@@ -905,14 +972,14 @@ const jf = createJellyfin({
   subtitle: (rel) => subtitleText(firstReal(rel)),
   tmdbSeason: async (rel, n) => {
     if (!config.tmdbKey || String(rel).startsWith('local/')) return null;
-    const m = await metaFor(firstReal(rel), async (dir) => (await listDir(dir)).items, config.tmdbKey).catch(() => null);
+    const m = await metaOf(firstReal(rel)).catch(() => null);
     return m?.tmdbType === 'tv' && m.tmdbId ? seasonEpisodes(config.tmdbKey, m.tmdbId, n) : null;
   },
   views: viewsList,
   children: childrenOf,
   media: (rel) => media(firstReal(rel)),
   probe: async (rel) => { if (!hasFfmpeg) return null; const m = media(rel); return probe(m.src, m.auth); },
-  metaFor: (rel) => (rel.startsWith('local/') ? null : metaFor(firstReal(rel), async (dir) => (await listDir(dir)).items, config.tmdbKey)),
+  metaFor: (rel) => (rel.startsWith('local/') ? null : metaOf(firstReal(rel))),
   stream: async (req, res, rel) => { const m = media(rel); return m.local ? serveFile(req, res, m.src) : proxy(req, res, m.src); },
   image: async (req, res, src) => {
     if (src.startsWith('/tmdb/')) return handleTmdbImage(req, new URL(src, 'http://x'), res);
@@ -973,6 +1040,9 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/subget') return await handleSubGet(url, res);
     if (p === '/api/pick-folder') return await handlePickFolder(req, res);
     if (p === '/api/meta') return await handleMeta(url, res);
+    if (p === '/api/cast') return await handleCast(url, res);
+    if (p === '/api/meta-search') return await handleMetaSearch(url, res);
+    if (p === '/api/meta-id' && req.method === 'POST') return await handleMetaId(req, res);
     if (p === '/api/episodes') return await handleEpisodes(url, res);
     if (p === '/api/epub') return await handleEpub(url, res);
     if (p.startsWith('/epub/')) return await handleEpubFile(url, res);

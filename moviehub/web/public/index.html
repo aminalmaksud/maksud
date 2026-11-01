@@ -78,7 +78,8 @@
     <h1 id="folderTitle"></h1>
     <p id="folderSub"></p>
     <p id="folderSyn" hidden></p>
-    <div class="fh-actions"><button class="btn gold" id="folderResume" hidden></button><button class="btn" id="folderShuffle" hidden></button></div>
+    <div id="folderCast" hidden></div>
+    <div class="fh-actions"><button class="btn gold" id="folderResume" hidden></button><button class="btn" id="folderEdit" hidden>Edit match</button><button class="btn" id="folderShuffle" hidden></button></div>
   </div>
   <p id="status" role="status"></p>
   <div id="rows"></div>
@@ -177,6 +178,7 @@
         <h2 id="dTitle"></h2>
         <p class="d-meta" id="dMeta"></p>
         <p class="d-overview" id="dOverview"></p>
+        <div id="dCast"></div>
         <div class="d-versions" id="dVersions" hidden></div>
         <div class="d-actions">
           <button class="btn primary" id="dPlay"></button>
@@ -184,6 +186,7 @@
           <button class="btn list-btn" id="dList"></button>
           <button class="btn" id="dFolder" hidden>All files</button>
           <button class="btn" id="dDownload" hidden></button>
+          <button class="btn" id="dEdit" hidden>Edit match</button>
           <button class="btn quiet" id="dForget" hidden></button>
         </div>
         <p class="d-file" id="dFile"></p>
