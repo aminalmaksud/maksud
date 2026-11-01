@@ -493,3 +493,12 @@ html.streamhub .rd-title b { font: 600 16px var(--display); text-transform: none
 html.streamhub .rd-ctl .icon-btn { border-radius: 6px; border-color: var(--line2); }
 html.streamhub .rd-ctl select, html.streamhub .rd-pg input { border-radius: 6px; border-color: var(--line2); }
 @media (max-width: 960px) { html.streamhub #audioBar { left: 56px; } }
+
+/* Edit match: the generic Contemporary dialog padding and fonts don't apply to its own layout */
+html.streamhub .match-dlg { width: min(640px, 94vw); border-radius: 12px; }
+html.streamhub .match-dlg form { padding: 0; }
+html.streamhub .match-dlg input { border-radius: 8px; background: var(--bg); font: 500 14px var(--body); }
+html.streamhub .match-dlg .mt-field input { font-family: var(--mono); font-size: 13px; }
+html.streamhub .match-dlg input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37, 99, 255, .25); }
+html.streamhub .match-dlg label { color: var(--text); font-weight: 600; }
+html.streamhub .match-dlg h3 { font: 600 20px var(--display); color: var(--strong); letter-spacing: -.01em; }

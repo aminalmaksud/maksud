@@ -78,6 +78,7 @@
     <h1 id="folderTitle"></h1>
     <p id="folderSub"></p>
     <p id="folderSyn" hidden></p>
+    <div id="folderIds" class="idchips" hidden></div>
     <div id="folderCast" hidden></div>
     <div class="fh-actions"><button class="btn gold" id="folderResume" hidden></button><button class="btn" id="folderEdit" hidden>Edit match</button><button class="btn" id="folderShuffle" hidden></button></div>
   </div>
@@ -204,6 +205,7 @@
   <div class="rd-bar">
     <button class="icon-btn" id="rdClose" title="Close (Esc)"></button>
     <div class="rd-title"><b id="rdTitle"></b><small id="rdSub"></small></div>
+    <button class="icon-btn" id="rdInfo" title="Book details and match (Google Books, ISBN)"></button>
     <div class="rd-ctl" id="rdCtl"></div>
   </div>
   <div class="rd-body" id="rdBody"></div>
@@ -212,9 +214,22 @@
 <!-- Live TV viewer -->
 <div id="liveView" tabindex="-1" hidden>
   <video id="liveVideo" playsinline autoplay></video>
-  <div class="lv-top"><button class="icon-btn" id="liveClose" title="Close (Esc)"></button>
-    <div class="lv-title"><b id="liveName"></b><small id="liveGroup"></small></div>
-    <div class="lv-ctl"><button class="icon-btn" id="livePrev" title="Previous channel (↑)"></button><button class="icon-btn" id="liveNext" title="Next channel (↓)"></button><button class="icon-btn" id="liveFull" title="Full screen (F)">⛶</button></div></div>
+  <div class="lv-ui">
+    <div class="lv-top"><button class="icon-btn" id="liveClose" title="Close (Esc)"></button>
+      <div class="lv-title"><b id="liveName"></b><small id="liveGroup"></small></div></div>
+    <div class="lv-bottom">
+      <div class="lv-row">
+        <button class="icon-btn" id="livePrev" title="Previous channel (Shift+P)"></button>
+        <button class="icon-btn lv-play" id="livePlay" title="Pause / play (Space)"></button>
+        <button class="icon-btn" id="liveNext" title="Next channel (Shift+N)"></button>
+        <button class="lv-live" id="liveGo" title="Jump to the live picture"><i></i>LIVE</button>
+        <span class="grow"></span>
+        <div class="vol"><button class="icon-btn" id="liveMute" title="Mute (M)"></button><input type="range" id="liveVol" min="0" max="1" step="0.05" aria-label="Volume"></div>
+        <button class="icon-btn" id="livePip" title="Picture in picture"></button>
+        <button class="icon-btn" id="liveFull" title="Full screen (F)"></button>
+      </div>
+    </div>
+  </div>
   <p id="liveMsg" role="status"></p>
 </div>
 

@@ -55,32 +55,72 @@ export function createLive({ I, $, esc, enc, api, store, pauseAudio }) {
   }
 
   /* ---------- the viewer ---------- */
+  let idleTimer = 0;
+  const poke = () => {
+    root.classList.remove('idle');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => { if (!video.paused) root.classList.add('idle'); }, 2600);
+  };
+  const volume = store.get('livevol', { v: 1, muted: false });
+  const syncControls = () => {
+    $('livePlay').innerHTML = video.paused ? I.play : I.pause;
+    $('livePlay').title = video.paused ? 'Play (Space)' : 'Pause (Space)';
+    $('liveMute').innerHTML = video.muted || video.volume === 0 ? I.mute : I.vol;
+    $('liveVol').value = video.muted ? 0 : video.volume;
+    $('liveGo').classList.toggle('behind', video.paused);
+    root.classList.toggle('paused', video.paused);
+  };
+  const setVolume = (v, muted = false) => {
+    video.volume = Math.max(0, Math.min(1, v)); video.muted = muted;
+    store.set('livevol', { v: video.volume, muted }); syncControls();
+  };
+  const togglePause = () => { video.paused ? video.play().catch(() => {}) : video.pause(); };
+  /** Back to the live picture: a paused stream falls behind, so start the channel again. */
+  const goLive = () => { const c = st.shown[st.cur]; if (c) tune(c); };
+  function tune(c) {
+    st.retried = false;
+    $('liveMsg').textContent = 'Connecting…'; $('liveMsg').hidden = false;
+    video.src = `/live?id=${enc(c.id)}&fmt=${st.fmt}`;
+    video.play().catch(() => { /* a click is needed first */ });
+  }
   function play(i) {
     if (!st.shown.length) return;
     st.cur = (i + st.shown.length) % st.shown.length;
     const c = st.shown[st.cur];
-    st.retried = false;
     pauseAudio?.();
     const pv = $('video'); if (pv && !pv.paused) pv.pause();
     root.hidden = false; document.body.style.overflow = 'hidden';
     $('liveName').textContent = c.name; $('liveGroup').textContent = c.group;
-    $('liveMsg').textContent = 'Connecting…'; $('liveMsg').hidden = false;
-    video.src = `/live?id=${enc(c.id)}&fmt=${st.fmt}`;
-    video.play().catch(() => { /* a click is needed first */ });
+    tune(c); poke(); syncControls();
     root.focus();
   }
   function close() {
+    if (document.fullscreenElement === root) document.exitFullscreen?.();
     root.hidden = true; video.pause(); video.removeAttribute('src'); video.load();
     if ($('player').hidden || $('player').classList.contains('mini')) document.body.style.overflow = '';
   }
   const isOpen = () => !root.hidden;
+  const toggleFull = () => (document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen?.().catch(() => {}));
 
   function init() {
     $('liveClose').innerHTML = I.close; $('livePrev').innerHTML = `<span class="flip">${I.next}</span>`; $('liveNext').innerHTML = I.next;
+    $('livePip').innerHTML = I.pip; $('liveFull').innerHTML = I.full;
+    setVolume(volume.v ?? 1, !!volume.muted);
     $('liveClose').onclick = close;
     $('livePrev').onclick = () => play(st.cur - 1);
     $('liveNext').onclick = () => play(st.cur + 1);
-    $('liveFull').onclick = () => (document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen?.().catch(() => {}));
+    $('livePlay').onclick = togglePause;
+    $('liveGo').onclick = goLive;
+    $('liveMute').onclick = () => setVolume(video.volume || 0.5, !video.muted);
+    $('liveVol').oninput = (e) => setVolume(Number(e.target.value));
+    $('livePip').onclick = () => (document.pictureInPictureElement ? document.exitPictureInPicture() : video.requestPictureInPicture()).catch(() => {});
+    $('liveFull').onclick = toggleFull;
+    // mouse: click the picture to pause or resume, double-click for full screen, wheel for volume
+    video.addEventListener('click', togglePause);
+    video.addEventListener('dblclick', toggleFull);
+    root.addEventListener('wheel', (e) => { e.preventDefault(); setVolume(video.volume + (e.deltaY < 0 ? 0.05 : -0.05)); poke(); }, { passive: false });
+    root.addEventListener('mousemove', poke); root.addEventListener('mousedown', poke);
+    for (const ev of ['play', 'pause', 'volumechange']) video.addEventListener(ev, () => { syncControls(); poke(); });
     video.addEventListener('playing', () => { $('liveMsg').hidden = true; });
     video.addEventListener('waiting', () => { $('liveMsg').textContent = 'Buffering…'; $('liveMsg').hidden = false; });
     video.addEventListener('error', () => {
@@ -88,14 +128,21 @@ export function createLive({ I, $, esc, enc, api, store, pauseAudio }) {
       if (!st.retried) { st.retried = true; st.fmt = st.fmt === 'mkv' ? 'mp4' : 'mkv'; const c = st.shown[st.cur]; video.src = `/live?id=${enc(c.id)}&fmt=${st.fmt}`; video.play().catch(() => {}); return; }
       $('liveMsg').textContent = 'This channel isn’t working right now.'; $('liveMsg').hidden = false;
     });
+    // keyboard, as in Jellyfin: Space/K pause, F full screen, M mute, arrows volume; Shift+N / Shift+P (or Page Up/Down) change channel
     document.addEventListener('keydown', (e) => {
-      if (!isOpen()) return;
-      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
-      else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); play(st.cur - 1); }
-      else if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); play(st.cur + 1); }
-      else if (e.key === 'f') { $('liveFull').click(); }
-      else if (e.key === 'm') { video.muted = !video.muted; }
-      else if (e.key === 'Backspace') e.stopPropagation();
+      if (!isOpen() || e.ctrlKey || e.metaKey || e.altKey) return;
+      const k = e.key.toLowerCase();
+      poke();
+      if (k === 'escape') { e.preventDefault(); e.stopPropagation(); if (document.fullscreenElement) document.exitFullscreen(); else close(); }
+      else if (k === ' ' || (k === 'k' && !e.shiftKey)) { e.preventDefault(); e.stopPropagation(); togglePause(); }
+      else if (k === 'arrowup') { e.preventDefault(); setVolume(video.volume + 0.05); }
+      else if (k === 'arrowdown') { e.preventDefault(); setVolume(video.volume - 0.05); }
+      else if (k === 'pageup' || (k === 'p' && e.shiftKey)) { e.preventDefault(); play(st.cur - 1); }
+      else if (k === 'pagedown' || (k === 'n' && e.shiftKey)) { e.preventDefault(); play(st.cur + 1); }
+      else if (k === 'f' && !e.shiftKey) { e.preventDefault(); toggleFull(); }
+      else if (k === 'm' && !e.shiftKey) { e.preventDefault(); setVolume(video.volume || 0.5, !video.muted); }
+      else if (k === 'l' || k === 'home' || k === 'end') { e.preventDefault(); goLive(); }
+      else if (k === 'backspace') e.stopPropagation();
     }, true);
   }
   return { init, render, close, isOpen, hasChannels: () => st.channels.length > 0 };

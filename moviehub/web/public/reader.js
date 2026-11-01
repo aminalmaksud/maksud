@@ -5,7 +5,7 @@ const extOf = (n) => n.slice(n.lastIndexOf('.') + 1).toLowerCase();
 const stemOf = (n) => n.replace(/\.[^.]+$/, '');
 const segs = (p) => p.split('/').map(encodeURIComponent).join('/');
 
-export function createReader({ I, $, esc, enc, api, store }) {
+export function createReader({ I, $, esc, enc, api, store, openInfo }) {
   const root = $('reader'), body = $('rdBody'), ctl = $('rdCtl');
   const positions = store.get('readpos', {});
   let cur = null; // { item, save(), teardown(), key(e) }
@@ -14,8 +14,10 @@ export function createReader({ I, $, esc, enc, api, store }) {
   const btn = (id, html, title) => `<button class="icon-btn" id="${id}" title="${esc(title)}">${html}</button>`;
   const bye = () => { if (cur) { cur.save?.(); cur.teardown?.(); cur = null; } };
 
+  let openItem = null;
   async function open(item) {
     bye();
+    openItem = item;
     const ext = extOf(item.name);
     const title = stemOf(item.name).replace(/[._]+/g, ' ');
     $('rdTitle').textContent = title; $('rdSub').textContent = ''; ctl.innerHTML = ''; body.innerHTML = '<p class="rd-msg">Opening…</p>';
@@ -264,6 +266,7 @@ export function createReader({ I, $, esc, enc, api, store }) {
   function init() {
     $('rdClose').innerHTML = I.close;
     $('rdClose').onclick = close;
+    $('rdInfo').innerHTML = I.info; $('rdInfo').onclick = () => { if (openItem) openInfo?.(openItem); };
     document.addEventListener('keydown', (e) => {
       if (!isOpen()) return;
       if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(); return; }

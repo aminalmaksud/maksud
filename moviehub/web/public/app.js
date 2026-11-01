@@ -2,7 +2,7 @@
 import { createMusic } from './music.js';
 import { createReader } from './reader.js';
 import { createLive } from './live.js';
-import { castHtml, createMatcher } from './matcher.js';
+import { castHtml, wireCast, idChips, createMatcher } from './matcher.js';
 const $ = (id) => document.getElementById(id);
 if (navigator.userAgent.includes('Electron')) document.documentElement.classList.add('electron');
 const WIN = navigator.userAgent.includes('Windows');
@@ -46,6 +46,7 @@ const I = {
   check: P('<path d="M20 6L9 17l-5-5"/>'),
   file: P('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>'),
   plus: P('<path d="M12 5v14M5 12h14"/>'),
+  info: P('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>'),
   heart: P('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/>'),
   bookmark: P('<path d="M6 3h12v18l-6-4-6 4z"/>'),
   down: P('<path d="M6 9l6 6 6-6"/>'),
@@ -115,7 +116,7 @@ const store = {
 };
 // Music keeps playing while you browse; the reader opens books over the page (see music.js, reader.js)
 const music = createMusic({ I, $, esc, enc, fmt, api, pauseVideo: () => { const v = $('video'); if (v && !v.paused) v.pause(); } });
-const reader = createReader({ I, $, esc, enc, api, store });
+const reader = createReader({ I, $, esc, enc, api, store, openInfo: (item) => openBookInfo(item) });
 const matcher = createMatcher({ esc, enc, api, I });
 const live = createLive({ I, $, esc, enc, api, store, pauseAudio: () => music.pause() });
 
@@ -286,6 +287,7 @@ function cardHtml(it, { wideArt = false, sub = '', forgettable = false } = {}) {
       <div class="syn"></div>
       <div class="hover-play"><span>${I.play}</span></div>
       ${forgettable ? `<span class="card-act x" role="button" data-forget="${esc(it.path)}" title="Remove from Continue watching">${I.close}</span>` : listButton(it)}
+      ${it.kind === 'book' ? `<span class="card-act info" role="button" data-info="${esc(it.path)}" title="Book details and match (Google Books, ISBN)">${I.info}</span>` : ''}
     </div>
     <div class="cap"><div class="t">${esc(niceName(name).title)}</div><div class="s">${esc(sub || niceName(name).year)}</div></div>
   </button>`;
@@ -437,7 +439,7 @@ function resetView(view) {
   $('status').textContent = ''; $('status').className = '';
   $('folderHead').hidden = view === 'home' || view === 'settings';
   $('welcome').hidden = true;
-  $('folderCast').hidden = true; $('folderCast').innerHTML = ''; $('folderEdit').hidden = true;
+  $('folderCast').hidden = true; $('folderCast').innerHTML = ''; $('folderEdit').hidden = true; $('folderIds').hidden = true; $('folderIds').innerHTML = '';
   $('folderSyn').hidden = true; $('folderSyn').textContent = ''; $('folderResume').hidden = true; $('folderShuffle').hidden = true;
   $('folderCover').hidden = true; $('folderCover').innerHTML = ''; $('folderHead').classList.remove('has-cover'); coverBase = '';
   $('seasonCover').hidden = true; $('seasonBar').hidden = true; $('moreIn').hidden = true; $('moreIn').innerHTML = ''; $('split').classList.remove('has-more');
@@ -543,7 +545,8 @@ async function showAlbum(path, items) {
   if (state.view !== 'folder' || state.path !== path) return;
   const first = audio[0];
   if (m?.poster) coverImage(m.poster); else if (first) coverImage(`/api/art?path=${enc(first.path)}`);
-  fillInfo(path, audio.length ? 'album' : 'book', !m?.poster && !first);
+  const book = items.find((i) => i.kind === 'book');
+  fillInfo(path, audio.length ? 'album' : 'book', !m?.poster && !first, audio.length ? path : book.path);
   if (!audio.length) return;
   const go = (shuffle) => {
     const list = audio;
@@ -556,30 +559,54 @@ async function showAlbum(path, items) {
 }
 /** An album's or a book's details (TheAudioDB, Google Books) under its title, and the button to fix the match. */
 const infoCache = new Map();
-async function fillInfo(path, kind, needCover) {
-  if (!infoCache.has(path)) infoCache.set(path, api(`/api/info?kind=${kind}&path=${enc(path)}`).catch(() => null));
-  const r = await infoCache.get(path);
+const infoFor = (key, kind) => {
+  if (!infoCache.has(key)) infoCache.set(key, api(`/api/info?kind=${kind}&path=${enc(key)}`).catch(() => null));
+  return infoCache.get(key);
+};
+/** What the Edit match dialog shows as the current match of an album or a book. */
+function infoCurrent(r, kind) {
+  const i = r?.info;
+  if (!i) return null;
+  return kind === 'album'
+    ? { title: i.title, sub: [i.artist, i.year, i.genre].filter(Boolean).join(' · '), poster: i.cover, ids: { id: i.id } }
+    : { title: i.title, sub: [i.authors?.join(', '), i.publisher, i.year].filter(Boolean).join(' · '), poster: i.cover, ids: { id: i.id, isbn: i.isbn } };
+}
+const infoChanged = () => { infoCache.clear(); metaCache.clear(); folderCache.clear(); route(); };
+/** Book details and Edit match from anywhere a book shows up (its card, its reader). */
+async function openBookInfo(item) {
+  const r = await infoFor(item.path, 'book');
+  matcher.open({ path: item.path, title: stem(item.name).replace(/[._]+/g, ' '), current: infoCurrent(r, 'book'), pinned: !!r?.pinned, provider: 'book', onChanged: () => { infoChanged(); } });
+}
+async function fillInfo(path, kind, needCover, key = path) {
+  const r = await infoFor(key, kind);
   if (state.view !== 'folder' || state.path !== path) return;
   const edit = $('folderEdit');
   edit.hidden = false; edit.textContent = 'Edit match';
   const own = lastSeg(path).replace(/\.[^.]+$/, '').replace(/[([]\s*(?:19|20)\d{2}\s*[)\]]/g, '').replace(/[._]+/g, ' ').trim(), above = path.replace(/\/$/, '').split('/');
   const seed = kind === 'album' && above.length >= 3 ? `${decodeURIComponent(above.at(-2))} - ${own}` : own;
-  edit.onclick = () => matcher.open({ path, title: seed, pinned: !!r?.pinned, provider: kind, onChanged: () => { infoCache.clear(); metaCache.clear(); folderCache.clear(); route(); } });
+  edit.onclick = () => matcher.open({ path: key, title: seed, current: infoCurrent(r, kind), pinned: !!r?.pinned, provider: kind, onChanged: infoChanged });
   const i = r?.info;
   if (!i) { if (r?.error) { $('folderSyn').hidden = false; $('folderSyn').classList.add('none'); $('folderSyn').textContent = r.error; } return; }
   if (i.cover && (needCover || r.pinned)) coverImage(i.cover);
-  const bits = kind === 'album' ? [i.artist, i.year, i.genre] : [i.authors?.join(', '), i.publisher, i.year, i.isbn && `ISBN ${i.isbn}`];
+  const bits = kind === 'album' ? [i.artist, i.year, i.genre] : [i.authors?.join(', '), i.publisher, i.year];
   $('folderSub').textContent = [$('folderSub').textContent, ...bits.filter(Boolean)].filter(Boolean).join(' · ');
+  $('folderIds').innerHTML = idChips(kind === 'album' ? [['TheAudioDB ID', i.id]] : [['Google Books ID', i.id, i.link], ['ISBN', i.isbn]], esc);
+  $('folderIds').hidden = !$('folderIds').innerHTML;
   if (i.description) { const el = $('folderSyn'); el.hidden = false; el.classList.remove('none'); el.textContent = i.description; }
 }
 /** The plot of a movie or series folder, under its title. Says what's missing when there's none. */
+/** What the Edit match dialog shows as the current TMDB match. */
+const tmdbCurrent = (m, c) => (c?.tmdbId ? { title: m?.matched || m?.title || '', sub: [m?.year, c.tmdbType === 'tv' ? 'TV series' : 'Movie', c.genres?.join(', ')].filter(Boolean).join(' · '), poster: m?.poster, ids: { tmdb: String(c.tmdbId), imdb: c.imdbId || '' } } : null);
 /** Cast under a series or movie page, and the button to fix the match. */
 async function fillFolderCast(path, title) {
   const c = await castFor(path);
   if (state.view !== 'folder' || state.path !== path) return;
   $('folderCast').innerHTML = castHtml(c, esc); $('folderCast').hidden = !$('folderCast').innerHTML;
+  wireCast($('folderCast'));
+  const m = await meta(path);
+  if (state.view !== 'folder' || state.path !== path) return;
   $('folderEdit').hidden = false;
-  $('folderEdit').onclick = () => matcher.open({ path, title, pinned: !!c?.pinned, type: c?.tmdbType || '', onChanged: matchChanged });
+  $('folderEdit').onclick = () => matcher.open({ path, title, current: tmdbCurrent(m, c), pinned: !!c?.pinned, type: c?.tmdbType || '', onChanged: matchChanged });
 }
 async function showSynopsis(path) {
   const el = $('folderSyn');
@@ -1000,10 +1027,13 @@ document.addEventListener('click', (e) => {
 });
 
 document.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-list]:not(#heroList), [data-forget]');
+  const b = e.target.closest('[data-list]:not(#heroList), [data-forget], [data-info]');
   if (!b) return;
   e.stopPropagation(); e.preventDefault();
-  if (b.dataset.list) {
+  if (b.dataset.info) {
+    const it = findItem(b.dataset.info);
+    if (it) openBookInfo(it);
+  } else if (b.dataset.list) {
     const it = findItem(b.dataset.list);
     toast2(toggleList(it) ? 'Added to My List' : 'Removed from My List');
   } else {
@@ -1169,9 +1199,9 @@ async function showDetails(item, opts = {}) {
   if (state.config?.tmdbKey) {
     const c = await castFor(metaPath);
     if (detailsItem !== item) return;
-    $('dCast').innerHTML = castHtml(c, esc);
+    $('dCast').innerHTML = castHtml(c, esc); wireCast($('dCast'));
     $('dEdit').hidden = false;
-    $('dEdit').onclick = () => matcher.open({ path: metaPath, title: m.matched || m.title, pinned: !!c?.pinned, type: c?.tmdbType || '', onChanged: matchChanged });
+    $('dEdit').onclick = () => matcher.open({ path: metaPath, title: m.matched || m.title, current: tmdbCurrent(m, c), pinned: !!c?.pinned, type: c?.tmdbType || '', onChanged: matchChanged });
   }
 }
 const closeDetails = () => { $('details').hidden = true; detailsItem = null; };
