@@ -114,7 +114,7 @@ poster images it finds on the server (`poster.jpg`, `folder.jpg`, …) and draws
 
 Add M3U or M3U8 playlists under **Settings → Live TV**, one per line (`My channels | https://example.com/list.m3u`,
 or a playlist file on this computer). A **Live TV** tab appears with the channels grouped as the playlist groups them,
-a search box, logos and favourites (★). Click a channel to watch; ↑ / ↓ change channel, F is full screen, Esc closes.
+a search box, logos and favourites (★). Click a channel to watch. The viewer has a control bar (previous / next channel, pause, LIVE, volume, picture in picture, full screen). Mouse: click the picture to pause, double-click for full screen, scroll for volume. Keys: Space or K = pause · F = full screen · M = mute · ↑ ↓ = volume · Shift+N / Shift+P (or Page Down / Up) = next / previous channel · L = back to live · Esc = close. A paused channel falls behind the live picture; press LIVE to catch up.
 StreamHub only plays the streams your playlist links to. Channels are converted with ffmpeg on the way, so HLS, MPEG-TS and
 most other streams play with sound, but live streams can't be paused or rewound. There is no programme guide yet.
 
