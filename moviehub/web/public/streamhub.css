@@ -88,7 +88,11 @@ html.streamhub #nav a:hover, html.streamhub #shTheme:hover, html.streamhub #sett
 html.streamhub #nav a.on { background: var(--raised); color: var(--strong); box-shadow: none; }
 html.streamhub #nav a.on::before { content: ""; position: absolute; left: 0; top: 12px; width: 3px; height: 16px; border-radius: 3px; background: var(--blue); }
 html.streamhub #nav em { font: 600 11px/20px var(--body); font-style: normal; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: var(--blue); color: #fff; text-align: center; }
-html.streamhub #refreshBtn { display: none; }
+/* Refresh sits under the places in the sidebar, like Settings at the bottom */
+html.streamhub #refreshBtn { order: 4; position: relative; display: flex; align-items: center; gap: 12px; width: auto; height: 40px; padding: 0 11px; border-radius: 6px; border: 0; background: transparent; color: var(--muted); font: 500 14px var(--body); white-space: nowrap; text-align: left; }
+html.streamhub #refreshBtn svg { width: 18px; height: 18px; flex: none; stroke-width: 1.75; }
+html.streamhub #refreshBtn::after { content: "Refresh"; }
+html.streamhub #refreshBtn:hover { background: var(--raised); color: var(--strong); }
 html.streamhub #shFoot { order: 5; margin-top: auto; padding-top: 12px; display: flex; flex-direction: column; gap: 2px; }
 html.streamhub #shStatus { display: block; padding: 10px 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--line2); background: var(--surface); color: var(--strong); text-decoration: none; }
 html.streamhub #shStatus:hover { border-color: var(--hover); background: var(--raised); }
