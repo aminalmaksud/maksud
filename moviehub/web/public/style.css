@@ -622,7 +622,8 @@ dialog .s-card > h3 { display: none; }
 #player { position: fixed; inset: 0; z-index: 30; background: #000; overflow: hidden; color: #fff; font-family: var(--body); }
 #player video { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; }
 #player.idle { cursor: none; }
-.p-ui { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; transition: opacity .25s; }
+.p-ui { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; transition: opacity .25s; pointer-events: none; } /* the empty middle lets clicks through to the picture: click pauses, double-click is full screen */
+.p-ui > * { pointer-events: auto; }
 #player.idle .p-ui { opacity: 0; }
 .p-top { display: flex; align-items: center; gap: 12px; padding: 18px 24px 56px; background: linear-gradient(rgba(20, 4, 6, .82), transparent); }
 html.electron #player:not(.fs) .p-top { padding-left: 92px; }
@@ -716,7 +717,12 @@ html.electron #player:not(.fs) .p-top { padding-left: 92px; }
 .sub-preview span { font-size: calc(var(--sub, 1) * 18px); }
 
 /* mini player: Back keeps the video going in the corner */
-.p-top #pList.on { color: var(--gold-2); }
+#pList.on { color: var(--gold-2); }
+#pList.on svg { fill: currentColor; }
+.seek-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.seek-row .seek { flex: 1; margin-bottom: 0; }
+.p-t { font: 500 14px var(--mono); font-variant-numeric: tabular-nums; color: #fff7ea; min-width: 3.4em; }
+.p-t:last-child { text-align: right; }
 .mini-ui { display: none; }
 #player.mini {
   inset: auto 26px 26px auto; width: min(400px, 46vw); aspect-ratio: 16 / 9; height: auto; z-index: 25; border-radius: 20px;

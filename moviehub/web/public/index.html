@@ -139,7 +139,7 @@
           </fieldset>
         </section>
         <section class="s-card">
-          <div class="field s-row"><span class="flabel">Look</span>
+          <div class="field s-row"><span class="flabel">Skin</span>
             <div class="looks">
               <button type="button" class="look-pick" data-look="vintage"><i></i><span>Vintage<small>Parchment and maroon, the original</small></span></button>
               <button type="button" class="look-pick" data-look="contemporary"><i></i><span>Contemporary<small>StreamHub: sidebar, flat and modern</small></span></button>
@@ -236,30 +236,32 @@
     <div class="p-top">
       <button class="icon-btn" id="pClose" title="Minimize — keeps playing (Esc)"></button>
       <div class="p-title"><b id="pTitle"></b><small id="pSub"></small></div>
-      <span class="grow"></span>
-      <button class="icon-btn" id="pList" title="Add to My List"></button>
     </div>
     <div class="p-bottom">
-      <div class="seek" id="seek">
-        <div class="seek-track"><i id="seekBuf"></i><i id="seekPlayed"></i><span id="seekKnob"></span></div>
-        <div class="seek-tip" id="seekTip"></div>
+      <div class="seek-row">
+        <span class="p-t" id="pElapsed">0:00</span>
+        <div class="seek" id="seek">
+          <div class="seek-track"><i id="seekBuf"></i><i id="seekPlayed"></i><span id="seekKnob"></span></div>
+          <div class="seek-tip" id="seekTip"></div>
+        </div>
+        <span class="p-t" id="pRemain">-0:00</span>
       </div>
       <div class="p-row">
+        <button class="icon-btn" id="pBack" title="Rewind 10 s (←)"></button>
         <button class="icon-btn" id="pPlay" title="Play / pause (Space)"></button>
-        <button class="icon-btn" id="pBack" title="Back 10 s (←)"></button>
-        <button class="icon-btn" id="pFwd" title="Forward 10 s (→)"></button>
-        <button class="icon-btn" id="pNext" title="Next episode (N)" hidden></button>
+        <button class="icon-btn" id="pFwd" title="Forward 30 s (→)"></button>
+        <button class="icon-btn" id="pNext" title="Next episode (Shift+N)" hidden></button>
+        <span class="grow"></span>
+        <button class="pill-btn" id="pAudio" title="Audio track (A)"></button>
+        <button class="pill-btn" id="pSubs" title="Subtitles (C)"></button>
+        <button class="pill-btn" id="pSpeed" title="Playback speed (Shift+, / Shift+.)"></button>
+        <button class="pill-btn" id="pStereo" title="3D movie shown in 2D" hidden></button>
+        <button class="icon-btn" id="pDownload" title="Download to this Mac" hidden></button>
+        <button class="icon-btn" id="pList" title="Add to My List"></button>
         <div class="vol">
           <button class="icon-btn" id="pMute" title="Mute (M)"></button>
           <input type="range" id="pVol" min="0" max="1" step="0.05" aria-label="Volume">
         </div>
-        <span class="p-time" id="pTime">0:00 / 0:00</span>
-        <span class="grow"></span>
-        <button class="pill-btn" id="pAudio" title="Audio track (A)"></button>
-        <button class="pill-btn" id="pSubs" title="Subtitles (C)"></button>
-        <button class="pill-btn" id="pSpeed" title="Playback speed"></button>
-        <button class="pill-btn" id="pStereo" title="3D movie shown in 2D" hidden></button>
-        <button class="icon-btn" id="pDownload" title="Download to this Mac" hidden></button>
         <button class="icon-btn" id="pPip" title="Picture in picture"></button>
         <button class="icon-btn" id="pFull" title="Full screen (F)"></button>
       </div>

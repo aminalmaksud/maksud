@@ -308,7 +308,8 @@ html.streamhub .menu .stepper output { color: #A9B4C4; font-family: var(--mono);
 html.streamhub .menu .hint { color: #A9B4C4; }
 html.streamhub .menu .hint a { color: #84ADFF; }
 html.streamhub .sub-preview { border-radius: 8px; background: #182030; }
-html.streamhub .p-top #pList.on { color: #84ADFF; }
+html.streamhub #pList.on { color: #84ADFF; }
+html.streamhub .p-t { font: 400 13px var(--mono); color: #E9EDF3; }
 html.streamhub #upNext { border-radius: 12px; background: rgba(15, 21, 33, .97); border: 1px solid #263041; }
 html.streamhub #upNext small { font: 600 11px var(--body); letter-spacing: .1em; color: #7A879B; }
 html.streamhub #upNext .btn:not(.primary) { background: #182030; color: #fff; border-color: transparent; }

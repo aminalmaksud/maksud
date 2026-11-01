@@ -54,9 +54,9 @@ server or folder that holds videos.
 sections, search, resume and the full player. Name a folder library the same as an ISP library (for example
 `Movies`) to show both as one section. Download is hidden for these, because they're already on your computer.
 
-**Look:** Settings → **Look** switches between **Vintage** (parchment and maroon, the original) and **Contemporary**
+**Skin:** Settings → **Skin** switches between **Vintage** (parchment and maroon, the original) and **Contemporary**
 (StreamHub: sidebar, flat and modern) on both the Mac and Windows apps. The Mac app starts in Vintage and the Windows app in
-Contemporary. Each look has its own themes: Parchment / Night, or System / Light / Dark. Both looks bring their fonts
+Contemporary. Each skin has its own themes: Parchment / Night, or System / Light / Dark. Both skins bring their fonts
 with them, so they look the same offline. The Vintage design sources are in `design/vintage/`, and the Contemporary ones in `windows/design/`.
 
 **Books and music:** add a folder of books or music like any other library (for example `Music | G:\Music` and `Books | G:\Book`), and
@@ -121,8 +121,11 @@ most other streams play with sound, but live streams can't be paused or rewound.
 - Click a movie to see its details, then **Play** or **Resume**.
 - The player has an **audio** button (🎵) for tracks/dubs and a **CC** button for subtitles, timing,
   size and loading your own `.srt`. There's also a speed button, picture-in-picture and full screen.
-- Keys: Space = pause · ← → = 10 s · Shift+← → = 30 s · ↑ ↓ = volume · F = full screen · M = mute ·
-  C = subtitles on/off · A = audio tracks · [ ] = subtitle timing · N = next episode · 0–9 = jump to 0–90% · Esc = mini player
+- Mouse: click the picture to pause or resume, double-click for full screen, scroll to change the volume.
+- Keys (the same as Jellyfin's): Space or K = pause · ← or J = back 10 s · → or L = forward 30 s · ↑ ↓ = volume · F = full screen ·
+  M = mute · 0–9 = jump to 0–90% · Home / End = start / end · , and . = one frame back / forward · Shift+, and Shift+. = slower / faster ·
+  G / H = subtitles earlier / later · Shift+N = next episode · Esc = mini player. Also: C = subtitles on/off · A = audio tracks ·
+  [ ] = subtitle timing · N = next episode.
 
 ### Sound, sync and subtitles
 Many movies use AC3/DTS audio and MKV files, which normal web players can't decode. The app converts the
@@ -155,7 +158,7 @@ Install ffmpeg first (`brew install ffmpeg`) to get sound for every file. Tests:
 ## Windows app (StreamHub)
 
 StreamHub is the Windows version of the Mac app, with the same library, player, downloads and keys. It has its own
-look: sidebar navigation, light and dark themes that follow Windows, and a Server page (see `windows/design/`). It's built with
+skin: sidebar navigation, light and dark themes that follow Windows, and a Server page (see `windows/design/`). It's built with
 [Tauri](https://tauri.app): a small Rust program shows the app in Windows' built-in browser engine (WebView2) and
 runs the same server as the Mac app in the background, with ffmpeg included. You never have to start anything yourself.
 

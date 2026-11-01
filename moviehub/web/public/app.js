@@ -45,6 +45,7 @@ const I = {
   check: P('<path d="M20 6L9 17l-5-5"/>'),
   file: P('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>'),
   plus: P('<path d="M12 5v14M5 12h14"/>'),
+  heart: P('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/>'),
   bookmark: P('<path d="M6 3h12v18l-6-4-6 4z"/>'),
   down: P('<path d="M6 9l6 6 6-6"/>'),
   expand: P('<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>'),
@@ -1483,6 +1484,15 @@ function seekTo(t, { immediate = false } = {}) {
   clearTimeout(S.seekTimer);
   S.seekTimer = setTimeout(() => load(t), immediate ? 0 : 450);
 }
+/** One frame back or forward (the frame rate isn't known here, so 1/24 s). */
+function stepFrame(d) { video.pause(); seekTo(now() + d / 24, { immediate: true }); }
+/** Playback speed one step down or up, like Jellyfin's Shift+, and Shift+. */
+function stepSpeed(d) {
+  const steps = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+  const i = steps.findIndex((s) => s >= prefs.speed - 0.001);
+  prefs.speed = steps[Math.max(0, Math.min(steps.length - 1, (i < 0 ? 2 : i) + d))];
+  savePrefs(); video.playbackRate = prefs.speed; updateButtons(); toast(`Speed ${prefs.speed}×`, 800);
+}
 const skip = (s) => { seekTo(now() + s); toast(`${s > 0 ? '+' : '−'}${Math.abs(s)} s`, 600); };
 
 /** Stops playback and closes the player (the × on the mini player). */
@@ -1579,7 +1589,7 @@ function updateButtons() {
   setIcon($('pPlay'), video.paused ? 'play' : 'pause');
   setIcon($('mPlay'), video.paused ? 'play' : 'pause');
   const listed = S.item && inList(playerListItem().path);
-  setIcon($('pList'), listed ? 'check' : 'plus');
+  setIcon($('pList'), 'heart');
   $('pList').title = listed ? 'In My List' : 'Add to My List';
   $('pList').classList.toggle('on', !!listed);
   setIcon($('pMute'), video.muted || video.volume === 0 ? 'mute' : 'vol');
@@ -1599,7 +1609,7 @@ function updateButtons() {
 
 function updateTime() {
   const t = now(), d = duration();
-  $('pTime').textContent = `${fmt(t)} / ${fmt(d)}`;
+  $('pElapsed').textContent = fmt(t); $('pRemain').textContent = d ? `-${fmt(Math.max(0, d - t))}` : '';
   const pct = d ? (t / d) * 100 : 0;
   $('seekPlayed').style.width = pct + '%';
   $('seekKnob').style.left = pct + '%';
@@ -1633,7 +1643,7 @@ seekEl.addEventListener('mousedown', (e) => {
 const togglePlay = () => (video.paused ? video.play() : video.pause());
 $('pPlay').onclick = togglePlay;
 $('pBack').onclick = () => skip(-10);
-$('pFwd').onclick = () => skip(10);
+$('pFwd').onclick = () => skip(30); // like Jellyfin: back 10 s, forward 30 s
 $('pNext').onclick = () => { const n = nextItem(); if (n) { saveProgress(S.item, now(), duration()); startPlayback(n, { from: 0 }); } };
 $('pClose').onclick = minimizePlayer;
 $('mExpand').onclick = expandPlayer;
@@ -1689,6 +1699,12 @@ function poke() {
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => { if (!video.paused && $('menu').hidden && playerFull()) player.classList.add('idle'); }, 2600);
 }
+player.addEventListener('wheel', (e) => {
+  if (player.classList.contains('mini') || !$('menu').hidden) return;
+  e.preventDefault();
+  video.volume = Math.max(0, Math.min(1, video.volume + (e.deltaY < 0 ? 0.05 : -0.05))); video.muted = false;
+  prefs.volume = video.volume; prefs.muted = false; savePrefs(); $('pVol').value = video.volume; toast(`Volume ${Math.round(video.volume * 100)}%`, 700); updateButtons();
+}, { passive: false });
 player.addEventListener('mousemove', poke);
 player.addEventListener('mousedown', poke);
 
@@ -2064,13 +2080,17 @@ document.addEventListener('keydown', (e) => {
   poke();
   const k = e.key.toLowerCase();
   if (k === ' ' || k === 'k') { e.preventDefault(); togglePlay(); }
-  else if (k === 'arrowright' || k === 'l') { e.preventDefault(); skip(e.shiftKey ? 30 : 10); }
-  else if (k === 'arrowleft' || k === 'j') { e.preventDefault(); skip(e.shiftKey ? -30 : -10); }
+  else if ((k === 'arrowright' || k === 'l') && !e.shiftKey) { e.preventDefault(); skip(30); }
+  else if ((k === 'arrowleft' || k === 'j') && !e.shiftKey) { e.preventDefault(); skip(-10); }
   else if (k === 'arrowup') { e.preventDefault(); video.volume = Math.min(1, video.volume + 0.05); video.muted = false; prefs.volume = video.volume; savePrefs(); $('pVol').value = video.volume; toast(`Volume ${Math.round(video.volume * 100)}%`, 700); updateButtons(); }
   else if (k === 'arrowdown') { e.preventDefault(); video.volume = Math.max(0, video.volume - 0.05); prefs.volume = video.volume; savePrefs(); $('pVol').value = video.volume; toast(`Volume ${Math.round(video.volume * 100)}%`, 700); updateButtons(); }
   else if (k === 'm') $('pMute').click();
   else if (k === 'f') toggleFull();
-  else if (k === 'n') $('pNext').click();
+  else if (k === 'n') $('pNext').click(); // Shift+N, as in Jellyfin, works the same
+  else if (k === 'home') { e.preventDefault(); if (duration()) seekTo(0, { immediate: true }); }
+  else if (k === 'end') { e.preventDefault(); if (duration()) seekTo(duration() - 1, { immediate: true }); }
+  else if (e.code === 'Comma' || e.code === 'Period') { e.preventDefault(); const d = e.code === 'Comma' ? -1 : 1; if (e.shiftKey) stepSpeed(d); else stepFrame(d); } // as in Jellyfin
+  else if (k === 'g' || k === 'h') setSubDelay(S.subs.delay + (k === 'h' ? 0.1 : -0.1)); // subtitle sync, as in Jellyfin
   else if (k === 'c') { const on = S.subs.id !== 'off'; if (on) selectSubtitle('off'); else { const o = S.subOptions.find((x) => x.type === 'file' || x.text); if (o) selectSubtitle(o.id); else toast('No subtitles for this video', 1500); } }
   else if (k === 'a') { const a = S.probe?.audio || []; if (a.length > 1) $('pAudio').click(); }
   else if (k === '[' || k === ']' || k === '{' || k === '}') setSubDelay(S.subs.delay + ((k === ']' || k === '}') ? 1 : -1) * (e.shiftKey ? 1 : 0.1));
