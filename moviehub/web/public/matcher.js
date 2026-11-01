@@ -16,6 +16,16 @@ export function castHtml(c, esc) {
   return `${facts ? `<p class="cast-facts">${facts}</p>` : ''}${people ? `<div class="cast">${people}</div>` : ''}`;
 }
 
+/** What each kind of title is matched against: where to search, where to save, and how to word the dialog. */
+const PROVIDERS = {
+  tmdb: { name: 'TMDB', hint: 'Pick the right title from TMDB, so its poster, plot and cast are correct.', idLabel: '…or use an ID', idHint: 'TMDB id (603), IMDb id (tt0133093) or an address', search: (enc, q) => `/api/meta-search?q=${enc(q)}`, save: '/api/meta-id',
+    body: (v, type) => (/tt\d{5,}/i.test(v) ? { imdb: v } : { tmdb: v, ...(type ? { type } : {}) }), hit: (r) => ({ tmdb: String(r.id), type: r.type }), errEmpty: 'Type an ID, or pick a title from the list.' },
+  album: { name: 'TheAudioDB', hint: 'Pick the album from TheAudioDB, so its cover and description are right. Search as “artist” or “artist - album”.', idLabel: '…or use an album ID', idHint: 'TheAudioDB album id (2115888) or its address', search: (enc, q) => `/api/info-search?kind=album&q=${enc(q)}`, save: '/api/info-id',
+    body: (v) => ({ kind: 'album', id: v }), hit: (r) => ({ kind: 'album', id: String(r.id) }), errEmpty: 'Type an album ID, or pick one from the list.' },
+  book: { name: 'Google Books', hint: 'Pick the book from Google Books, so its cover, author and description are right.', idLabel: '…or use an ISBN or Google Books ID', idHint: 'ISBN (978-0-553-80457-7), Google Books id or address', search: (enc, q) => `/api/info-search?kind=book&q=${enc(q)}`, save: '/api/info-id',
+    body: (v) => ({ kind: 'book', id: v }), hit: (r) => ({ kind: 'book', id: String(r.id) }), errEmpty: 'Type an ISBN or ID, or pick a book from the list.' },
+};
+
 export function createMatcher({ esc, enc, api, I }) {
   let dlg = null;
 
@@ -23,16 +33,17 @@ export function createMatcher({ esc, enc, api, I }) {
    * Opens the dialog for the title at `path`. `onChanged()` runs after a match is saved or cleared.
    * Providers: only TMDB for now; the shape (search, then save by id) is what music and books will use too.
    */
-  function open({ path, title, pinned = false, type = '', onChanged }) {
+  function open({ path, title, pinned = false, type = '', provider = 'tmdb', onChanged }) {
     close();
+    const P = PROVIDERS[provider];
     dlg = document.createElement('dialog');
     dlg.className = 'match-dlg';
     dlg.innerHTML = `<form method="dialog">
       <h3>Match “${esc(title)}”</h3>
-      <p class="mt-hint">Pick the right title from TMDB, so its poster, plot and cast are correct.</p>
+      <p class="mt-hint">${esc(P.hint)}</p>
       <label>Search by name<input name="q" value="${esc(title)}" spellcheck="false" autocomplete="off"></label>
       <div class="mt-results" id="mtResults" aria-live="polite"></div>
-      <label>…or use an ID<input name="id" placeholder="TMDB id (603), IMDb id (tt0133093) or an address" spellcheck="false" autocomplete="off"></label>
+      <label>${esc(P.idLabel)}<input name="id" placeholder="${esc(P.idHint)}" spellcheck="false" autocomplete="off"></label>
       <p class="mt-err" id="mtErr" hidden></p>
       <div class="mt-btns">${pinned ? '<button type="button" class="btn quiet" id="mtReset">Back to automatic</button>' : ''}<span class="grow"></span>
         <button type="button" class="btn" id="mtCancel">Cancel</button><button class="btn gold" id="mtSave">Use this ID</button></div></form>`;
@@ -41,7 +52,7 @@ export function createMatcher({ esc, enc, api, I }) {
     const err = (m) => { $q('#mtErr').textContent = m || ''; $q('#mtErr').hidden = !m; };
     const save = async (body) => {
       err('');
-      try { await api('/api/meta-id', { method: 'POST', body: JSON.stringify({ path, ...body }) }); close(); onChanged?.(); }
+      try { await api(P.save, { method: 'POST', body: JSON.stringify({ path, ...body }) }); close(); onChanged?.(); }
       catch (e) { err(e.message); }
     };
     $q('#mtCancel').onclick = close;
@@ -50,8 +61,8 @@ export function createMatcher({ esc, enc, api, I }) {
     form.onsubmit = (e) => {
       e.preventDefault();
       const v = form.id.value.trim();
-      if (!v) return err('Type an ID, or pick a title from the list.');
-      save(/tt\d{5,}/i.test(v) ? { imdb: v } : { tmdb: v, ...(type ? { type } : {}) });
+      if (!v) return err(P.errEmpty);
+      save(P.body(v, type));
     };
     let timer = 0, seq = 0;
     const search = async () => {
@@ -59,11 +70,11 @@ export function createMatcher({ esc, enc, api, I }) {
       if (q.length < 2) { box.innerHTML = ''; return; }
       box.innerHTML = '<p class="mt-hint">Searching…</p>';
       try {
-        const { results } = await api(`/api/meta-search?q=${enc(q)}`);
+        const { results } = await api(P.search(enc, q));
         if (n !== seq) return;
         box.innerHTML = results.length ? results.map((r, i) => `<button type="button" class="mt-hit" data-i="${i}">
-          ${r.poster ? `<img src="${esc(r.poster)}" alt="">` : '<i></i>'}<span><b>${esc(r.title)}</b> <small>${r.year || ''} · ${r.type === 'tv' ? 'TV series' : 'Movie'} · ${r.id}</small><em>${esc(r.overview)}</em></span></button>`).join('') : '<p class="mt-hint">Nothing found.</p>';
-        box.querySelectorAll('.mt-hit').forEach((b) => { b.onclick = () => save({ tmdb: String(results[b.dataset.i].id), type: results[b.dataset.i].type }); });
+          ${r.poster ? `<img src="${esc(r.poster)}" alt="">` : '<i></i>'}<span><b>${esc(r.title)}</b> <small>${[r.year, r.type === 'tv' ? 'TV series' : r.type === 'movie' ? 'Movie' : '', r.id].filter(Boolean).join(' · ')}</small><em>${esc(r.overview)}</em></span></button>`).join('') : '<p class="mt-hint">Nothing found.</p>';
+        box.querySelectorAll('.mt-hit').forEach((b) => { b.onclick = () => save(P.hit(results[b.dataset.i])); });
       } catch (e) { if (n === seq) box.innerHTML = ''; err(e.message); }
     };
     form.q.oninput = () => { clearTimeout(timer); timer = setTimeout(search, 350); };

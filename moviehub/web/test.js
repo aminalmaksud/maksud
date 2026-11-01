@@ -512,4 +512,50 @@ assert.equal(chs[0].url, 'http://h/a.m3u8');
   assert.equal(Object.keys(JSON.parse(fs.readFileSync(process.env.CONFIG_FILE, 'utf8')).metaIds).length, 1, 'saving Settings keeps the matches');
   fs.rmSync(own, { recursive: true, force: true });
 }
+// --- albums (TheAudioDB) and books (Google Books): found by folder names, matched by hand with an id or ISBN
+{
+  const album = { idAlbum: '2115888', idArtist: '111239', strAlbum: 'Parachutes', strArtist: 'Coldplay', intYearReleased: '2000', strGenre: 'Alternative Rock', strDescriptionEN: 'The debut album.', strAlbumThumb: 'https://img/parachutes.jpg', intScore: '9.1' };
+  const book = { id: 'zyTCAlFPjgYC', volumeInfo: { title: 'The Google Story', authors: ['David A. Vise'], publishedDate: '2005-11-15', publisher: 'Delacorte', description: '<p>How two guys <b>built</b> it.</p>', industryIdentifiers: [{ type: 'ISBN_13', identifier: '9780553804577' }], pageCount: 207, imageLinks: { thumbnail: 'http://books.google.com/c.jpg' } } };
+  const seen = [];
+  const ext = http.createServer((q, s) => {
+    const u = new URL(q.url, 'http://x'); seen.push(q.url); s.setHeader('content-type', 'application/json');
+    if (u.pathname === '/adb/123/searchalbum.php') return s.end(JSON.stringify({ album: u.searchParams.get('s') === 'Coldplay' ? [album] : null }));
+    if (u.pathname === '/adb/123/album.php') return s.end(JSON.stringify({ album: u.searchParams.get('m') === '2115888' ? [album] : null }));
+    if (u.pathname === '/gb/volumes/zyTCAlFPjgYC') return s.end(JSON.stringify(book));
+    if (u.pathname === '/gb/volumes') { const qq = u.searchParams.get('q'); return s.end(JSON.stringify(qq === 'isbn:9780553804577' || /google story/i.test(qq) ? { items: [book] } : { totalItems: 0 })); }
+    s.statusCode = 404; s.end('{}');
+  });
+  await new Promise((r) => ext.listen(0, '127.0.0.1', r));
+  process.env.AUDIODB_API = `http://127.0.0.1:${ext.address().port}/adb`; process.env.GOOGLE_BOOKS_API = `http://127.0.0.1:${ext.address().port}/gb`;
+  const shelf2 = fs.mkdtempSync(path.join(os.tmpdir(), 'mh-info-'));
+  fs.mkdirSync(path.join(shelf2, 'Coldplay', 'Parachutes (2000)'), { recursive: true });
+  fs.writeFileSync(path.join(shelf2, 'Coldplay', 'Parachutes (2000)', '01 Don\'t Panic.mp3'), 'x');
+  fs.mkdirSync(path.join(shelf2, 'Odd'), { recursive: true });
+  fs.writeFileSync(path.join(shelf2, 'Odd', 'The Google Story.pdf'), 'x');
+  await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Shelf | ${shelf2}`, jellyfin: false }) });
+  const albumRel = encodeURIComponent('0/Coldplay/Parachutes%20(2000)/');
+  let r2 = await (await get(`/api/info?kind=album&path=${albumRel}`)).json();
+  assert.deepEqual([r2.info.title, r2.info.artist, r2.info.year, r2.info.genre, r2.info.cover, r2.pinned], ['Parachutes', 'Coldplay', 2000, 'Alternative Rock', 'https://img/parachutes.jpg', false], 'found from the artist and album folders');
+  const bookRel = encodeURIComponent('0/Odd/The%20Google%20Story.pdf');
+  r2 = await (await get(`/api/info?kind=book&path=${bookRel}`)).json();
+  assert.deepEqual([r2.info.title, r2.info.authors, r2.info.isbn, r2.info.year], ['The Google Story', ['David A. Vise'], '9780553804577', 2005]);
+  assert.equal(r2.info.description, 'How two guys built it.', 'markup removed');
+  assert.equal(r2.info.cover, 'https://books.google.com/c.jpg', 'covers over https');
+  const post2 = (body) => fetch(base + '/api/info-id', { method: 'POST', body: JSON.stringify(body) });
+  assert.equal((await post2({ kind: 'album', path: '0/Odd/', id: 'abc' })).status, 400);
+  assert.equal((await post2({ kind: 'album', path: '0/Odd/', id: '99999' })).status, 404, 'unknown album refused');
+  assert.equal((await post2({ kind: 'album', path: '0/Odd/', id: 'https://www.theaudiodb.com/album/2115888-coldplay-parachutes' })).status, 200);
+  r2 = await (await get('/api/info?kind=album&path=' + encodeURIComponent('0/Odd/'))).json();
+  assert.deepEqual([r2.info.title, r2.pinned], ['Parachutes', true], 'a folder with no artist is matched by id');
+  assert.equal((await post2({ kind: 'book', path: '0/Odd/', isbn: '978-0-553-80457-7' })).status, 200, 'an ISBN works');
+  assert.equal((await post2({ kind: 'book', path: '0/Odd/x.pdf', id: 'https://books.google.com/books?id=zyTCAlFPjgYC' })).status, 200, 'a Google Books address works');
+  assert.equal((await post2({ kind: 'book', path: '0/Odd/', isbn: '9781111111111' })).status, 404);
+  await post2({ kind: 'album', path: '0/Odd/', clear: true });
+  assert.equal((await (await get('/api/info?kind=album&path=' + encodeURIComponent('0/Odd/'))).json()).pinned, false, 'cleared');
+  let sr = await (await get('/api/info-search?kind=album&q=Coldplay')).json();
+  assert.deepEqual(sr.results.map((x) => [x.id, x.title, x.year]), [['2115888', 'Parachutes · Coldplay', 2000]]);
+  sr = await (await get('/api/info-search?kind=book&q=978-0-553-80457-7')).json();
+  assert.deepEqual(sr.results.map((x) => [x.id, x.title, x.overview]), [['zyTCAlFPjgYC', 'The Google Story', 'David A. Vise']], 'an ISBN in the search box');
+  fs.rmSync(shelf2, { recursive: true, force: true }); ext.close();
+}
 server.close(); isp.close(); tmdbFake.close(); fs.rmSync(path.dirname(process.env.CONFIG_FILE), { recursive: true, force: true });

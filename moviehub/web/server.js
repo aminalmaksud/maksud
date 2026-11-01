@@ -13,6 +13,8 @@ import { hasFfmpeg, ffmpegVersion, probe, remux, extractSubtitle, keyframeBefore
 import { metaFor, seasonEpisodes, tmdbById, findByImdb, searchTmdb, castOf, forgetMeta } from './meta.js';
 import { createJellyfin } from './jellyfin.js';
 import { loadPlaylist, forgetPlaylists } from './iptv.js';
+import { albumById, searchAlbums } from './audiodb.js';
+import { bookById, bookByIsbn, searchBooks } from './books.js';
 import { movieHash, searchSubtitles, fetchSubtitle } from './subsearch.js';
 import { groupKey, mergeListings, encodeV, decodeV } from './merge.js';
 import { downloadsEnabled, startDownload, cancelDownload, deleteDownloaded, listDownloads, localEntries, localFile } from './downloads.js';
@@ -51,6 +53,8 @@ function loadConfig() {
     // online subtitles (see subsearch.js)
     opensubsKey: c.opensubsKey ?? '', opensubsUser: c.opensubsUser ?? '', opensubsPass: c.opensubsPass ?? '', subdlKey: c.subdlKey ?? '',
     shareTv: !!c.shareTv, // share local folders with the Android TV app (see shareServer)
+    infoIds: c.infoIds && typeof c.infoIds === 'object' ? c.infoIds : {}, // albums and books matched by hand: address -> { kind, id }
+    audiodbKey: c.audiodbKey ?? '', googleBooksKey: c.googleBooksKey ?? '',
     metaIds: c.metaIds && typeof c.metaIds === 'object' ? c.metaIds : {}, // titles the user matched by hand: address -> { type, id } (TMDB)
     playlists: splitServers(c.playlists), // Live TV: M3U playlists, one per line (see iptv.js)
     jellyfin: !!c.jellyfin, jellyfinPass: c.jellyfinPass ?? '', // Jellyfin-compatible API for Jellyfin apps (see jellyfin.js)
@@ -550,6 +554,76 @@ async function handleCast(url, res) {
   const c = await castOf(config.tmdbKey, m.tmdbType, m.tmdbId);
   json(res, 200, { tmdbId: m.tmdbId, tmdbType: m.tmdbType, pinned: !!pinnedFor(metaPathOf(url)), ...c });
 }
+/* ---- albums (TheAudioDB) and books (Google Books): what they are, and matching them by hand ---- */
+const cleanTitle = (n) => decodeURIComponent(n).replace(/\.[^.]+$/, '').replace(/[._]+/g, ' ').replace(/[([]\s*(?:19|20)\d{2}\s*[)\]]/g, '').replace(/\s+/g, ' ').trim();
+const looksIsbn = (v) => /^(?:97[89][\s-]?)?\d[\d\s-]{8,14}[\dXx]$/.test(String(v).trim()) && String(v).replace(/[^0-9Xx]/g, '').length >= 10;
+async function infoById(kind, id) {
+  return kind === 'album' ? albumById(config.audiodbKey, id) : bookById(config.googleBooksKey, id);
+}
+async function autoInfo(kind, rel) {
+  const segs = rel.replace(/\/$/, '').split('/');
+  const last = cleanTitle(segs.at(-1) || '');
+  if (!last) return null;
+  if (kind === 'album') {
+    const artist = segs.length >= 3 ? cleanTitle(segs.at(-2)) : '';
+    if (!artist) return null;
+    const hits = await searchAlbums(config.audiodbKey, artist, last).catch(() => []);
+    return hits[0] || null;
+  }
+  const hits = await searchBooks(config.googleBooksKey, last).catch(() => []);
+  return hits[0] || null;
+}
+async function handleInfo(url, res) {
+  const kind = url.searchParams.get('kind') === 'book' ? 'book' : 'album';
+  const rel = metaPathOf(url);
+  const k = metaKeyOf(rel), pin = k && config.infoIds[k];
+  let info = null;
+  try { info = pin && pin.kind === kind ? await infoById(kind, pin.id) : await autoInfo(kind, rel); } catch (e) { return json(res, 200, { info: null, error: e.message }); }
+  json(res, 200, { info, pinned: !!pin });
+}
+async function handleInfoSearch(url, res) {
+  const kind = url.searchParams.get('kind') === 'book' ? 'book' : 'album';
+  const q = (url.searchParams.get('q') || '').trim();
+  if (q.length < 2) return json(res, 200, { results: [] });
+  let list = [];
+  if (kind === 'album') {
+    const [a, b] = q.split(/\s+-\s+/);
+    list = await searchAlbums(config.audiodbKey, a, b || '');
+  } else if (looksIsbn(q)) {
+    const one = await bookByIsbn(config.googleBooksKey, q);
+    list = one ? [one] : [];
+  } else list = await searchBooks(config.googleBooksKey, q);
+  json(res, 200, { results: list.slice(0, 12).map((x) => ({ id: x.id, type: kind, title: kind === 'album' ? `${x.title}${x.artist ? ' · ' + x.artist : ''}` : x.title, year: x.year, poster: x.cover, overview: kind === 'album' ? x.genre : x.authors.join(', ') })) });
+}
+async function handleInfoId(req, res) {
+  const b = JSON.parse((await readBody(req)) || '{}');
+  const kind = b.kind === 'book' ? 'book' : 'album';
+  let rel = String(b.path || '');
+  if (rel.startsWith('v:')) rel = decodeV(rel)?.[0] || '';
+  const k = metaKeyOf(rel);
+  if (!k) throw httpError(400, 'This item can’t be matched by hand');
+  if (b.clear) delete config.infoIds[k];
+  else {
+    const raw = String(b.id || b.isbn || '').trim();
+    let info = null;
+    if (kind === 'album') {
+      const id = /(\d{3,})/.exec(raw)?.[1];
+      if (!id) throw httpError(400, 'Give a TheAudioDB album id (a number) or its address');
+      info = await albumById(config.audiodbKey, id).catch((e) => { throw httpError(502, e.message); });
+    } else if (looksIsbn(raw)) {
+      info = await bookByIsbn(config.googleBooksKey, raw).catch((e) => { throw httpError(502, e.message); });
+    } else {
+      const id = /[?&]id=([\w-]{6,})/.exec(raw)?.[1] || /^([\w-]{6,})$/.exec(raw)?.[1];
+      if (!id) throw httpError(400, 'Give a Google Books id, its address, or an ISBN');
+      info = await bookById(config.googleBooksKey, id).catch((e) => { throw httpError(502, e.message); });
+    }
+    if (!info) throw httpError(404, kind === 'album' ? 'TheAudioDB doesn’t know that album' : 'Google Books doesn’t know that book');
+    config.infoIds[k] = { kind, id: info.id };
+  }
+  fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
+  json(res, 200, { ok: true });
+}
 /** Search TMDB by name, for the "pick the right title" dialog. */
 async function handleMetaSearch(url, res) {
   if (!config.tmdbKey) throw httpError(400, 'Add a TMDB key in Settings first');
@@ -770,7 +844,9 @@ async function handleConfig(req, res) {
       opensubsPass: b.keepOpensubsPass || b.opensubsPass === undefined ? config.opensubsPass : String(b.opensubsPass),
       subdlKey: b.subdlKey === undefined ? config.subdlKey : String(b.subdlKey).trim(),
       shareTv: b.shareTv === undefined ? config.shareTv : !!b.shareTv,
-      metaIds: config.metaIds,
+      metaIds: config.metaIds, infoIds: config.infoIds,
+      audiodbKey: b.audiodbKey === undefined ? config.audiodbKey : String(b.audiodbKey).trim(),
+      googleBooksKey: b.googleBooksKey === undefined ? config.googleBooksKey : String(b.googleBooksKey).trim(),
       playlists: b.playlists === undefined ? config.playlists : splitServers(b.playlists),
       jellyfin: b.jellyfin === undefined ? config.jellyfin : !!b.jellyfin,
       jellyfinPass: b.jellyfinPass === undefined ? config.jellyfinPass : String(b.jellyfinPass),
@@ -780,7 +856,7 @@ async function handleConfig(req, res) {
     fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
-  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND, localLibs: localLibs(), playlists: config.playlists, share: shareInfo(), jellyfin: jellyfinInfo(),
+  json(res, 200, { servers: config.servers, username: config.username, hasPassword: !!config.password, tmdbKey: config.tmdbKey, ffmpeg: hasFfmpeg, downloads: downloadsEnabled(), brand: BRAND, localLibs: localLibs(), playlists: config.playlists, audiodbKey: config.audiodbKey, googleBooksKey: config.googleBooksKey, share: shareInfo(), jellyfin: jellyfinInfo(),
     opensubsKey: config.opensubsKey, opensubsUser: config.opensubsUser, hasOpensubsPass: !!config.opensubsPass, subdlKey: config.subdlKey });
 }
 
@@ -1041,6 +1117,9 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/pick-folder') return await handlePickFolder(req, res);
     if (p === '/api/meta') return await handleMeta(url, res);
     if (p === '/api/cast') return await handleCast(url, res);
+    if (p === '/api/info') return await handleInfo(url, res);
+    if (p === '/api/info-search') return await handleInfoSearch(url, res);
+    if (p === '/api/info-id' && req.method === 'POST') return await handleInfoId(req, res);
     if (p === '/api/meta-search') return await handleMetaSearch(url, res);
     if (p === '/api/meta-id' && req.method === 'POST') return await handleMetaId(req, res);
     if (p === '/api/episodes') return await handleEpisodes(url, res);

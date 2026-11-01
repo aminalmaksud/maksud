@@ -543,6 +543,7 @@ async function showAlbum(path, items) {
   if (state.view !== 'folder' || state.path !== path) return;
   const first = audio[0];
   if (m?.poster) coverImage(m.poster); else if (first) coverImage(`/api/art?path=${enc(first.path)}`);
+  fillInfo(path, audio.length ? 'album' : 'book', !m?.poster && !first);
   if (!audio.length) return;
   const go = (shuffle) => {
     const list = audio;
@@ -552,6 +553,24 @@ async function showAlbum(path, items) {
   };
   $('folderResume').innerHTML = `${I.play}Play`; $('folderResume').onclick = () => go(false); $('folderResume').hidden = false;
   $('folderShuffle').innerHTML = `${I.shuffle}Shuffle`; $('folderShuffle').onclick = () => go(true); $('folderShuffle').hidden = false;
+}
+/** An album's or a book's details (TheAudioDB, Google Books) under its title, and the button to fix the match. */
+const infoCache = new Map();
+async function fillInfo(path, kind, needCover) {
+  if (!infoCache.has(path)) infoCache.set(path, api(`/api/info?kind=${kind}&path=${enc(path)}`).catch(() => null));
+  const r = await infoCache.get(path);
+  if (state.view !== 'folder' || state.path !== path) return;
+  const edit = $('folderEdit');
+  edit.hidden = false; edit.textContent = 'Edit match';
+  const own = lastSeg(path).replace(/\.[^.]+$/, '').replace(/[([]\s*(?:19|20)\d{2}\s*[)\]]/g, '').replace(/[._]+/g, ' ').trim(), above = path.replace(/\/$/, '').split('/');
+  const seed = kind === 'album' && above.length >= 3 ? `${decodeURIComponent(above.at(-2))} - ${own}` : own;
+  edit.onclick = () => matcher.open({ path, title: seed, pinned: !!r?.pinned, provider: kind, onChanged: () => { infoCache.clear(); metaCache.clear(); folderCache.clear(); route(); } });
+  const i = r?.info;
+  if (!i) { if (r?.error) { $('folderSyn').hidden = false; $('folderSyn').classList.add('none'); $('folderSyn').textContent = r.error; } return; }
+  if (i.cover && (needCover || r.pinned)) coverImage(i.cover);
+  const bits = kind === 'album' ? [i.artist, i.year, i.genre] : [i.authors?.join(', '), i.publisher, i.year, i.isbn && `ISBN ${i.isbn}`];
+  $('folderSub').textContent = [$('folderSub').textContent, ...bits.filter(Boolean)].filter(Boolean).join(' · ');
+  if (i.description) { const el = $('folderSyn'); el.hidden = false; el.classList.remove('none'); el.textContent = i.description; }
 }
 /** The plot of a movie or series folder, under its title. Says what's missing when there's none. */
 /** Cast under a series or movie page, and the button to fix the match. */
@@ -1197,6 +1216,7 @@ async function fillSettings() {
   const f = $('settingsForm');
   f.playlists.value = (c.playlists || []).join('\n');
   f.servers.value = c.servers.join('\n'); f.username.value = c.username; f.password.value = ''; f.tmdbKey.value = c.tmdbKey || '';
+  f.googleBooksKey.value = c.googleBooksKey || ''; f.audiodbKey.value = c.audiodbKey || '';
   f.password.placeholder = c.hasPassword ? '•••••• (saved)' : '';
   f.opensubsKey.value = c.opensubsKey || ''; f.opensubsUser.value = c.opensubsUser || ''; f.opensubsPass.value = ''; f.subdlKey.value = c.subdlKey || '';
   f.opensubsPass.placeholder = c.hasOpensubsPass ? '•••••• (saved)' : 'optional';
@@ -1326,7 +1346,7 @@ $('settingsForm').onsubmit = async (e) => {
   try {
     const keepPw = !f.password.value && state.config?.hasPassword && f.username.value === state.config.username;
     await saveConfig({
-      servers: f.servers.value, playlists: f.playlists.value, username: f.username.value, password: f.password.value, keepPassword: keepPw, tmdbKey: f.tmdbKey.value,
+      servers: f.servers.value, playlists: f.playlists.value, googleBooksKey: f.googleBooksKey.value, audiodbKey: f.audiodbKey.value, username: f.username.value, password: f.password.value, keepPassword: keepPw, tmdbKey: f.tmdbKey.value,
       opensubsKey: f.opensubsKey.value, opensubsUser: f.opensubsUser.value, opensubsPass: f.opensubsPass.value,
       shareTv: f.shareTv.checked,
       jellyfin: f.jellyfin.checked, jellyfinPass: f.jellyfinNoPass.checked ? '' : (f.jellyfinPass.value || undefined),

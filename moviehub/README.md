@@ -92,6 +92,12 @@ pick the right one, or paste a TMDB id (`603`), a themoviedb.org address or an I
 (and is followed by the episodes inside a series folder); **Back to automatic** undoes it. IMDb has no free official data service, so IMDb
 ids are looked up through TMDB, and IMDb's own ratings aren't shown.
 
+**Albums and books:** an album page shows its cover, artist, year, genre and description from [TheAudioDB](https://www.theaudiodb.com)
+(found from the Artist/Album folder names; its free key is built in), and a single book's page shows author, publisher, year, ISBN and
+description from Google Books. **Edit match** works the same way: search, or paste a TheAudioDB album id, a Google Books id or address,
+or an ISBN. Google Books' shared free allowance is often used up, so add your own free key under Settings → Google Books API key.
+These details are fetched from the services each time (kept in memory only), and a book among many loose books in one folder has no page of its own to edit.
+
 **Online subtitles** (optional): to use **Search online…** in the player's subtitle menu (like VLC), add a free API key
 from [OpenSubtitles.com](https://www.opensubtitles.com/consumers), from [SubDL](https://subdl.com) (on your profile page), or from both.
 Signing in with your OpenSubtitles account allows more downloads a day. Results that match the exact file come first,

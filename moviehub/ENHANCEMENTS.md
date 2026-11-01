@@ -36,8 +36,9 @@ One line each. Part 1 is what Maksud's original app already had, so you can see 
 18. **Fixes along the way**: Username/Password alignment in Settings, the Vintage hero on PCs with animations turned off, and the Jellyfin API moving to the next port when a real Jellyfin already uses 8096.
 19. **Live TV (IPTV)**: add M3U playlists (web address or file) and watch channels grouped, searchable, with logos and favourites; the server converts any stream so it plays with sound.
 20. **Cast and Edit match**: cast with photos like Jellyfin, plus a dialog to pick the right TMDB title by name, TMDB id or IMDb id when the automatic match is wrong.
-21. **Jellyfin-style player**: the same bar layout, keys (Space/K, J/L, digits, frame step, speed…) and mouse (click pauses, wheel changes volume).
-22. **Automated tests and builds**: tests for the server, Jellyfin API, books and music, and GitHub builds for Windows and both Mac versions on every change.
+21. **Album and book details**: TheAudioDB albums (cover, year, genre, description) and Google Books (author, ISBN, description), with Edit match by album id, Google Books id or ISBN.
+22. **Jellyfin-style player**: the same bar layout, keys (Space/K, J/L, digits, frame step, speed…) and mouse (click pauses, wheel changes volume).
+23. **Automated tests and builds**: tests for the server, Jellyfin API, books and music, and GitHub builds for Windows and both Mac versions on every change.
 
 ## 3. Not done yet
 
