@@ -661,13 +661,18 @@ async function showFolder(path, { refresh = false } = {}) {
     return;
   }
   if (state.view !== 'folder') return;
-  state.path = l.path; state.items = l.items;
+  state.path = l.path; state.items = l.items; state.scanning = !!l.scanning;
   renderNav(); renderHead();
   $('status').textContent = '';
   if (!l.rootType && isCategoryFolder(l.items)) {
     $('rows').innerHTML = sortCategories(l.items.filter((x) => x.isDir)).map((d) => rowShell({ title: d.name, path: d.path })).join('');
     $('rows').querySelectorAll('.row[data-row]').forEach((r) => rowObserver.observe(r));
   } else {
+    if (l.scanning) {
+      // a TV series library that is still being scanned: show what's found so far and ask again in a moment
+      const again = () => { if (state.view === 'folder' && state.path === l.path) { folderCache.delete(path); showFolder(path); } };
+      setTimeout(again, 3000);
+    }
     const seasons = seasonsOf(l.items);
     if (seasons) { showSynopsis(l.path); return showSeasons(l.path, seasons); }
     renderGrid(playable(l.items), { folder: l.path });
@@ -699,6 +704,7 @@ function seasonCountText(videos) {
 }
 /** "More in TV & Web Series": the other titles in the folder this series sits in. */
 async function showMoreIn(path) {
+  if (path.startsWith('show:')) return; // a grouped series: its library's root is the list of series
   const parent = parentPath(path.replace(/\/$/, '') + '/');
   if (!parent || parent === path) return;
   let l;
@@ -848,7 +854,7 @@ function renderGrid(items, { sub = null, folder = undefined } = {}) {
     grid.querySelectorAll('.card').forEach((c) => lazy.observe(c));
     if (epDirs) fillEpisodeFolders(gridFolder, visible);
   }
-  if (state.view === 'folder') $('status').textContent = !visible.length ? (q ? 'Nothing here matches your search.' : 'This folder is empty.') : '';
+  if (state.view === 'folder') $('status').textContent = !visible.length ? (q ? 'Nothing here matches your search.' : state.scanning ? 'Scanning your library…' : 'This folder is empty.') : (state.scanning ? 'Still scanning your library… more will appear.' : '');
 }
 const EP_DIR_RE = /\bS\d{1,2} ?E\d{1,3}\b|\b(?:ep|episode|e)[ ._-]?\d{1,3}\b/i;
 /** Episode folders: each card gets its episode's still, title and length from TMDB. */
@@ -1295,7 +1301,7 @@ document.querySelectorAll('[data-look]').forEach((b) => {
 $('settingsBtn').onclick = openSettings;
 $('cancelBtn').onclick = closeSettings;
 $('dhakaflixBtn').onclick = () => { $('settingsForm').servers.value = DHAKAFLIX; };
-const LIB_KINDS = [['movies', 'Movies', 'Films, one folder or file each'], ['shows', 'TV series', 'One folder per series, with seasons or episodes'], ['music', 'Music', 'Artists and albums'], ['books', 'Books', 'PDF, EPUB and comics'], ['auto', 'Mixed / not sure', 'StreamHub guesses from the folders']];
+const LIB_KINDS = [['movies', 'Movies', 'Films, one folder or file each'], ['shows', 'TV series', 'Episodes are grouped into shows and seasons by their file names, however the folders are arranged'], ['music', 'Music', 'Artists and albums'], ['books', 'Books', 'PDF, EPUB and comics'], ['auto', 'Mixed / not sure', 'StreamHub guesses from the folders']];
 /** Guess from the folder's name, to preselect the choice. */
 const guessKind = (name) => (/movie|film|cinema/i.test(name) ? 'movies' : /\b(tv|series|serial|show|shows|anime|drama|dramas|cartoons?)\b/i.test(name) ? 'shows' : /music|song|album|audio/i.test(name) ? 'music' : /book|comic|pdf|epub/i.test(name) ? 'books' : 'auto');
 /** Asks what a folder holds (like Jellyfin's library type). Answers a type, or null if cancelled. */

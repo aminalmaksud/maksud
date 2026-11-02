@@ -558,4 +558,64 @@ assert.equal(chs[0].url, 'http://h/a.m3u8');
   assert.deepEqual(sr.results.map((x) => [x.id, x.title, x.overview]), [['zyTCAlFPjgYC', 'The Google Story', 'David A. Vise']], 'an ISBN in the search box');
   fs.rmSync(shelf2, { recursive: true, force: true }); ext.close();
 }
+// --- "TV series" libraries group episodes by what the files say, whatever the folders look like
+{
+  const lib2 = fs.mkdtempSync(path.join(os.tmpdir(), 'mh-shows-'));
+  const put = (rel) => { fs.mkdirSync(path.dirname(path.join(lib2, rel)), { recursive: true }); fs.writeFileSync(path.join(lib2, rel), FILE); };
+  for (const f of ['Breaking Bad (2008)/Season 1/Breaking.Bad.S01E01.720p.mkv', 'Breaking Bad (2008)/Season 1/Breaking.Bad.S01E02.720p.mkv',
+    'Breaking Bad (2008)/Seaon 2/Breaking.Bad.S02E01.mkv', 'Breaking Bad (2008)/Breaking.Bad.S03E01.mkv', 'Elsewhere/Breaking Bad S01E03.mkv',
+    'Flat/Dark.S01E01.mkv', 'Flat/Dark.S01E02.mkv', 'Flat/Chernobyl.S01E01.mkv', 'Flat/Chernobyl.S01E02.mkv',
+    'The Office (US)/Seasn 1/Episode 01.mkv', 'The Office (US)/Seasn 1/Episode 02.mkv', 'The Office (US)/Specials/Behind.mkv',
+    'Loose/Lost/Sezon 2/01 - Pilot.mkv', 'Extras/Featurettes/Making Of.mkv']) put(f);
+  await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Stuff | ${lib2} | shows`, tmdbKey: 'KEY', jellyfin: false }) });
+  let b = await (await get('/api/browse')).json();
+  assert.equal(b.rootType, 'shows');
+  assert.deepEqual(b.items.map((i) => i.name), ['Breaking Bad', 'Chernobyl', 'Dark', 'Lost', 'The Office (US)'], 'one entry per show, whatever the folders');
+  assert.ok(b.items.every((i) => i.isDir && i.path.startsWith('show:')));
+  const seasonsOfShow = async (name) => { const it = b.items.find((i) => i.name === name); const r = await (await get(`/api/browse?path=${encodeURIComponent(it.path)}`)).json(); return r.items; };
+  const episodesOf = async (name, season) => {
+    const ss = await seasonsOfShow(name), s = ss.find((x) => x.name === season);
+    return (await (await get(`/api/browse?path=${encodeURIComponent(s.path)}`)).json()).items;
+  };
+  assert.deepEqual((await seasonsOfShow('Breaking Bad')).map((s) => s.name), ['Season 1', 'Season 2', 'Season 3'], 'a typo in a folder name does not split a season off');
+  assert.deepEqual((await episodesOf('Breaking Bad', 'Season 1')).map((e) => e.name.replace(/\.720p/, '')), ['Breaking.Bad.S01E01.mkv', 'Breaking.Bad.S01E02.mkv', 'Breaking Bad S01E03.mkv'], 'an episode in another folder joins its season');
+  assert.equal((await episodesOf('Breaking Bad', 'Season 3')).length, 1, 'an episode beside the season folders is still a season 3 episode');
+  assert.deepEqual((await seasonsOfShow('Dark')).map((s) => s.name), ['Season 1']);
+  assert.equal((await episodesOf('Dark', 'Season 1')).length, 2, 'two shows in one flat folder are told apart');
+  assert.equal((await episodesOf('Chernobyl', 'Season 1')).length, 2);
+  assert.deepEqual((await seasonsOfShow('The Office (US)')).map((s) => s.name), ['Season 1', 'Specials'], 'generic file names take the show from the folder; Specials last');
+  assert.equal((await episodesOf('The Office (US)', 'Season 1')).length, 2);
+  assert.deepEqual((await seasonsOfShow('Lost')).map((s) => s.name), ['Season 2'], 'a season word in another language and a nested folder');
+  const ep1 = (await episodesOf('Dark', 'Season 1'))[0];
+  r = await get(`/stream?path=${encodeURIComponent(ep1.path)}`, { range: 'bytes=0-9' });
+  assert.equal(r.status, 206, 'episodes play from their real path');
+  // details come from the show's name, and episode plots from its season
+  const bb = b.items.find((i) => i.name === 'Breaking Bad');
+  const mm = await (await get(`/api/meta?path=${encodeURIComponent(bb.path)}`)).json();
+  assert.equal(mm.tmdbId, 42, 'TMDB details for a grouped show');
+  const seasonPath = (await seasonsOfShow('Breaking Bad')).find((s) => s.name === 'Season 2').path;
+  const eps2 = await (await get(`/api/episodes?path=${encodeURIComponent(seasonPath)}&season=2`)).json();
+  assert.equal(eps2.episodes[0].name, 'Pilot', 'episode plots work on a grouped season');
+  assert.equal((await get(`/api/browse?path=${encodeURIComponent('show:ffffffffff/x/')}`)).status, 404, 'an unknown show is not found');
+  // Jellyfin apps see the same grouping: one Series per show with its Seasons and Episodes
+  await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Stuff | ${lib2} | shows`, jellyfin: true }) });
+  await new Promise((res) => setTimeout(res, 100));
+  const J3 = `http://127.0.0.1:${await jfPort()}`;
+  const jj = async (p) => (await fetch(J3 + p, { headers: { 'x-emby-token': T } })).json();
+  const v3 = (await jj('/UserViews')).Items;
+  assert.equal(v3[0].CollectionType, 'tvshows');
+  const ser = (await jj(`/Items?ParentId=${v3[0].Id}&IncludeItemTypes=Series&Recursive=true`)).Items;
+  assert.deepEqual(ser.map((x) => x.Name), ['Breaking Bad', 'Chernobyl', 'Dark', 'Lost', 'The Office (US)'], 'Jellyfin lists the grouped series');
+  const bbJ = ser.find((x) => x.Name === 'Breaking Bad');
+  const bbSeasons = (await jj(`/Shows/${bbJ.Id}/Seasons`)).Items;
+  assert.deepEqual(bbSeasons.map((x) => x.IndexNumber), [1, 2, 3], 'seasons from the files, not the folders');
+  const bbEps = (await jj(`/Shows/${bbJ.Id}/Episodes?seasonId=${bbSeasons[0].Id}`)).Items;
+  assert.equal(bbEps.length, 3, 'including the episode that sits in another folder');
+  // the same folders in a Mixed library are shown as they always were
+  await fetch(base + '/api/config', { method: 'POST', body: JSON.stringify({ servers: `Stuff | ${lib2}`, jellyfin: false }) });
+  b = await (await get('/api/browse')).json();
+  assert.equal(b.rootType, undefined);
+  assert.ok(b.items.some((i) => i.name === 'Flat') && !b.items.some((i) => i.path.startsWith('show:')), 'a library not marked TV series keeps its folders');
+  fs.rmSync(lib2, { recursive: true, force: true });
+}
 server.close(); isp.close(); tmdbFake.close(); fs.rmSync(path.dirname(process.env.CONFIG_FILE), { recursive: true, force: true });

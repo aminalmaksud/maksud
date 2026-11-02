@@ -110,6 +110,18 @@ create an account at themoviedb.org, then go to Settings → API. Without a key 
 poster images it finds on the server (`poster.jpg`, `folder.jpg`, …) and draws a colored card otherwise.
 
 
+## TV series libraries (grouped like Plex and Jellyfin)
+
+When you add a folder and answer **TV series** (or end its library line with `| shows`), StreamHub ignores how the folders are arranged and
+groups episodes by what the **file names** say: `Show.S01E02`, `1x02`, `Season 1 Episode 2`, `Ep 12`, `Show - 12`, `01 - Title`. The season comes
+from the file name, else from the nearest "Season" folder, which may have a typo (`Seaon 1`, `Seasn 2`, `S02`, `Saison 3`, `Specials`). A file
+with no show name (`Episode 05.mkv`) takes it from its folder. So a season folder with a typo, episodes in a different folder, or a whole
+folder holding several shows' episodes all end up as one show per name with its seasons. Names are matched ignoring case, year,
+punctuation and a leading "The", so `Breaking.Bad.S01E01` and `Breaking Bad (2008)/` are one show. Jellyfin apps see the same grouping.
+Files with no episode marker are still listed (under their own name), never hidden. Libraries left on "Mixed / not sure" and the DhakaFlix-style
+servers are shown as before. Matching is by name only: a differently spelled show name in two files makes two shows, and **Edit match** fixes
+a show's poster and plot but doesn't move files between shows.
+
 ## Live TV (IPTV)
 
 Add M3U or M3U8 playlists under **Settings → Live TV**, one per line (`My channels | https://example.com/list.m3u`,

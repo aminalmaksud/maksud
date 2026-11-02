@@ -89,6 +89,8 @@ export function createJellyfin(ctx) {
   const JF_TYPES = { movies: 'movies', shows: 'tvshows', music: 'music', books: 'books' };
   const typeOfView = (v) => JF_TYPES[v.type] || collectionTypeOf(v.name);
   async function indexFor(view, waitMs = 4000) {
+    // a library marked TV series: the series, seasons and episodes come from what the files say (shows.js), not from the folders
+    if (view.type === 'shows' && ctx.shows) { const r = await ctx.shows(view.rel); return { movies: [], series: r.series, done: r.done, listed: 0, truncated: false, at: Date.now() }; }
     let idx = indexes.get(view.rel);
     if (!idx || Date.now() - idx.at > 30 * 60e3) { idx = crawl(view.rel, typeOfView(view), (rel) => ctx.children(rel)); indexes.set(view.rel, idx); }
     if (!idx.done) await Promise.race([idx.finished, new Promise((r) => setTimeout(r, waitMs))]);

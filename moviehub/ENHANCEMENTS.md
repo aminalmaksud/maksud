@@ -38,7 +38,8 @@ One line each. Part 1 is what Maksud's original app already had, so you can see 
 20. **Cast and Edit match**: cast with photos like Jellyfin, plus a dialog to pick the right TMDB title by name, TMDB id or IMDb id when the automatic match is wrong.
 21. **Album and book details**: TheAudioDB albums (cover, year, genre, description) and Google Books (author, ISBN, description), with Edit match by album id, Google Books id or ISBN.
 22. **Jellyfin-style player**: the same bar layout, keys (Space/K, J/L, digits, frame step, speed…) and mouse (click pauses, wheel changes volume).
-23. **Automated tests and builds**: tests for the server, Jellyfin API, books and music, and GitHub builds for Windows and both Mac versions on every change.
+23. **TV series libraries grouped like Plex/Jellyfin**: episodes are grouped by file name into shows and seasons, even with typos in season folders, episodes in other folders or one flat folder; Jellyfin apps see the same grouping.
+24. **Automated tests and builds**: tests for the server, Jellyfin API, books and music, and GitHub builds for Windows and both Mac versions on every change.
 
 ## 3. Not done yet
 

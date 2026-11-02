@@ -110,6 +110,14 @@ export async function castOf(key, type, id) {
   return castCache.get(ck) || { imdbId: null, tagline: '', genres: [], cast: [], director: [] };
 }
 
+/** A series found by its files (see shows.js): TMDB details by its title, or by the id the user picked. */
+export async function metaForShow(tmdbKey, { title, year }, pin) {
+  const base = { title, show: null, year: year || null, season: null, episode: null, overview: '', rating: null, poster: null, backdrop: null, matched: null, tmdbId: null, tmdbType: null };
+  if (!tmdbKey) return base;
+  const t = pin ? await tmdbById(tmdbKey, pin.type, pin.id) : await lookup(tmdbKey, { title, year }, true);
+  return t ? { ...base, year: t.year || base.year, overview: t.overview, rating: t.rating, poster: t.poster, backdrop: t.backdrop, matched: t.title, tmdbId: t.tmdbId, tmdbType: t.tmdbType } : base;
+}
+
 export function forgetMeta() { cache.clear(); tmdbCache.clear(); seasonCache.clear(); }
 
 /**

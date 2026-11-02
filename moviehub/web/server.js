@@ -10,7 +10,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseListing, srtToVtt, extOf, canonPath, VIDEO_EXT, mediaKind } from './listing.js';
 import { openZip } from './zip.js';
 import { hasFfmpeg, ffmpegVersion, probe, remux, extractSubtitle, keyframeBefore, audioAsMp3, embeddedArt } from './media.js';
-import { metaFor, seasonEpisodes, tmdbById, findByImdb, searchTmdb, castOf, forgetMeta } from './meta.js';
+import { crawlFiles, buildSeries, seasonName } from './shows.js';
+import { metaFor, metaForShow, seasonEpisodes, tmdbById, findByImdb, searchTmdb, castOf, forgetMeta } from './meta.js';
 import { createJellyfin } from './jellyfin.js';
 import { loadPlaylist, forgetPlaylists } from './iptv.js';
 import { albumById, searchAlbums } from './audiodb.js';
@@ -297,6 +298,52 @@ async function listVirtual(rel, refresh) {
 }
 const libOf = (p) => Number(String(p).split('/')[0]);
 
+/* ---- "TV series" libraries: episodes grouped by what the files say (shows.js), shown as series > seasons > episodes ---- */
+const showIdx = new Map(); // library root -> { at, crawl, series, n, done }
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+function showsIndex(rootRel) {
+  let e = showIdx.get(rootRel);
+  if (!e || Date.now() - e.at > 30 * 60e3) { e = { at: Date.now(), crawl: crawlFiles(rootRel, childrenOf), series: [], n: -1, done: false }; showIdx.set(rootRel, e); }
+  return e;
+}
+/** The series of a library, waiting a little for the first scan; `done` is false while it is still going. */
+async function showsSeries(rootRel, waitMs = 12000) {
+  const e = showsIndex(rootRel);
+  if (!e.crawl.done) await Promise.race([e.crawl.finished, delay(waitMs)]);
+  if (e.n !== e.crawl.files.length || e.done !== e.crawl.done) { e.series = buildSeries(e.crawl.files, rootRel); e.n = e.crawl.files.length; e.done = e.crawl.done; }
+  return { series: e.series, done: e.crawl.done, listed: e.crawl.listed, truncated: e.crawl.truncated };
+}
+const showSeg = (rel) => /^(show:[0-9a-f]+)\//.exec(rel)?.[1] || null;
+const showPath = (s) => `${'show:' + s.id}/${encodeURIComponent(s.year ? `${s.title} (${s.year})` : s.title)}/`;
+/** A series by the id in a "show:<id>/…" path, even after a restart (then the typed libraries are scanned again). */
+async function findShow(rel) {
+  const id = showSeg(rel)?.slice(5);
+  if (!id) throw httpError(404, 'Unknown series');
+  const look = () => { for (const e of showIdx.values()) { const s = e.series.find((x) => x.id === id); if (s) return s; } return null; };
+  let s = look();
+  if (!s) {
+    const roots = await Promise.all(libraryRoots());
+    for (const g of groups()) if (g.type === 'shows') await showsSeries(groupRoot(g, roots));
+    s = look();
+  }
+  if (!s) throw httpError(404, 'Unknown series');
+  return s;
+}
+const libraryRoots = () => bases().map((_, i) => libraryRoot(i).then((l) => l.path, () => `${i}/`));
+async function listShowsRoot(rel) {
+  const r = await showsSeries(rel);
+  return { path: rel, items: r.series.map((s) => ({ name: s.year ? `${s.title} (${s.year})` : s.title, path: showPath(s), isDir: true, kind: 'dir' })), scanning: !r.done, scanned: r.listed };
+}
+async function listShow(rel) {
+  const s = await findShow(rel);
+  const season = decodeURIComponent(rel.split('/')[2] || '');
+  if (!season) return { path: rel, items: s.seasons.map((x) => ({ name: seasonName(x.n), path: `${showPath(s)}${encodeURIComponent(seasonName(x.n))}/`, isDir: true, kind: 'dir' })) };
+  const n = /^specials$/i.test(season) ? 0 : Number(/\d+/.exec(season)?.[0]);
+  const sn = s.seasons.find((x) => x.n === n);
+  if (!sn) throw httpError(404, 'Unknown season');
+  return { path: rel, items: sn.episodes.map((e) => e.entry) };
+}
+
 async function handleBrowse(url, res) {
   const all = bases();
   const servers = serverNames();
@@ -304,7 +351,7 @@ async function handleBrowse(url, res) {
   let rel = url.searchParams.get('path') || '';
   if (rel === 'local/') return json(res, 200, { path: 'local/', items: localEntries(), servers, roots: [], groups: [] });
   const refresh = !!url.searchParams.get('refresh');
-  if (refresh) { listCache.delete(rel); libRoots.clear(); }
+  if (refresh) { listCache.delete(rel); libRoots.clear(); showIdx.clear(); }
   const roots = await Promise.all(all.map((_, i) => libraryRoot(i).then((l) => l.path, () => `${i}/`)));
   const gs = groups().map((g) => ({ ...g, root: groupRoot(g, roots) }));
   const extra = { servers, roots, groups: gs, localLibs: localLibs() };
@@ -313,8 +360,11 @@ async function handleBrowse(url, res) {
     return json(res, 200, { path: '', ...extra, items: gs.map((g) => ({ name: g.name, path: g.root, isDir: true, kind: 'dir' })) });
   }
   if (!rel) rel = gs[0].root;
+  if (rel.startsWith('show:')) return json(res, 200, { ...(await listShow(rel)), ...extra });
+  if (gs.some((g) => g.root === rel && g.type === 'shows')) return json(res, 200, { ...(await listShowsRoot(rel)), ...extra, rootType: 'shows' });
   if (rel.startsWith('v:')) return json(res, 200, { ...(await listVirtual(rel, refresh)), ...extra, rootType: rootTypeOf(rel) });
   if (!rel.endsWith('/')) rel += '/';
+  if (gs.some((g) => g.root === rel && g.type === 'shows')) return json(res, 200, { ...(await listShowsRoot(rel)), ...extra, rootType: 'shows' });
   const listing = /^\d+\/$/.test(rel) ? await libraryRoot(Number(rel.slice(0, -1))) : await listDir(rel);
   json(res, 200, { ...listing, ...extra, rootType: rootTypeOf(rel) });
 }
@@ -524,11 +574,13 @@ async function handleEmbeddedSub(url, res) {
 
 /** Where a hand-picked match is kept: the title's real address, so reordering libraries doesn't lose it. */
 function metaKeyOf(rel) {
+  if (showSeg(rel)) return showSeg(rel);
   if (!rel || rel.startsWith('local/')) return null;
   try { return resolveUnderBase(rel).url.href; } catch { return null; }
 }
 /** The match picked by hand for this folder or file, or for the nearest folder above it (an episode follows its series). */
 function pinnedFor(rel) {
+  if (showSeg(rel)) return config.metaIds[showSeg(rel)] || null;
   const segs = rel.replace(/\/$/, '').split('/');
   for (let n = segs.length; n >= 2; n--) {
     const r = segs.slice(0, n).join('/') + (n === segs.length && !rel.endsWith('/') ? '' : '/');
@@ -537,11 +589,14 @@ function pinnedFor(rel) {
   }
   return null;
 }
-const metaOf = (rel) => metaFor(rel, async (dir) => (await listDir(dir)).items, config.tmdbKey, pinnedFor);
+const metaOf = async (rel) => {
+  if (showSeg(rel)) { const s = await findShow(rel); return metaForShow(config.tmdbKey, s, config.tmdbKey ? pinnedFor(rel) : null); }
+  return metaFor(rel, async (dir) => (await listDir(dir)).items, config.tmdbKey, pinnedFor);
+};
 function metaPathOf(url) {
   let rel = url.searchParams.get('path') || '';
   if (rel.startsWith('v:')) rel = decodeV(rel)?.[0] || ''; // a joined folder: its first copy has the poster as well as any
-  if (!rel.startsWith('local/')) resolveUnderBase(rel);
+  if (!rel.startsWith('local/') && !showSeg(rel)) resolveUnderBase(rel);
   return rel;
 }
 async function handleMeta(url, res) {
@@ -670,7 +725,7 @@ async function handleEpisodes(url, res) {
   let rel = url.searchParams.get('path') || '';
   const season = Number(url.searchParams.get('season'));
   if (rel.startsWith('v:')) rel = decodeV(rel)?.[0] || '';
-  if (!rel.startsWith('local/')) resolveUnderBase(rel);
+  if (!rel.startsWith('local/') && !showSeg(rel)) resolveUnderBase(rel);
   if (!config.tmdbKey || !Number.isInteger(season) || season < 0 || season > 99) return json(res, 200, { episodes: [] });
   const m = await metaOf(rel).catch(() => null);
   if (!m?.tmdbId || m.tmdbType !== 'tv') return json(res, 200, { episodes: [] });
@@ -851,7 +906,7 @@ async function handleConfig(req, res) {
       jellyfin: b.jellyfin === undefined ? config.jellyfin : !!b.jellyfin,
       jellyfinPass: b.jellyfinPass === undefined ? config.jellyfinPass : String(b.jellyfinPass),
     };
-    listCache.clear(); libRoots.clear(); localWalks.clear(); jf.reset(); forgetPlaylists();
+    listCache.clear(); libRoots.clear(); localWalks.clear(); showIdx.clear(); jf.reset(); forgetPlaylists();
     updateShare(); updateJellyfin();
     fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
@@ -1037,6 +1092,7 @@ const viewsList = async () => {
   return groups().map((g) => ({ name: g.name, rel: groupRoot(g, roots), type: g.type }));
 };
 const childrenOf = async (rel) => {
+  if (rel.startsWith('show:')) return (await listShow(rel)).items;
   if (rel.startsWith('v:')) return (await listVirtual(rel)).items;
   return (/^\d+\/$/.test(rel) ? await libraryRoot(Number(rel.slice(0, -1))) : await listDir(rel)).items;
 };
@@ -1053,6 +1109,7 @@ const jf = createJellyfin({
   },
   views: viewsList,
   children: childrenOf,
+  shows: async (rootRel) => { const r = await showsSeries(rootRel, 4000); return { done: r.done, series: r.series.map((x) => ({ rel: showPath(x), name: x.title, year: x.year, seasons: x.seasons.map((se) => ({ n: se.n, rel: `${showPath(x)}${encodeURIComponent(seasonName(se.n))}/`, name: seasonName(se.n) })) })) }; },
   media: (rel) => media(firstReal(rel)),
   probe: async (rel) => { if (!hasFfmpeg) return null; const m = media(rel); return probe(m.src, m.auth); },
   metaFor: (rel) => (rel.startsWith('local/') ? null : metaOf(firstReal(rel))),
