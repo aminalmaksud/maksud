@@ -55,6 +55,7 @@ class MainActivity : ComponentActivity(), ScreenHost {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CrashLog.install(this)
         setContentView(R.layout.activity_main)
         findViewById<View>(R.id.root).background = ParchmentDrawable(this)
         content = findViewById(R.id.content)
@@ -85,6 +86,7 @@ class MainActivity : ComponentActivity(), ScreenHost {
             }
         })
         Playback.onStopped += miniStopped
+        CrashLog.showIfAny(this)
     }
 
     override fun onDestroy() {
