@@ -8,6 +8,8 @@ object Names {
         """\b(2160p|1080p|720p|576p|480p|4k|uhd|hdr|hdr10|dv|bluray|blu ray|brrip|bdrip|bdremux|remux|web ?dl|webrip|web|hdrip|dvdrip|dvdscr|hdtv|hdcam|camrip|x264|x265|h ?264|h ?265|hevc|avc|10bit|8bit|aac\d?|ac3|eac3|dts|ddp?\d?|atmos|truehd|dual audio|multi audio|hindi|english|esubs?|subbed|dubbed|proper|repack|extended|unrated|imax|yify|yts|rarbg|psa|pahe)\b""",
         RegexOption.IGNORE_CASE,
     )
+    // Every bracket and brace escaped: Android's regex engine (ICU) rejects a bare "]" or "}" that Java accepts.
+    private val BRACKETED = Regex("""\[[^\]]*\]|\{[^\}]*\}""")
     private val SXE = Regex("""\bS(\d{1,2}) ?E(\d{1,3})\b|\b(\d{1,2})x(\d{2,3})\b""", RegexOption.IGNORE_CASE)
     private val ANIME_EP = Regex("""\s-\s(\d{1,4})(?:v\d)?(?:\s|$)""")
     private val YEAR = Regex("""(?:^|[\s(])((?:19|20)\d{2})(?=[\s)]|$)""")
@@ -19,7 +21,7 @@ object Names {
     }
 
     fun parse(raw: String): ParsedName {
-        var s = stem(raw).replace(Regex("[._]+"), " ").replace(Regex("""\[[^\]]*]|\{[^}]*}"""), " ").replace(Regex("\\s+"), " ").trim()
+        var s = stem(raw).replace(Regex("[._]+"), " ").replace(BRACKETED, " ").replace(Regex("\\s+"), " ").trim()
         val original = s
         var season: Int? = null
         var episode: Int? = null

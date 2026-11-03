@@ -56,5 +56,6 @@ class CatalogTest {
         assertEquals("(2024)", Names.cleanTitle("(2024)"))
         assertEquals("2012", Names.cleanTitle("2012 (2009)"))
         assertEquals("2023", Names.yearIn("Oppenheimer (2023) 1080p"))
+        assertEquals("Jawan", Names.parse("Jawan (2023) [Hindi] {x265} 1080p").title)
     }
 }

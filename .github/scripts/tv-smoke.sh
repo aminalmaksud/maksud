@@ -20,7 +20,7 @@ EOF
 check() { # $1 = label
   sleep 20
   echo "=== $1: process"
-  adb shell pidof $PKG && echo "RUNNING" || echo "NOT RUNNING"
+  if adb shell pidof $PKG; then echo "RUNNING"; else echo "NOT RUNNING"; CRASHED=1; fi
   echo "=== $1: crash log"
   adb logcat -d -b crash | tail -80
   adb logcat -d | grep -E "AndroidRuntime|FATAL|moviehub" | tail -60
@@ -28,6 +28,7 @@ check() { # $1 = label
   adb logcat -c
 }
 
+CRASHED=0
 adb logcat -c
 echo "##### first launch (no servers set)"
 adb shell am start -W -n $PKG/.MainActivity
@@ -51,4 +52,4 @@ adb shell am start -W -n $PKG/.MainActivity
 check home
 adb shell input keyevent KEYCODE_DPAD_DOWN; adb shell input keyevent KEYCODE_DPAD_CENTER
 check opened
-exit 0
+exit $CRASHED
