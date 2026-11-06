@@ -7,8 +7,17 @@ const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg';
 const FFPROBE = process.env.FFPROBE_PATH || 'ffprobe';
 
 export const hasFfmpeg = (() => {
-  try { return spawnSync(FFMPEG, ['-version']).status === 0 && spawnSync(FFPROBE, ['-version']).status === 0; } catch { return false; }
+  try { return spawnSync(FFMPEG, ['-version'], { windowsHide: true }).status === 0 && spawnSync(FFPROBE, ['-version'], { windowsHide: true }).status === 0; } catch { return false; }
 })();
+
+let version = null;
+/** "7.0.2" — shown on the Windows app's Server page. */
+export function ffmpegVersion() {
+  if (version === null) {
+    try { version = (/ffmpeg version n?([\w.-]+)/.exec(spawnSync(FFMPEG, ['-version'], { windowsHide: true }).stdout) || ['', ''])[1]; } catch { version = ''; }
+  }
+  return version;
+}
 
 const PLAYABLE_VIDEO = new Set(['h264', 'hevc', 'vp8', 'vp9', 'av1']);
 const PLAYABLE_AUDIO = new Set(['aac', 'mp3', 'opus', 'vorbis', 'flac']);
@@ -18,7 +27,7 @@ const headerArgs = (auth) => (auth ? ['-headers', `Authorization: ${auth}\r\n`] 
 
 function run(cmd, args, { timeoutMs }) {
   return new Promise((resolve, reject) => {
-    const p = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    const p = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
     const out = []; let err = '';
     const t = setTimeout(() => p.kill('SIGKILL'), timeoutMs);
     p.stdout.on('data', (d) => out.push(d));
@@ -36,28 +45,42 @@ const trackLabel = (s, i) => [s.tags?.title, lang(s).toUpperCase()].filter(Boole
 
 const probeCache = new Map();
 
+const chapterList = (cs) => (cs || []).map((c) => ({ start: Number(c.start_time), end: Number(c.end_time), title: String(c.tags?.title || '') })).filter((c) => Number.isFinite(c.start) && Number.isFinite(c.end));
+/** Intro, recap and credits found from chapter titles ("Opening", "Recap", "End Credits"...): { intro, recap, outro } as [start, end]. */
+export function skipRanges(chapters) {
+  const out = {};
+  for (const c of chapterList(chapters)) {
+    const len = c.end - c.start;
+    if (len < 5) continue;
+    if (/\b(intro|opening|title (?:sequence|card)|main title|theme)\b/i.test(c.title)) { if (!out.intro && len <= 400) out.intro = [c.start, c.end]; }
+    else if (/\b(recap|previously)\b/i.test(c.title)) { if (!out.recap && len <= 400) out.recap = [c.start, c.end]; }
+    else if (/\b(outro|ending|end credits|credits|closing)\b/i.test(c.title)) { if (!out.outro) out.outro = [c.start, c.end]; }
+  }
+  return out;
+}
+
 /** Streams, duration and whether the browser engine can play the file as-is. */
 export function probe(url, auth) {
   if (!probeCache.has(url)) {
-    const job = run(FFPROBE, ['-v', 'error', ...headerArgs(auth), '-print_format', 'json', '-show_format', '-show_streams', url], { timeoutMs: 30000 })
+    const job = run(FFPROBE, ['-v', 'error', ...headerArgs(auth), '-print_format', 'json', '-show_format', '-show_streams', '-show_chapters', url], { timeoutMs: 30000 })
       .then((buf) => {
         const j = JSON.parse(buf.toString('utf8'));
         const streams = j.streams || [];
         const v = streams.find((s) => s.codec_type === 'video' && !s.disposition?.attached_pic);
         const audio = streams.filter((s) => s.codec_type === 'audio').map((s, i) => ({
-          index: i, codec: s.codec_name, channels: s.channels || 0, label: trackLabel(s, i), lang: lang(s),
+          index: i, gi: s.index, codec: s.codec_name, channels: s.channels || 0, label: trackLabel(s, i), lang: lang(s),
           default: !!s.disposition?.default,
         }));
         const subs = streams.filter((s) => s.codec_type === 'subtitle').map((s, i) => ({
-          index: i, codec: s.codec_name, label: trackLabel(s, i), lang: lang(s), text: TEXT_SUBS.has(s.codec_name),
+          index: i, gi: s.index, codec: s.codec_name, label: trackLabel(s, i), lang: lang(s), text: TEXT_SUBS.has(s.codec_name),
           forced: !!s.disposition?.forced,
         }));
         const tenBit = /10/.test(v?.profile || '') || /10le|10be/.test(v?.pix_fmt || '');
-        const video = v ? { codec: v.codec_name, width: v.width, height: v.height, transcode: !PLAYABLE_VIDEO.has(v.codec_name) || (v.codec_name === 'h264' && tenBit) } : null;
+        const video = v ? { gi: v.index, codec: v.codec_name, width: v.width, height: v.height, transcode: !PLAYABLE_VIDEO.has(v.codec_name) || (v.codec_name === 'h264' && tenBit) } : null;
         const container = extOf(/^https?:/i.test(url) ? new URL(url).pathname : url); // URL or downloaded file path
         const direct = ['mp4', 'm4v', 'webm', 'mov'].includes(container) && !!video && !video.transcode
           && audio.length <= 1 && (!audio.length || PLAYABLE_AUDIO.has(audio[0].codec));
-        return { duration: Number(j.format?.duration) || 0, video, audio, subs, direct };
+        return { duration: Number(j.format?.duration) || 0, video, audio, subs, direct, chapters: chapterList(j.chapters), skips: skipRanges(j.chapters) };
       });
     job.catch(() => probeCache.delete(url));
     probeCache.set(url, job);
@@ -90,7 +113,7 @@ export async function keyframeBefore(url, auth, t) {
  * Starts ffmpeg writing fragmented MP4 to stdout, beginning at `start` seconds, with the chosen audio
  * track converted to stereo AAC. Video is copied unless the engine can't decode it.
  */
-export function remux(url, auth, { start = 0, audio = 0, audioDelay = 0, info, format = 'mkv' }) {
+export function remux(url, auth, { start = 0, audio = 0, audioDelay = 0, info, format = 'mkv', live = false }) {
   const v = info?.video;
   const a = info?.audio?.[audio];
   const videoArgs = !v ? [] : !v.transcode
@@ -108,7 +131,10 @@ export function remux(url, auth, { start = 0, audio = 0, audioDelay = 0, info, f
   //  - Fragmented MP4 restarts each track at zero on its own and browsers ignore its edit lists, which is
   //    what threw sound off by up to a whole keyframe interval. It's only a fallback (e.g. HEVC), started
   //    on a keyframe for both tracks to keep the error small.
-  const container = format === 'mp4'
+  // A live channel has no start or end: reconnect if it drops, and let the timestamps begin at zero.
+  const container = live
+    ? [...(/^https?:/i.test(url) ? ['-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '5'] : []), '-fflags', '+genpts+discardcorrupt', '-i', url]
+    : format === 'mp4'
     ? [...(start > 0 ? ['-noaccurate_seek', '-ss', String(start)] : []), '-i', url]
     : [...(start > 0 ? ['-ss', String(start)] : []), '-copyts', '-i', url];
   // The total length must be in the Matroska header: without it the engine treats the stream as live and
@@ -123,7 +149,7 @@ export function remux(url, auth, { start = 0, audio = 0, audioDelay = 0, info, f
     '-map', '0:v:0?', ...(a ? ['-map', `0:a:${audio}`] : []),
     ...videoArgs, ...audioArgs, '-sn', '-dn', ...out,
   ];
-  return spawn(FFMPEG, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+  return spawn(FFMPEG, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 }
 
 const subCache = new Map();
@@ -144,4 +170,22 @@ export function extractSubtitle(url, auth, index, from = 0, dur = 0) {
     subCache.set(key, job);
   }
   return subCache.get(key);
+}
+
+/** Audio the browser can't decode (WMA, APE...) as an MP3 stream. Not seekable, but it plays. */
+export function audioAsMp3(url, auth) {
+  return spawn(FFMPEG, ['-hide_banner', '-loglevel', 'error', ...headerArgs(auth), '-i', url, '-vn', '-map', '0:a:0', '-c:a', 'libmp3lame', '-q:a', '3', '-f', 'mp3', 'pipe:1'],
+    { stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true });
+}
+
+const artCache = new Map();
+/** The picture embedded in an audio file (album art) as JPEG, or null when it has none. */
+export function embeddedArt(url, auth) {
+  if (!artCache.has(url)) {
+    const job = run(FFMPEG, ['-hide_banner', '-loglevel', 'error', ...headerArgs(auth), '-i', url, '-an', '-map', '0:v:0', '-frames:v', '1', '-vf', 'scale=600:-2', '-f', 'mjpeg', 'pipe:1'], { timeoutMs: 20000 })
+      .then((b) => (b.length ? b : null), () => null);
+    artCache.set(url, job);
+    if (artCache.size > 300) artCache.delete(artCache.keys().next().value);
+  }
+  return artCache.get(url);
 }

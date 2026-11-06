@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="position:relative;width:{{ W }};height:{{ H }};border-radius:{{ r }};background:{{ bg }};overflow:hidden;flex:none;border:{{ border }};box-shadow:0 10px 22px -10px rgba(43,14,8,.55);transition:transform .15s, box-shadow .15s;cursor:pointer" style-hover="transform:translateY(-3px);box-shadow:0 0 0 3px #F5CF5B, 0 16px 28px -12px rgba(43,14,8,.6)">
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 1px,transparent 1px 10px)"></div>
+  <div style="position:absolute;left:50%;top:40%;width:{{ ring }};height:{{ ring }};transform:translate(-50%,-50%);border:1px solid rgba(245,207,91,.3);border-radius:50%"></div>
+  <div style="position:absolute;left:50%;top:40%;transform:translate(-50%,-52%);font:600 {{ iniFs }}/1 Cinzel, Fraunces, serif;color:transparent;-webkit-text-stroke:1.25px rgba(245,207,91,.92)">{{ ini }}</div>
+  <div style="position:absolute;inset:{{ inset }};border:1px solid rgba(245,207,91,.5);border-radius:{{ fr }}"></div>
+  <span style="position:absolute;top:{{ ornT }};left:50%;transform:translateX(-50%);font-size:{{ orn }};line-height:1;color:#F5CF5B">✦</span>
+  <span style="position:absolute;bottom:{{ ornT }};left:50%;transform:translateX(-50%);font-size:{{ orn }};line-height:1;color:#F5CF5B">✦</span>
+  <div style="position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(180deg,transparent,rgba(18,6,4,.78))"></div>
+  <sc-if value="{{ showTile }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;top:{{ tile }};left:{{ tile }};width:{{ tileS }};height:{{ tileS }};border-radius:6px;background:#F5CF5B;color:#2B1A14;display:flex;align-items:center;justify-content:center"><svg width="{{ tileIc }}" height="{{ tileIc }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M7 3v18 M3 7.5h4 M3 12h18 M3 16.5h4 M17 3v18 M17 7.5h4 M17 16.5h4"></path></svg></div></sc-if>
+  <sc-if value="{{ watched }}"><div title="Watched" style="position:absolute;top:{{ tile }};right:{{ tile }};width:{{ tileS }};height:{{ tileS }};border-radius:50%;background:#FFF7EA;color:#2B1A14;display:flex;align-items:center;justify-content:center"><svg width="{{ tileIc }}" height="{{ tileIc }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div></sc-if>
+  <sc-if value="{{ showMeta }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;left:{{ mx }};right:{{ mx }};bottom:{{ mb }};display:flex;flex-direction:column;gap:6px">
+    <div style="display:flex;gap:4px;flex-wrap:wrap"><span style="padding:2px 7px;border-radius:999px;background:#F5CF5B;color:#2B1A14;font:700 {{ tagFs }}/1.3 'Plus Jakarta Sans', sans-serif">{{ y }}</span><span style="padding:1px 7px;border-radius:999px;border:1px solid rgba(255,247,234,.75);color:#FFF7EA;font:600 {{ tagFs }}/1.3 'Plus Jakarta Sans', sans-serif">{{ q }}</span></div>
+    <span style="font:600 {{ titleFs }}/1.08 Oswald, sans-serif;text-transform:uppercase;letter-spacing:.02em;color:#FFF7EA;text-wrap:balance">{{ title }}</span>
+  </div></sc-if>
+  <sc-if value="{{ hasPct }}"><div style="position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,247,234,.25)"><div style="width:{{ pct }};height:100%;background:#F5CF5B"></div></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:200,&quot;height&quot;:260},&quot;t&quot;:{&quot;editor&quot;:null,&quot;default&quot;:{&quot;title&quot;:&quot;Arrival&quot;,&quot;y&quot;:&quot;2016&quot;,&quot;q&quot;:&quot;1080p&quot;,&quot;a&quot;:&quot;#1F5A3E&quot;,&quot;b&quot;:&quot;#0D2A1E&quot;},&quot;tsType&quot;:&quot;{title:string,y:string,q:string,a:string,b:string}&quot;},&quot;w&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:156,&quot;tsType&quot;:&quot;number&quot;},&quot;featured&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;watched&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;pct&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const t = this.props.t || { title: 'Title', y: '2024', q: '1080p', a: '#7A1820', b: '#2E080B' };
+    const W = +(this.props.w ?? 156), s = W / 156, H = Math.round(W * 1.5), px = v => Math.round(v) + 'px';
+    const inset = Math.max(4, 8 * s), orn = Math.max(7, 10 * s);
+    return {
+      W: px(W), H: px(H), r: px(Math.max(8, 16 * s)), bg: `linear-gradient(165deg, ${t.a} 0%, ${t.b} 100%)`,
+      border: this.props.featured ? '3px solid #F5CF5B' : '0',
+      ini: (t.title || '?')[0], iniFs: px(84 * s), ring: px(100 * s), inset: px(inset), fr: px(Math.max(5, 10 * s)),
+      orn: px(orn), ornT: px(inset - orn / 2), tile: px(Math.max(7, 14 * s)), tileS: px(Math.max(16, 24 * s)), tileIc: px(Math.max(10, 14 * s)),
+      showTile: W >= 64, showMeta: W >= 100, mx: px(14 * s), mb: px(16 * s), titleFs: px(Math.max(12, 17 * s)), tagFs: px(Math.max(9, 10.5 * s)),
+      y: t.y, q: t.q, title: t.title, watched: !!this.props.watched, hasPct: !!this.props.pct, pct: this.props.pct
+    };
+  }
+}
+</script>
+</body>
+</html>
