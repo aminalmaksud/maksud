@@ -116,6 +116,9 @@ export function createLive({ I, $, esc, enc, api, store, pauseAudio }) {
     $('livePip').onclick = () => (document.pictureInPictureElement ? document.exitPictureInPicture() : video.requestPictureInPicture()).catch(() => {});
     $('liveFull').onclick = toggleFull;
     // mouse: click the picture to pause or resume, double-click for full screen, wheel for volume
+    // no browser menu here either (its "Show all controls" draws a second control bar over ours)
+    root.addEventListener('contextmenu', (e) => e.preventDefault());
+    new MutationObserver(() => { if (video.hasAttribute('controls')) video.removeAttribute('controls'); }).observe(video, { attributes: true, attributeFilter: ['controls'] });
     video.addEventListener('click', togglePause);
     video.addEventListener('dblclick', toggleFull);
     root.addEventListener('wheel', (e) => { e.preventDefault(); setVolume(video.volume + (e.deltaY < 0 ? 0.05 : -0.05)); poke(); }, { passive: false });

@@ -1743,6 +1743,10 @@ function openCtx(x, y) {
   ctx.style.left = `${Math.max(6, Math.min(x, W - r.width - 6))}px`; ctx.style.top = `${Math.max(6, Math.min(y, H - r.height - 6))}px`;
   ctx.firstElementChild?.focus();
 }
+// The browser's own video menu ("Show all controls", "Loop", "Save video as"…) must never appear: its controls paint a second bar under ours.
+// A right-click anywhere in the player gets our menu instead, and if a native control bar is ever switched on, it is switched straight off.
+new MutationObserver(() => { if (video.hasAttribute('controls')) video.removeAttribute('controls'); }).observe(video, { attributes: true, attributeFilter: ['controls'] });
+video.controls = false; video.disablePictureInPicture = false;
 player.addEventListener('contextmenu', (e) => {
   e.preventDefault();
   if (player.classList.contains('mini')) return;
