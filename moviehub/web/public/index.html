@@ -269,6 +269,7 @@
         <span class="p-t" id="pRemain">-0:00</span>
       </div>
       <div class="p-row">
+        <button class="icon-btn" id="pPrev" title="Previous episode (Shift+P)" hidden></button>
         <button class="icon-btn" id="pBack" title="Rewind 10 s (←)"></button>
         <button class="icon-btn" id="pPlay" title="Play / pause (Space)"></button>
         <button class="icon-btn" id="pFwd" title="Forward 30 s (→)"></button>
@@ -295,6 +296,8 @@
     <b id="upNextTitle"></b>
     <div class="d-actions"><button class="btn primary" id="upNextPlay">Play now</button><button class="btn" id="upNextCancel">Cancel</button></div>
   </div>
+  <button id="skipBtn" class="skip-btn" hidden></button>
+  <div id="ctxMenu" class="ctx" role="menu" hidden></div>
   <div id="toast" hidden></div>
   <input type="file" id="subFile" accept=".srt,.vtt" hidden>
   <div class="mini-ui">

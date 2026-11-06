@@ -558,6 +558,15 @@ assert.equal(chs[0].url, 'http://h/a.m3u8');
   assert.deepEqual(sr.results.map((x) => [x.id, x.title, x.overview]), [['zyTCAlFPjgYC', 'The Google Story', 'David A. Vise']], 'an ISBN in the search box');
   fs.rmSync(shelf2, { recursive: true, force: true }); ext.close();
 }
+// --- skipping the intro, recap and credits comes from chapter titles
+{
+  const { skipRanges } = await import('./media.js');
+  const ch = (t, a, b) => ({ start_time: String(a), end_time: String(b), tags: { title: t } });
+  assert.deepEqual(skipRanges([ch('Recap', 0, 20), ch('Opening Credits', 20, 50), ch('Chapter 3', 50, 550), ch('End Credits', 550, 600)]), { recap: [0, 20], intro: [20, 50], outro: [550, 600] }, '"Opening Credits" is the intro, not the credits');
+  assert.deepEqual(skipRanges([ch('Chapter 1', 0, 300), ch('Chapter 2', 300, 600)]), {}, 'plain chapters give nothing to skip');
+  assert.deepEqual(skipRanges([ch('Intro', 0, 2), ch('Ending', 580, 600)]), { outro: [580, 600] }, 'a 2-second "Intro" chapter is not worth a button');
+  assert.deepEqual(skipRanges(undefined), {});
+}
 // --- "TV series" libraries group episodes by what the files say, whatever the folders look like
 {
   const lib2 = fs.mkdtempSync(path.join(os.tmpdir(), 'mh-shows-'));
@@ -589,6 +598,12 @@ assert.equal(chs[0].url, 'http://h/a.m3u8');
   const ep1 = (await episodesOf('Dark', 'Season 1'))[0];
   r = await get(`/stream?path=${encodeURIComponent(ep1.path)}`, { range: 'bytes=0-9' });
   assert.equal(r.status, 206, 'episodes play from their real path');
+  const qd = await (await get(`/api/queue?path=${encodeURIComponent(ep1.path)}`)).json();
+  assert.deepEqual(qd.items.map((e) => e.name), ['Dark.S01E01.mkv', 'Dark.S01E02.mkv'], 'Previous and Next follow the whole show');
+  assert.ok(qd.show, 'and say which show it is, for marks that apply to the whole series');
+  const bbq = await (await get(`/api/queue?path=${encodeURIComponent((await episodesOf('Breaking Bad', 'Season 1'))[0].path)}`)).json();
+  assert.deepEqual(bbq.items.map((e) => e.name.replace(/\.720p/, '')), ['Breaking.Bad.S01E01.mkv', 'Breaking.Bad.S01E02.mkv', 'Breaking Bad S01E03.mkv', 'Breaking.Bad.S02E01.mkv', 'Breaking.Bad.S03E01.mkv'], 'across seasons, so the last episode of one leads to the next');
+  assert.equal((await (await get('/api/queue?path=nope')).json()).items, null, 'an ordinary file has no show queue');
   // details come from the show's name, and episode plots from its season
   const bb = b.items.find((i) => i.name === 'Breaking Bad');
   const mm = await (await get(`/api/meta?path=${encodeURIComponent(bb.path)}`)).json();

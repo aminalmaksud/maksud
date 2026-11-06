@@ -388,6 +388,12 @@ h2.row-title { cursor: default; }
 .ep .bar i { display: block; height: 100%; background: var(--gold); }
 .ep .check { color: var(--gold-ink); }
 .ep-end { display: flex; align-items: center; gap: 12px; }
+.ep-tick { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: var(--faint); border: 1.5px solid var(--line); cursor: pointer; opacity: .55; transition: opacity .15s, color .15s, border-color .15s, background .15s; }
+.ep-tick svg { width: 16px; height: 16px; }
+.ep:hover .ep-tick, .ep-tick:focus-visible, .ep-tick.on { opacity: 1; }
+.ep-tick.on { background: var(--acc-fill); border-color: transparent; color: var(--acc-fill-text, #fff); }
+.ep-tick:hover { border-color: var(--maroon); color: var(--maroon); }
+.ep-tick.on:hover { filter: brightness(.9); color: var(--acc-fill-text, #fff); }
 .ep-x { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: var(--faint); border: 1px solid var(--line); opacity: 0; transition: opacity .15s, color .15s, border-color .15s; }
 .ep-x svg { width: 16px; height: 16px; }
 .ep:hover .ep-x { opacity: 1; }
@@ -998,3 +1004,15 @@ html:not(.streamhub) #folderCast .cm span { color: var(--panel-text, inherit); }
 .match-dlg h4 { font: 700 12px var(--body); }
 html:not(.streamhub) #folderEdit { color: #fff7ea; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .45); }
 html:not(.streamhub) #folderEdit:hover { background: rgba(255, 255, 255, .2); }
+
+/* Skip intro / recap / credits */
+.skip-btn { position: absolute; right: 24px; bottom: 118px; z-index: 6; padding: 11px 22px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, .55); background: rgba(20, 8, 6, .72); color: #fff; font: 700 15px var(--body); cursor: pointer; backdrop-filter: blur(6px); transition: background .15s, transform .15s; }
+.skip-btn:hover { background: var(--acc-fill, #f5cf5b); color: var(--acc-fill-text, #2b1a14); border-color: transparent; }
+.skip-btn[hidden] { display: none; }
+#player.mini .skip-btn, #player.mini .ctx { display: none; }
+/* the player's own right-click menu */
+.ctx { position: absolute; z-index: 20; min-width: 230px; padding: 6px; border-radius: 10px; background: rgba(24, 14, 10, .96); border: 1px solid rgba(255, 255, 255, .22); box-shadow: 0 14px 40px rgba(0, 0, 0, .5); display: flex; flex-direction: column; }
+.ctx[hidden] { display: none; }
+.ctx button { all: unset; box-sizing: border-box; cursor: pointer; padding: 9px 12px; border-radius: 6px; color: #f7ece0; font: 500 14px var(--body); }
+.ctx button:hover, .ctx button:focus-visible { background: var(--acc-fill, #f5cf5b); color: var(--acc-fill-text, #2b1a14); }
+.ctx hr { border: 0; border-top: 1px solid rgba(255, 255, 255, .16); margin: 5px 4px; }

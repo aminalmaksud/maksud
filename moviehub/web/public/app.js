@@ -144,6 +144,15 @@ function toggleList(it) {
   if (state.view === 'list') showList();
   return on;
 }
+/** The tick on an episode: marks it watched, or, when it already is, unwatched. */
+function toggleWatched(path) {
+  const h = history_[path];
+  if (h?.done) delete history_[path];
+  else history_[path] = { path, name: known.get(path)?.name || h?.name || lastSeg(path), pos: 0, dur: h?.dur || 0, done: true, at: Date.now() };
+  store.set('history', history_);
+  if (state.view === 'home') refreshHomeRows(); else render();
+  if (!$('seasonBar').hidden) $('seasonCount').textContent = seasonCountText(state.items.filter((i) => i.kind === 'video'));
+}
 function saveProgress(item, pos, dur) {
   if (!dur || pos < 5) return;
   const done = pos > dur - Math.min(120, dur * 0.05);
@@ -845,7 +854,7 @@ function renderGrid(items, { sub = null, folder = undefined } = {}) {
       const pct = p && !p.done && p.dur ? (p.pos / p.dur) * 100 : 0;
       return `<button class="ep" data-path="${esc(v.path)}"><span class="num">${epNumber(v.name, i)}</span>
         <span><div class="t">${esc(epTitle(v.name, i))}</div><div class="ep-syn"></div><div class="s">${p?.done ? 'Watched' : pct ? `${fmt(p.dur - p.pos)} left` : esc(stem(v.name))}</div></span>
-        <span class="ep-end">${p?.done ? `<span class="check">${I.check}</span>` : pct ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}${p ? `<span class="ep-x" role="button" data-forget="${esc(p.path)}" title="${p.done ? 'Mark as unwatched' : 'Remove progress'}">${I.undo}</span>` : ''}</span></button>`;
+        <span class="ep-end">${pct ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}<span class="ep-tick${p?.done ? ' on' : ''}" role="button" tabindex="0" data-watch="${esc(v.path)}" title="${p?.done ? 'Watched: click to mark as unwatched' : 'Mark as watched'}">${I.check}</span></span></button>`;
     }).join('');
     fillEpisodeInfo(gridFolder, videos);
   } else {
@@ -1033,10 +1042,12 @@ document.addEventListener('click', (e) => {
 });
 
 document.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-list]:not(#heroList), [data-forget], [data-info]');
+  const b = e.target.closest('[data-list]:not(#heroList), [data-forget], [data-info], [data-watch]');
   if (!b) return;
   e.stopPropagation(); e.preventDefault();
-  if (b.dataset.info) {
+  if (b.dataset.watch) {
+    toggleWatched(b.dataset.watch);
+  } else if (b.dataset.info) {
     const it = findItem(b.dataset.info);
     if (it) openBookInfo(it);
   } else if (b.dataset.list) {
@@ -1451,12 +1462,16 @@ async function startPlayback(item, { from } = {}) {
   });
 
   // The video's own folder gives its subtitle files and the next episode, wherever it was opened from.
-  const [probe, folder] = await Promise.all([
+  const [probe, folder, queue] = await Promise.all([
     api(`/api/probe?path=${enc(item.path)}`).catch((e) => { banner(esc(e.message)); return null; }),
-    listFolder(item.path.replace(/[^/]+$/, '')).then((l) => l.items, () => state.items),
+    api(`/api/browse?path=${enc(item.path.replace(/[^/]+$/, ''))}&real=1`).then((l) => l.items, () => state.items),
+    // an episode of a grouped TV series: previous and next follow the whole show, across seasons, not the folder it sits in
+    api(`/api/queue?path=${enc(item.path)}`).catch(() => null),
   ]);
   if (S.item !== item) return;
-  S.probe = probe; S.folder = folder; S.list = folder.filter((i) => i.kind === 'video');
+  S.probe = probe; S.folder = folder; S.list = queue?.items || folder.filter((i) => i.kind === 'video');
+  S.seriesKey = queue?.show ? `show:${queue.show}` : seriesKeyOf(item);
+  loadSkips();
   const pr = S.probe;
   S.duration = pr?.duration || 0;
   // Preferred audio language, else the track the file marks as default.
@@ -1526,15 +1541,20 @@ function sourceUrl(t) {
   return S.mode === 'direct' ? `/stream?path=${enc(S.item.path)}` : `/remux?path=${enc(S.item.path)}&t=${t}&audio=${S.audio}&adelay=${S.adelay}&fmt=${S.fmt}`;
 }
 
+let loadSeq = 0, startedHandler = null;
 async function load(t) {
-  const item = S.item;
+  const item = S.item, seq = ++loadSeq;
   player.classList.add('loading');
   video.playbackRate = prefs.speed;
+  // Only the newest stream may adjust the clock: a stream replaced before it started playing must not leave its own adjustment behind
+  // (three quick rewinds used to leave the clock up to 20 s ahead of the picture, so subtitles and the resume position drifted).
+  if (startedHandler) { video.removeEventListener('playing', startedHandler); startedHandler = null; }
   if (S.mode === 'direct') {
     const url = sourceUrl(0);
     if (!video.src.endsWith(url)) {
       video.src = url;
       await new Promise((r) => video.addEventListener('loadedmetadata', r, { once: true }));
+      if (seq !== loadSeq) return;
     }
     video.currentTime = t;
   } else if (S.fmt === 'mkv') {
@@ -1542,19 +1562,21 @@ async function load(t) {
     S.offset = 0;
     S.pendingSeek = t; // until the new stream starts playing
     video.src = sourceUrl(t);
-    // Safety net: if the engine ever restarts its clock at 0 instead of the movie's time, re-base on `t`.
-    if (t > 5) {
-      video.addEventListener('playing', () => {
-        if (S.item === item && video.currentTime < t - 5) { S.offset = t - video.currentTime; S.pendingSeek = null; }
-      }, { once: true });
-    }
+    startedHandler = () => {
+      startedHandler = null;
+      if (seq !== loadSeq || S.item !== item) return;
+      // Safety net: if the engine ever restarts its clock at 0 instead of the movie's time, re-base on `t`.
+      if (t > 5 && video.currentTime < t - 5) S.offset = t - video.currentTime;
+      S.pendingSeek = null;
+    };
+    video.addEventListener('playing', startedHandler, { once: true });
     video.playbackRate = prefs.speed;
     video.play().catch(() => {});
     return;
   } else {
     let start = t;
     try { start = (await api(`/api/seek-point?path=${enc(item.path)}&t=${t}`)).start; } catch { /* use t */ }
-    if (S.item !== item) return;
+    if (S.item !== item || seq !== loadSeq) return;
     // MP4 fallback: each track restarts at zero, so the clock is offset by where the stream began.
     S.offset = start;
     video.src = sourceUrl(start);
@@ -1627,19 +1649,125 @@ function nextItem() {
   const i = S.list.findIndex((v) => v.path === S.item.path);
   return i >= 0 ? S.list[i + 1] || null : null;
 }
+function previousItem() {
+  if (!S.item) return null;
+  const i = S.list.findIndex((v) => v.path === S.item.path);
+  return i > 0 ? S.list[i - 1] : null;
+}
+
+/* ----- skip intro / recap / credits: from the file's chapters, or marks you set once for the whole series ----- */
+const skipsStore = store.get('skips', {});
+/** What marks apply to: the grouped show, else the folder that holds the episodes (a Season folder counts as its parent). */
+function seriesKeyOf(item) {
+  const dir = item.path.replace(/[^/]+$/, '');
+  return SEASON_RE.test(lastSeg(dir).trim()) ? parentPath(dir.replace(/\/$/, '') + '/') : dir;
+}
+function loadSkips() {
+  const mine = skipsStore[S.seriesKey] || {};
+  S.skip = { ...(S.probe?.skips || {}), ...(mine.intro ? { intro: mine.intro } : {}), ...(mine.outro ? { outro: mine.outro } : {}) };
+  S.markStart = null;
+  updateSkip();
+}
+/** The part of the video the position is in that can be skipped: { kind, to }, or null. */
+function activeSkip() {
+  if (!S.skip || !S.item) return null;
+  const t = now(), d = duration();
+  for (const kind of ['recap', 'intro', 'outro']) {
+    const r = S.skip[kind];
+    if (!r) continue;
+    const end = kind === 'outro' ? (r[1] || d) : r[1];
+    if (t >= r[0] - 0.5 && t < end - 2) return { kind, to: end };
+  }
+  return null;
+}
+function updateSkip() {
+  const b = $('skipBtn'), a = player.classList.contains('mini') ? null : activeSkip();
+  if (!a) { b.hidden = true; b.dataset.kind = ''; return; }
+  const label = a.kind === 'outro' ? (nextItem() ? 'Next episode' : 'Skip credits') : a.kind === 'recap' ? 'Skip recap' : 'Skip intro';
+  b.dataset.kind = a.kind; b.dataset.to = a.to;
+  if (b.textContent !== label) b.textContent = label;
+  b.hidden = false;
+}
+$('skipBtn').onclick = () => {
+  const kind = $('skipBtn').dataset.kind, to = Number($('skipBtn').dataset.to);
+  if (kind === 'outro') {
+    const n = nextItem();
+    if (n) { saveProgress(S.item, duration(), duration()); return startPlayback(n, { from: 0 }); } // skipping the credits goes on to the next episode
+    return seekTo(duration() - 1, { immediate: true });
+  }
+  seekTo(to, { immediate: true });
+};
+function saveMark(kind, range) {
+  const m = skipsStore[S.seriesKey] || (skipsStore[S.seriesKey] = {});
+  if (range) m[kind] = range; else { delete m.intro; delete m.outro; }
+  store.set('skips', skipsStore); loadSkips();
+}
+
+/* ----- right-click menu on the player (replaces the browser's, whose "Show controls" paints a second control bar) ----- */
+const ctx = $('ctxMenu');
+function closeCtx() { ctx.hidden = true; }
+function openCtx(x, y) {
+  if (!S.item) return;
+  const n = nextItem(), p = previousItem(), watched = progressOf(S.item.path)?.done;
+  const items = [
+    [video.paused ? 'Play' : 'Pause', togglePlay], null,
+    ['Subtitles…', () => { poke(); $('pSubs').click(); }],
+    ['Audio track…', () => { poke(); $('pAudio').click(); }, (S.probe?.audio?.length || 0) > 1],
+    ['Playback speed…', () => { poke(); $('pSpeed').click(); }], null,
+    ...(p ? [['Previous episode', () => $('pPrev').click()]] : []),
+    ...(n ? [['Next episode', () => $('pNext').click()]] : []),
+    ...(p || n ? [null] : []),
+    [S.markStart != null ? `Intro ends here (started at ${fmt(S.markStart)})` : 'Mark intro start here', () => {
+      if (S.markStart == null) { S.markStart = now(); toast('Now play to where the intro ends, right-click and choose “Intro ends here”', 3200); }
+      else if (now() > S.markStart + 3) { saveMark('intro', [S.markStart, now()]); toast('Intro saved for every episode of this series', 2200); }
+      else toast('The intro must end after it starts', 1800);
+    }],
+    ['Credits start here', () => { saveMark('outro', [now(), duration()]); toast('Credits saved for every episode of this series', 2200); }],
+    ...((skipsStore[S.seriesKey] && (skipsStore[S.seriesKey].intro || skipsStore[S.seriesKey].outro)) ? [['Clear my skip marks for this series', () => { saveMark(null, null); toast('Skip marks cleared', 1600); }]] : []), null,
+    [watched ? 'Mark as unwatched' : 'Mark as watched', () => { toggleWatched(S.item.path); toast(watched ? 'Marked as unwatched' : 'Marked as watched', 1400); }],
+    [document.pictureInPictureElement ? 'Leave picture in picture' : 'Picture in picture', () => $('pPip').click()],
+    [document.fullscreenElement ? 'Leave full screen' : 'Full screen', toggleFull],
+  ];
+  ctx.innerHTML = '';
+  for (const it of items) {
+    if (it === null) { const hr = document.createElement('hr'); ctx.append(hr); continue; }
+    if (it[2] === false) continue;
+    const b = document.createElement('button');
+    b.type = 'button'; b.setAttribute('role', 'menuitem'); b.textContent = it[0];
+    b.onclick = () => { closeCtx(); it[1](); };
+    ctx.append(b);
+  }
+  while (ctx.lastElementChild?.tagName === 'HR') ctx.lastElementChild.remove();
+  ctx.hidden = false;
+  const r = ctx.getBoundingClientRect(), W = player.clientWidth, H = player.clientHeight;
+  ctx.style.left = `${Math.max(6, Math.min(x, W - r.width - 6))}px`; ctx.style.top = `${Math.max(6, Math.min(y, H - r.height - 6))}px`;
+  ctx.firstElementChild?.focus();
+}
+player.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  if (player.classList.contains('mini')) return;
+  const box = player.getBoundingClientRect();
+  openCtx(e.clientX - box.left, e.clientY - box.top);
+});
+document.addEventListener('mousedown', (e) => { if (!ctx.hidden && !e.target.closest('#ctxMenu')) closeCtx(); }, true);
+document.addEventListener('keydown', (e) => {
+  if (ctx.hidden) return;
+  if (e.key === 'Escape') { e.stopImmediatePropagation(); e.preventDefault(); closeCtx(); }
+  else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.stopImmediatePropagation(); e.preventDefault();
+    const bs = [...ctx.querySelectorAll('button')], i = bs.indexOf(document.activeElement);
+    bs[(i + (e.key === 'ArrowDown' ? 1 : -1) + bs.length) % bs.length].focus();
+  }
+}, true);
 
 /* ----- events ----- */
 video.addEventListener('waiting', () => player.classList.add('loading'));
 video.addEventListener('playing', () => { player.classList.remove('loading'); updateButtons(); });
-// A Matroska stream has started once its clock is near the position it was asked for.
-video.addEventListener('timeupdate', () => {
-  if (S.pendingSeek != null && S.mode === 'remux' && S.fmt === 'mkv' && video.currentTime > 0 && Math.abs(S.offset + video.currentTime - S.pendingSeek) < 30) S.pendingSeek = null;
-});
 video.addEventListener('canplay', () => player.classList.remove('loading'));
 video.addEventListener('pause', updateButtons);
 video.addEventListener('play', updateButtons);
 video.addEventListener('timeupdate', () => {
-  updateTime();
+  updateTime(); updateSkip();
   if (S.item && ++S.saveTick % 20 === 0) saveProgress(S.item, now(), duration());
   pumpEmbeddedSubs();
   // A direct stream that decodes no audio: the file's sound format isn't supported natively, convert it.
@@ -1684,7 +1812,7 @@ function updateButtons() {
   $('pList').classList.toggle('on', !!listed);
   setIcon($('pMute'), video.muted || video.volume === 0 ? 'mute' : 'vol');
   setIcon($('pFull'), document.fullscreenElement ? 'unfull' : 'full');
-  $('pNext').hidden = !nextItem();
+  $('pNext').hidden = !nextItem(); $('pPrev').hidden = !previousItem();
   const a = S.probe?.audio || [];
   $('pAudio').hidden = !a.length;
   $('pAudio').innerHTML = `${I.audio}<span>${esc(a.find((x) => x.index === S.audio)?.label || 'Audio')}</span>`;
@@ -1734,6 +1862,8 @@ const togglePlay = () => (video.paused ? video.play() : video.pause());
 $('pPlay').onclick = togglePlay;
 $('pBack').onclick = () => skip(-10);
 $('pFwd').onclick = () => skip(30); // like Jellyfin: back 10 s, forward 30 s
+$('pPrev').innerHTML = `<span class="flip">${I.next}</span>`;
+$('pPrev').onclick = () => { const n = previousItem(); if (n) { saveProgress(S.item, now(), duration()); startPlayback(n, { from: 0 }); } };
 $('pNext').onclick = () => { const n = nextItem(); if (n) { saveProgress(S.item, now(), duration()); startPlayback(n, { from: 0 }); } };
 $('pClose').onclick = minimizePlayer;
 $('mExpand').onclick = expandPlayer;
@@ -2177,6 +2307,7 @@ document.addEventListener('keydown', (e) => {
   else if (k === 'm') $('pMute').click();
   else if (k === 'f') toggleFull();
   else if (k === 'n') $('pNext').click(); // Shift+N, as in Jellyfin, works the same
+  else if (k === 'p' && e.shiftKey) $('pPrev').click();
   else if (k === 'home') { e.preventDefault(); if (duration()) seekTo(0, { immediate: true }); }
   else if (k === 'end') { e.preventDefault(); if (duration()) seekTo(duration() - 1, { immediate: true }); }
   else if (e.code === 'Comma' || e.code === 'Period') { e.preventDefault(); const d = e.code === 'Comma' ? -1 : 1; if (e.shiftKey) stepSpeed(d); else stepFrame(d); } // as in Jellyfin

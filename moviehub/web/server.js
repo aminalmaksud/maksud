@@ -330,6 +330,16 @@ async function findShow(rel) {
   return s;
 }
 const libraryRoots = () => bases().map((_, i) => libraryRoot(i).then((l) => l.path, () => `${i}/`));
+/** The episodes of the grouped show a file belongs to, in watching order (every season), for Previous and Next episode. */
+function showQueue(rel) {
+  for (const e of showIdx.values()) {
+    for (const s of e.series) {
+      const eps = s.seasons.flatMap((x) => x.episodes);
+      if (eps.some((x) => x.path === rel)) return { items: eps.map((x) => x.entry), show: s.id };
+    }
+  }
+  return null;
+}
 async function listShowsRoot(rel) {
   const r = await showsSeries(rel);
   return { path: rel, items: r.series.map((s) => ({ name: s.year ? `${s.title} (${s.year})` : s.title, path: showPath(s), isDir: true, kind: 'dir' })), scanning: !r.done, scanned: r.listed };
@@ -361,10 +371,11 @@ async function handleBrowse(url, res) {
   }
   if (!rel) rel = gs[0].root;
   if (rel.startsWith('show:')) return json(res, 200, { ...(await listShow(rel)), ...extra });
-  if (gs.some((g) => g.root === rel && g.type === 'shows')) return json(res, 200, { ...(await listShowsRoot(rel)), ...extra, rootType: 'shows' });
+  const real = !!url.searchParams.get('real'); // the folder as it is on disk, not the grouped list of shows (the player wants its subtitle files)
+  if (!real && gs.some((g) => g.root === rel && g.type === 'shows')) return json(res, 200, { ...(await listShowsRoot(rel)), ...extra, rootType: 'shows' });
   if (rel.startsWith('v:')) return json(res, 200, { ...(await listVirtual(rel, refresh)), ...extra, rootType: rootTypeOf(rel) });
   if (!rel.endsWith('/')) rel += '/';
-  if (gs.some((g) => g.root === rel && g.type === 'shows')) return json(res, 200, { ...(await listShowsRoot(rel)), ...extra, rootType: 'shows' });
+  if (!real && gs.some((g) => g.root === rel && g.type === 'shows')) return json(res, 200, { ...(await listShowsRoot(rel)), ...extra, rootType: 'shows' });
   const listing = /^\d+\/$/.test(rel) ? await libraryRoot(Number(rel.slice(0, -1))) : await listDir(rel);
   json(res, 200, { ...listing, ...extra, rootType: rootTypeOf(rel) });
 }
@@ -1173,6 +1184,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/subget') return await handleSubGet(url, res);
     if (p === '/api/pick-folder') return await handlePickFolder(req, res);
     if (p === '/api/meta') return await handleMeta(url, res);
+    if (p === '/api/queue') return json(res, 200, showQueue(url.searchParams.get('path') || '') || { items: null });
     if (p === '/api/cast') return await handleCast(url, res);
     if (p === '/api/info') return await handleInfo(url, res);
     if (p === '/api/info-search') return await handleInfoSearch(url, res);

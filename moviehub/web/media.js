@@ -45,10 +45,24 @@ const trackLabel = (s, i) => [s.tags?.title, lang(s).toUpperCase()].filter(Boole
 
 const probeCache = new Map();
 
+const chapterList = (cs) => (cs || []).map((c) => ({ start: Number(c.start_time), end: Number(c.end_time), title: String(c.tags?.title || '') })).filter((c) => Number.isFinite(c.start) && Number.isFinite(c.end));
+/** Intro, recap and credits found from chapter titles ("Opening", "Recap", "End Credits"...): { intro, recap, outro } as [start, end]. */
+export function skipRanges(chapters) {
+  const out = {};
+  for (const c of chapterList(chapters)) {
+    const len = c.end - c.start;
+    if (len < 5) continue;
+    if (/\b(intro|opening|title (?:sequence|card)|main title|theme)\b/i.test(c.title)) { if (!out.intro && len <= 400) out.intro = [c.start, c.end]; }
+    else if (/\b(recap|previously)\b/i.test(c.title)) { if (!out.recap && len <= 400) out.recap = [c.start, c.end]; }
+    else if (/\b(outro|ending|end credits|credits|closing)\b/i.test(c.title)) { if (!out.outro) out.outro = [c.start, c.end]; }
+  }
+  return out;
+}
+
 /** Streams, duration and whether the browser engine can play the file as-is. */
 export function probe(url, auth) {
   if (!probeCache.has(url)) {
-    const job = run(FFPROBE, ['-v', 'error', ...headerArgs(auth), '-print_format', 'json', '-show_format', '-show_streams', url], { timeoutMs: 30000 })
+    const job = run(FFPROBE, ['-v', 'error', ...headerArgs(auth), '-print_format', 'json', '-show_format', '-show_streams', '-show_chapters', url], { timeoutMs: 30000 })
       .then((buf) => {
         const j = JSON.parse(buf.toString('utf8'));
         const streams = j.streams || [];
@@ -66,7 +80,7 @@ export function probe(url, auth) {
         const container = extOf(/^https?:/i.test(url) ? new URL(url).pathname : url); // URL or downloaded file path
         const direct = ['mp4', 'm4v', 'webm', 'mov'].includes(container) && !!video && !video.transcode
           && audio.length <= 1 && (!audio.length || PLAYABLE_AUDIO.has(audio[0].codec));
-        return { duration: Number(j.format?.duration) || 0, video, audio, subs, direct };
+        return { duration: Number(j.format?.duration) || 0, video, audio, subs, direct, chapters: chapterList(j.chapters), skips: skipRanges(j.chapters) };
       });
     job.catch(() => probeCache.delete(url));
     probeCache.set(url, job);

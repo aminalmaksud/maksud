@@ -21,7 +21,7 @@ to the movie, seasons open as episode lists, and the search box searches every s
   once, with a **Quality** choice (1080p / 720p) on its page. This works for any server you add.
 - **My List.** Press **+** on any poster, **My List** on a movie's page or the featured panel, or **+** in the player.
 - **Continue watching.** Hover a title and press **×** to remove it, or use *Remove from Continue watching* on
-  its page. In an episode list, hover an episode and press ↺ to clear its progress.
+  its page. In an episode list, the tick at the right of an episode marks it watched, and unwatched again when it already is.
 - **Mini player.** Back / Esc shrinks the video to a corner so you can keep browsing. Click it to make it big
   again, or press × to stop.
 - Titles without a poster get a cover in the website's colours with the title, year and quality.
@@ -145,6 +145,14 @@ most other streams play with sound, but live streams can't be paused or rewound.
 - Click a movie to see its details, then **Play** or **Resume**.
 - The player has an **audio** button (🎵) for tracks/dubs and a **CC** button for subtitles, timing,
   size and loading your own `.srt`. There's also a speed button, picture-in-picture and full screen.
+- **Skip intro, recap and credits:** if the file has chapters named like "Intro", "Opening", "Recap" or "End Credits", a **Skip intro** / **Skip recap**
+  button appears while they play, and at the credits the button says **Next episode** (or **Skip credits** on the last one) and goes on to the next episode.
+  Files without chapters: right-click the player, choose **Mark intro start here**, play to where the intro ends, right-click and choose **Intro ends here**
+  (and **Credits start here** at the credits). The marks are kept for the whole series, so every episode gets the button. **Clear my skip marks** removes them.
+  StreamHub doesn't detect intros by itself yet.
+- **Right-click** the player for a menu: play/pause, subtitles, audio track, speed, previous / next episode, the skip marks, mark as watched or unwatched,
+  picture in picture and full screen. (It replaces the browser's own menu, whose "Show controls" paints a second control bar.)
+- **Previous / next episode:** buttons at the left of the control bar, and Shift+P / Shift+N. For a TV series library they follow the whole show, across seasons.
 - Mouse: click the picture to pause or resume, double-click for full screen, scroll to change the volume.
 - Keys (the same as Jellyfin's): Space or K = pause · ← or J = back 10 s · → or L = forward 30 s · ↑ ↓ = volume · F = full screen ·
   M = mute · 0–9 = jump to 0–90% · Home / End = start / end · , and . = one frame back / forward · Shift+, and Shift+. = slower / faster ·
