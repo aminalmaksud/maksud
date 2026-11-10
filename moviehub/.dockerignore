@@ -1,0 +1,9 @@
+**/node_modules
+**/test.js
+**/*.mp4
+**/config.json
+**/*.log
+mac/
+windows/
+android-tv/
+design/

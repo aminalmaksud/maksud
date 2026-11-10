@@ -1,0 +1,39 @@
+name: MusingsofMaksudTV Docker image
+
+# Builds the headless web server image (moviehub/Dockerfile) and checks that it starts and answers.
+# Nothing is pushed to a registry.
+on:
+  push:
+    paths: ['moviehub/web/**', 'moviehub/Dockerfile', 'moviehub/.dockerignore', '.github/workflows/moviehub-docker.yml']
+  pull_request:
+    paths: ['moviehub/web/**', 'moviehub/Dockerfile', 'moviehub/.dockerignore', '.github/workflows/moviehub-docker.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: moviehub
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image
+        run: docker build -t streamhub-web:ci .
+      - name: Start it and check it answers
+        run: |
+          docker run -d --name streamhub -p 8080:8080 streamhub-web:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/api/config -o /tmp/config.json; then break; fi
+            sleep 1
+          done
+          cat /tmp/config.json; echo
+          grep -q '"ffmpeg":true' /tmp/config.json || { echo "ffmpeg missing in the image"; docker logs streamhub; exit 1; }
+      - name: Container logs
+        if: always()
+        run: docker logs streamhub || true
+      - name: Stop
+        if: always()
+        run: docker rm -f streamhub || true
