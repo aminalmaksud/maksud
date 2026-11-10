@@ -31,6 +31,25 @@ jobs:
           done
           cat /tmp/config.json; echo
           grep -q '"ffmpeg":true' /tmp/config.json || { echo "ffmpeg missing in the image"; docker logs streamhub; exit 1; }
+      - name: Stop the first container
+        run: docker rm -f streamhub || true
+      - name: Mount a folder of films and check the container lists it
+        run: |
+          set -e
+          M="$RUNNER_TEMP/media/Movies"; C="$RUNNER_TEMP/streamhub-config"
+          mkdir -p "$M/Fake Film (2020)" "$C"
+          : > "$M/Fake Film (2020)/Fake.Film.2020.1080p.mkv"
+          chmod -R a+rX "$RUNNER_TEMP/media"; chmod 777 "$C"
+          echo '{"servers":["Movies | /libraries/Movies"]}' > "$C/config.json"; chmod 666 "$C/config.json"
+          docker run -d --name streamhub-mount -p 8081:8080 \
+            -v "$M:/libraries/Movies:ro" -v "$C:/config" streamhub-web:ci
+          for i in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:8081/api/browse?path=" -o /tmp/browse.json; then break; fi
+            sleep 1
+          done
+          cat /tmp/browse.json; echo
+          grep -q 'Fake Film (2020)' /tmp/browse.json || { echo "the mounted folder is not listed"; docker logs streamhub-mount; exit 1; }
+          docker rm -f streamhub-mount
       - name: Container logs
         if: always()
         run: docker logs streamhub || true
