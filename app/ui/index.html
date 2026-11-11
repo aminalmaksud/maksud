@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bangla Transcriber</title>
+<style>
+:root {
+  --bg: #f5f5f7; --panel: #ffffff; --side: #ececef; --line: #dcdce0; --text: #1d1d1f;
+  --muted: #6e6e73; --accent: #0a84ff; --accent-ink: #fff; --ok: #1f9d55; --err: #d93025;
+  --hl: rgba(10,132,255,.16); --chip: #f0f0f3;
+  --bn: "Kohinoor Bangla", "Bangla Sangam MN", "Noto Sans Bengali", "Hind Siliguri", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16161a; --panel: #1e1e23; --side: #1a1a1e; --line: #2e2e35; --text: #ececf1;
+    --muted: #9a9aa3; --accent: #0a84ff; --hl: rgba(10,132,255,.28); --chip: #26262d;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16161a; --panel: #1e1e23; --side: #1a1a1e; --line: #2e2e35; --text: #ececf1;
+  --muted: #9a9aa3; --accent: #0a84ff; --hl: rgba(10,132,255,.28); --chip: #26262d;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--text); font: 13px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--bn);
+  display: grid; grid-template-columns: 300px 1fr; overflow: hidden; -webkit-user-select: none; user-select: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.side { background: var(--side); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+.side header { padding: 18px 16px 10px; display: flex; align-items: center; gap: 10px; }
+.side header img { width: 30px; height: 30px; border-radius: 7px; }
+.side header h1 { font-size: 15px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+.side header small { display: block; color: var(--muted); font-size: 11.5px; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 7px; padding: 6px 12px; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn.primary:disabled { opacity: .45; cursor: default; }
+.btn.danger { color: var(--err); }
+.list { flex: 1; overflow-y: auto; padding: 4px 8px 8px; }
+.job { padding: 9px 10px; border-radius: 8px; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; position: relative; }
+.job:hover { background: var(--chip); }
+.job.sel { background: var(--hl); }
+.job .n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 550; }
+.job .m { grid-column: 1 / -1; color: var(--muted); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.job .x { opacity: 0; border: 0; background: none; color: var(--muted); padding: 2px 4px; position: absolute; right: 6px; bottom: 6px; line-height: 1; }
+.job .m { padding-right: 18px; }
+.job:hover .x { opacity: 1; }
+.pill { font-size: 10.5px; padding: 1px 7px; border-radius: 99px; background: var(--chip); color: var(--muted); align-self: center; }
+.pill.done { color: var(--ok); } .pill.error { color: var(--err); } .pill.working { color: var(--accent); }
+.bar { grid-column: 1 / -1; height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 3px; }
+.bar i { display: block; height: 100%; background: var(--accent); transition: width .4s; }
+.drop { margin: 6px 8px 10px; border: 1.5px dashed var(--line); border-radius: 10px; padding: 14px; text-align: center; color: var(--muted); font-size: 12px; }
+.settings { border-top: 1px solid var(--line); padding: 12px 14px 14px; display: grid; gap: 9px; }
+.settings label.row { display: grid; gap: 4px; color: var(--muted); font-size: 11.5px; }
+select { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 5px 8px; width: 100%; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 2px; }
+.seg button { border: 0; background: none; border-radius: 5px; padding: 4px; color: var(--muted); }
+.seg button.on { background: var(--chip); color: var(--text); font-weight: 600; }
+.checks { display: flex; gap: 14px; color: var(--muted); font-size: 12px; }
+.checks label { display: flex; gap: 5px; align-items: center; }
+.outdir { display: flex; gap: 6px; align-items: center; }
+.outdir span { flex: 1; color: var(--text); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; }
+.go { display: flex; gap: 8px; }
+.go .primary { flex: 1; padding: 8px; }
+.status { color: var(--muted); font-size: 11.5px; min-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.empty { flex: 1; display: grid; place-items: center; text-align: center; color: var(--muted); padding: 40px; }
+.empty .big { border: 2px dashed var(--line); border-radius: 18px; padding: 54px 60px; max-width: 520px; }
+.empty h2 { color: var(--text); font-size: 20px; margin: 0 0 6px; font-weight: 650; }
+.empty .bn { font-family: var(--bn); font-size: 15px; margin: 4px 0 18px; }
+.top { padding: 16px 24px 12px; border-bottom: 1px solid var(--line); display: grid; gap: 12px; }
+.title { display: flex; align-items: center; gap: 10px; }
+.title h2 { margin: 0; font-size: 16px; font-weight: 650; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player { display: flex; align-items: center; gap: 12px; }
+.play { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; display: grid; place-items: center; flex: none; }
+.play svg { width: 14px; height: 14px; fill: currentColor; }
+.time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; min-width: 92px; }
+input[type=range] { flex: 1; accent-color: var(--accent); }
+.tabs { display: flex; gap: 4px; }
+.tabs button { border: 0; background: none; padding: 4px 10px; border-radius: 6px; color: var(--muted); }
+.tabs button.on { background: var(--chip); color: var(--text); font-weight: 600; }
+.body { flex: 1; overflow-y: auto; padding: 22px 28px 40px; }
+.words { font-family: var(--bn); font-size: 19px; line-height: 2.05; -webkit-user-select: text; user-select: text; max-width: 860px; }
+.w { border-radius: 5px; padding: 1px 2px; cursor: pointer; transition: background .08s; }
+.w:hover { background: var(--chip); }
+.w.cur { background: var(--accent); color: #fff; }
+.gap { display: inline-block; font-family: -apple-system, sans-serif; font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 0 6px; line-height: 16px; vertical-align: 3px; margin: 0 3px; }
+.tip { position: fixed; pointer-events: none; background: var(--text); color: var(--bg); font-size: 11px; padding: 3px 7px; border-radius: 5px; font-variant-numeric: tabular-nums; display: none; z-index: 9; }
+pre { margin: 0; font: 12px/1.5 ui-monospace, "SF Mono", Menlo, var(--bn); -webkit-user-select: text; user-select: text; white-space: pre-wrap; }
+pre .k { color: #c678dd; } pre .s { color: #2aa876; } pre .num { color: #d19a66; }
+.msg { color: var(--muted); padding: 30px 0; }
+.err { color: var(--err); -webkit-user-select: text; user-select: text; }
+.big-progress { max-width: 460px; }
+.big-progress .bar { height: 6px; margin: 12px 0 8px; }
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 7px 14px; border-radius: 8px; font-size: 12px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+body.dragging main::after { content: "Drop audio or transcript files to add them"; position: fixed; inset: 10px; border: 2px dashed var(--accent); border-radius: 16px; display: grid; place-items: center; background: rgba(10,132,255,.08); font-size: 18px; color: var(--accent); font-weight: 600; pointer-events: none; z-index: 40; }
+
+.cues { max-width: 900px; }
+.hint { color: var(--muted); font-size: 12px; margin: 0 0 14px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.hint label { display: flex; gap: 5px; align-items: center; }
+.cue { display: grid; grid-template-columns: 44px 1fr; gap: 2px 12px; padding: 9px 12px; border-radius: 10px; border: 1px solid transparent; }
+.cue + .cue { margin-top: 2px; }
+.cue.cur { background: var(--hl); }
+.cue .no { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; padding-top: 3px; text-align: right; }
+.cue .tc { color: var(--muted); font: 11px ui-monospace, "SF Mono", Menlo, monospace; cursor: pointer; }
+.cue .tc:hover { color: var(--accent); }
+.cue .tx { font-family: var(--bn); font-size: 18px; line-height: 1.75; grid-column: 2; }
+.cue .gapnote { grid-column: 2; }
+.w { border-radius: 5px; padding: 1px 2px; cursor: pointer; transition: background .08s; }
+.w:hover { background: var(--chip); }
+.w.cur { background: var(--accent); color: #fff; }
+.w.unsure { text-decoration: underline dotted #e8a33d 2px; text-underline-offset: 5px; }
+.w.editing { outline: 2px solid var(--accent); }
+body.nounsure .w.unsure { text-decoration: none; }
+.pop { position: fixed; z-index: 20; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.28); padding: 12px; width: 390px; display: grid; gap: 9px; }
+.pop .btn { white-space: nowrap; }
+.pop input[type=text] { font: 18px/1.4 var(--bn); padding: 6px 9px; border-radius: 7px; border: 1px solid var(--line); background: var(--bg); color: var(--text); width: 100%; outline: none; }
+.pop input[type=text]:focus { border-color: var(--accent); }
+.pop .from { color: var(--muted); font-size: 11.5px; }
+.pop .from b { font-family: var(--bn); font-weight: 500; color: var(--text); font-size: 13px; }
+.pop .row { display: flex; gap: 6px; align-items: center; }
+.pop .row .sp { flex: 1; }
+.pop label { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 30; display: grid; place-items: center; }
+.modal { background: var(--panel); border-radius: 14px; width: min(680px, 92vw); height: min(620px, 86vh); display: flex; flex-direction: column; padding: 18px; gap: 10px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.modal h3 { margin: 0; font-size: 16px; }
+.modal p { margin: 0; color: var(--muted); font-size: 12.5px; }
+.modal textarea { flex: 1; font: 15px/1.6 var(--bn); padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg); color: var(--text); resize: none; outline: none; -webkit-user-select: text; user-select: text; }
+.modal .row { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+.modal .row .sp { flex: 1; color: var(--muted); font-size: 11.5px; }
+.outs { display: flex; gap: 12px; color: var(--muted); font-size: 12px; flex-wrap: wrap; }
+.outs label { display: flex; gap: 5px; align-items: center; }
+.outs label b { color: var(--text); font-weight: 600; }
+
+.cue { cursor: pointer; }
+.cue:hover { background: var(--chip); }
+.cue.cur:hover { background: var(--hl); }
+.cues.en .tx, .cues.en .w { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; }
+.cues.en .tx { font-size: 17px; }
+.lang { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-left: 6px; vertical-align: 1px; }
+.seg.lang-seg button { font-size: 12.5px; }
+.jl { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.jl .seg { width: 170px; }
+.modal .seg { width: 220px; }
+</style>
+</head>
+<body>
+<aside class="side">
+  <header>
+    <img src="/icon.png" alt="">
+    <div><h1>Bangla Transcriber</h1><small>Subtitles · বাংলা &amp; English</small></div>
+  </header>
+  <div style="padding:0 16px 8px;display:flex;gap:8px">
+    <button class="btn" id="add" style="flex:1">＋ Add audio…</button>
+  </div>
+  <div class="list" id="list"></div>
+  <div class="settings">
+    <div class="row" style="display:grid;gap:4px;color:var(--muted);font-size:11.5px">Language of new files
+      <div class="seg lang-seg" id="langseg"><button data-lang="bn">বাংলা</button><button data-lang="en">English</button></div>
+    </div>
+    <label class="row">Speech recognition model
+      <select id="model"></select>
+    </label>
+    <div class="row" style="display:grid;gap:4px;color:var(--muted);font-size:11.5px">Mode
+      <div class="seg" id="quality"><button data-b="1">Fast</button><button data-b="5">Most accurate</button></div>
+    </div>
+    <div class="row" style="display:grid;gap:4px;color:var(--muted);font-size:11.5px">Save files to
+      <div class="outdir"><span id="outdir">Same folder as audio</span><button class="btn" id="choose" style="padding:3px 9px">Choose…</button><button class="btn" id="reset" title="Same folder as audio" style="padding:3px 8px">↺</button></div>
+    </div>
+    <div class="outs"><label><input type="checkbox" id="o-srt"> <b>.srt</b> subtitles</label><label><input type="checkbox" id="o-json"> .json</label><label><input type="checkbox" id="o-txt"> .txt</label></div>
+    <button class="btn" id="corr">Corrections list…</button>
+    <div class="go"><button class="btn primary" id="start">Transcribe</button><button class="btn danger" id="stop" hidden>Stop</button></div>
+    <div class="status" id="status">Ready</div>
+  </div>
+</aside>
+<main id="main"></main>
+<div class="tip" id="tip"></div>
+<div class="toast" id="toast"></div>
+<audio id="audio" preload="metadata"></audio>
+<script>
+const $ = s => document.querySelector(s);
+const api = (p, body) => fetch(p, body === undefined ? {} : {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)}).then(r => r.json());
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const fmt = t => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = t - m * 60; return `${m}:${s.toFixed(1).padStart(4, "0")}`; };
+const tc = t => { const ms = Math.round(Math.max(0, t) * 1000); const p = (n, w = 2) => String(n).padStart(w, "0");
+  return `${p(Math.floor(ms / 3600000))}:${p(Math.floor(ms / 60000) % 60)}:${p(Math.floor(ms / 1000) % 60)},${p(ms % 1000, 3)}`; };
+const LANG = {bn: "বাংলা", en: "English"}, LANG_TAG = {bn: "BN", en: "EN"};
+const audio = $("#audio");
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+let S = {jobs: [], settings: {models: {}}}, sel = store.get("sel"), tab = store.get("tab") || "subs";
+let result = null, resultFor = null, loading = null, wordEls = [], cueEls = [], curIdx = -1, curCue = -1;
+if (!["subs", "srt", "json"].includes(tab)) tab = "subs";
+if (store.get("nounsure") === "1") document.body.classList.add("nounsure");
+
+function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("show"); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("show"), 1800); }
+
+let pollTimer = null;
+async function refresh() {
+  clearTimeout(pollTimer);
+  try { S = await api("/api/state"); renderSide(); renderMain(); } catch {}
+  pollTimer = setTimeout(refresh, S.running ? 500 : 1500);
+}
+const refresh0 = () => refresh();
+
+// ---- sidebar -------------------------------------------------------------------
+function renderSide() {
+  const st = S.settings, lang = st.lang || "bn";
+  document.querySelectorAll("#langseg button").forEach(b => b.classList.toggle("on", b.dataset.lang === lang));
+  const m = $("#model");
+  if (m._lang !== lang) {  // rebuild the model list for this language
+    m.innerHTML = "";
+    for (const [id, label] of Object.entries(S.models[lang] || {})) m.add(new Option(label, id));
+    m._lang = lang;
+  }
+  if (document.activeElement !== m) m.value = st.models[lang];
+  document.querySelectorAll("#quality button").forEach(b => b.classList.toggle("on", +b.dataset.b === +st.beams));
+  $("#outdir").textContent = st.out_dir || "Same folder as audio";
+  $("#outdir").title = st.out_dir || "";
+  $("#o-srt").checked = !!st.srt; $("#o-json").checked = !!st.json; $("#o-txt").checked = !!st.txt;
+  const pending = S.jobs.filter(j => j.kind !== "json" && (j.status === "queued" || j.status === "error")).length;
+  $("#start").disabled = S.running || !pending;
+  $("#start").textContent = S.running ? "Working…" : pending > 1 ? `Transcribe ${pending} files` : "Transcribe";
+  $("#stop").hidden = !S.running;
+  $("#status").textContent = S.running ? S.status : `${S.jobs.filter(j => j.status === "done").length} of ${S.jobs.length} done`;
+  if (sel && !S.jobs.some(j => j.id === sel)) sel = null;
+  if (!sel && S.jobs.length) sel = S.jobs[0].id;
+  renderList();
+}
+
+// The list is patched in place (never rebuilt) so clicks are not lost while it updates.
+function renderList() {
+  const list = $("#list");
+  if (!S.jobs.length) {
+    if (!list.querySelector(".drop")) list.innerHTML = `<div class="drop">Drop audio files here<br>or click “Add audio…”</div>`;
+    return;
+  }
+  list.querySelector(".drop")?.remove();
+  const rows = new Map([...list.querySelectorAll(".job")].map(el => [el.dataset.id, el]));
+  let prev = null;
+  for (const j of S.jobs) {
+    let el = rows.get(j.id);
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "job"; el.dataset.id = j.id;
+      el.innerHTML = `<div class="n"></div><span class="pill"></span><div class="m"></div><div class="bar"><i></i></div><button class="x" data-rm="${j.id}" title="Remove">✕</button>`;
+    }
+    rows.delete(j.id);
+    const want = prev ? prev.nextSibling : list.firstChild;
+    if (want !== el) list.insertBefore(el, want);
+    prev = el;
+    el.classList.toggle("sel", j.id === sel);
+    const n = el.querySelector(".n"), name = `${esc(j.name)}<span class="lang">${LANG_TAG[j.lang] || ""}</span>`;
+    if (n._v !== name) { n.innerHTML = name; n._v = name; n.title = j.path; }
+    const pill = el.querySelector(".pill");
+    pill.className = "pill " + j.status;
+    pill.textContent = {queued: "Waiting", working: "Working", done: "Done", error: "Failed"}[j.status];
+    el.querySelector(".m").textContent = j.status === "error" ? j.error : j.message || (j.status === "queued" ? "Ready to transcribe" : "");
+    const bar = el.querySelector(".bar");
+    bar.style.display = j.status === "working" ? "" : "none";
+    bar.firstChild.style.width = (j.progress * 100).toFixed(1) + "%";
+    el.querySelector(".x").style.display = j.status === "working" ? "none" : "";
+  }
+  rows.forEach(el => el.remove());
+}
+
+// ---- main area ---------------------------------------------------------------------
+function renderMain() {
+  const main = $("#main"), j = S.jobs.find(x => x.id === sel);
+  if (!j) {
+    const k = "empty" + S.models_ready + S.settings.lang;
+    if (main._k !== k) {
+      main._k = k; main._job = null;
+      main.innerHTML = `<div class="empty"><div class="big">
+        <h2>Audio → subtitles</h2>
+        <div class="bn">বাংলা বা ইংরেজি অডিও দিন, টাইমিংসহ সাবটাইটেল (.srt) নিন</div>
+        <p>Drop Bangla or English MP3, WAV, M4A, MP4… and you get a timed <b>.srt</b> plus ElevenLabs-style word-timestamp <b>.json</b>.
+        Choose the language at the bottom left. You can also drop an existing transcript <b>.json</b> to turn it into subtitles. Everything runs on this Mac.</p>
+        ${S.models_ready ? "" : `<p style="color:var(--accent)">First time only: the ${LANG[S.settings.lang]} AI models download automatically when you press Transcribe (a few GB). After that it works offline.</p>`}
+        <button class="btn primary" id="choosefiles">Choose files…</button></div></div>`;
+      $("#choosefiles").onclick = addFiles;
+      stopAudio();
+    }
+    return;
+  }
+  if (j.status !== "done") {
+    const k = `${j.id}:${j.status}:${j.lang}:${j.status === "working" ? "" : j.error}`;
+    if (main._k !== k) {
+      main._k = k; main._job = j.id;
+      main.innerHTML = `${header(j)}<div class="body"><div class="big-progress" id="prog"></div></div>`;
+      bindHeader(j);
+    }
+    const prog = $("#prog");
+    const html = j.status === "working"
+      ? `<div>${esc(j.message)}</div><div class="bar"><i style="width:${(j.progress * 100).toFixed(1)}%"></i></div><div class="msg" style="padding:0">You can keep adding files. They will be done one after another.</div>`
+      : j.status === "error" ? `<div class="err">${esc(j.error)}</div><p class="msg">Press Transcribe to try again. If it keeps failing, send the log file:<br>~/Library/Logs/Bangla Transcriber.log</p>`
+      : `<div class="msg">Waiting. Press <b>Transcribe</b> to start.</div>`;
+    if (prog._v !== html) { prog.innerHTML = html; prog._v = html; }
+    return;
+  }
+  const k = `${j.id}:done:${j.rev}:${tab}:${j.lang}`;
+  if (main._k !== k) {
+    const keepScroll = main._job === j.id && $("#body") ? $("#body").scrollTop : 0;
+    main._k = k; main._job = j.id;
+    main.innerHTML = `${header(j)}<div class="body" id="body"><div class="msg">Loading…</div></div>`;
+    bindHeader(j);
+    loadResult(j, keepScroll);
+  }
+}
+
+function header(j) {
+  const done = j.status === "done", canLang = j.kind === "audio" && j.status !== "working";
+  return `<div class="top">
+    <div class="title"><h2 title="${esc(j.path)}">${esc(j.name)}</h2>
+      ${canLang ? `<div class="jl">Language <div class="seg" id="joblang"><button data-jl="bn" class="${j.lang === "bn" ? "on" : ""}">বাংলা</button><button data-jl="en" class="${j.lang === "en" ? "on" : ""}">English</button></div></div>` : ""}
+      ${done ? `<div class="tabs"><button data-tab="subs" class="${tab === "subs" ? "on" : ""}">Subtitles</button><button data-tab="srt" class="${tab === "srt" ? "on" : ""}">.srt</button><button data-tab="json" class="${tab === "json" ? "on" : ""}">.json</button></div>
+      <button class="btn" id="copy">Copy SRT</button><button class="btn" id="reveal">Show in Finder</button>
+      <button class="btn" id="redo" title="${j.kind === "json" ? "Rebuild from the JSON file" : "Transcribe this file again"}">Redo</button>` : ""}
+    </div>
+    <div class="player"><button class="play" id="play" title="Play / pause (space)" ${j.audio ? "" : "disabled style=opacity:.4"}></button>
+      <input type="range" id="seek" min="0" max="1000" value="0" ${j.audio ? "" : "disabled"}><span class="time" id="time">${j.audio ? "0:00.0 / –" : "no audio found"}</span></div>
+  </div>`;
+}
+
+function bindHeader(j) {
+  if (audio.dataset.id !== j.id) {
+    audio.pause();
+    if (j.audio) audio.src = `/media/${j.id}`; else audio.removeAttribute("src");
+    audio.dataset.id = j.id;
+  }
+  setPlayIcon();
+  $("#play").onclick = () => audio.src && (audio.paused ? audio.play() : audio.pause());
+  $("#seek").oninput = e => { if (audio.duration) audio.currentTime = e.target.value / 1000 * audio.duration; };
+  document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { tab = b.dataset.tab; store.set("tab", tab); renderMain(); });
+  document.querySelectorAll("[data-jl]").forEach(b => b.onclick = async () => {
+    const lang = b.dataset.jl;
+    if (lang === j.lang) return;
+    if (j.status === "done" && !confirm(`Transcribe “${j.name}” again in ${LANG[lang]}? The current subtitles for this file will be replaced.`)) return;
+    const r = await api("/api/job_lang", {id: j.id, lang});
+    if (r.error) return toast(r.error);
+    if (j.status === "done") await api("/api/start", {});
+    refresh();
+  });
+  const c = $("#copy"); if (c) c.onclick = () => { if (result && resultFor === resultKey(j)) { copy(result.srt); toast("SRT copied"); } };
+  const r = $("#reveal"); if (r) r.onclick = () => api("/api/reveal", {path: j.outputs.srt || j.outputs.json || j.path});
+  const d = $("#redo"); if (d) d.onclick = () => api("/api/start", {redo: [j.id]}).then(refresh);
+}
+
+function copy(t) {
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).catch(() => fallbackCopy(t)); else fallbackCopy(t);
+}
+function fallbackCopy(t) { const a = document.createElement("textarea"); a.value = t; document.body.appendChild(a); a.select(); document.execCommand("copy"); a.remove(); }
+
+// Words the aligner was least sure about (bottom ~6%, and clearly low) are underlined for checking.
+function unsureCut(cues) {
+  const lps = cues.flatMap(c => c.words.map(w => w.lp)).filter(x => x < 0).sort((a, b) => a - b);
+  if (lps.length < 20) return -Infinity;
+  return Math.min(lps[Math.floor(lps.length * 0.06)], -1.2);
+}
+
+const resultKey = j => `${j.id}:${j.rev}`;
+async function loadResult(j, keepScroll = 0) {
+  const want = resultKey(j);
+  if (resultFor !== want) {
+    if (!loading || loading.key !== want) loading = {key: want, p: api(`/api/result/${j.id}`)};
+    const r = await loading.p;
+    if (loading && loading.key === want) { result = r; resultFor = want; loading = null; }
+  }
+  // Only draw if this file and tab are still the ones on screen.
+  const body = $("#body");
+  if (!body || $("#main")._k !== `${j.id}:done:${j.rev}:${tab}:${j.lang}` || resultFor !== want || !result || result.error) return;
+  wordEls = []; cueEls = []; curIdx = curCue = -1;
+  if (tab === "srt") {
+    body.innerHTML = result.srt ? `<pre style="font-size:14px;line-height:1.6">${esc(result.srt)}</pre>` : `<div class="msg">No speech was found in this file.</div>`;
+    return;
+  }
+  if (tab === "json") {
+    const txt = JSON.stringify(result.json, null, 2);
+    body.innerHTML = `<pre>${esc(txt.length > 400000 ? txt.slice(0, 400000) + "\n…" : txt)
+      .replace(/(&quot;[^&]*?&quot;)(:)/g, '<span class="k">$1</span>$2')
+      .replace(/: (&quot;.*?&quot;)/g, ': <span class="s">$1</span>')
+      .replace(/: (-?[\d.]+)/g, ': <span class="num">$1</span>')}</pre>`;
+    return;
+  }
+  const cues = result.cues;
+  if (!cues.length) { body.innerHTML = `<div class="msg">No speech was found in this file.</div>`; return; }
+  const cut = unsureCut(cues);
+  let unsure = 0;
+  const html = cues.map((c, n) => {
+    const ws = c.words.map(w => { const u = w.lp < cut; unsure += u;
+      return `<span class="w${u ? " unsure" : ""}" data-i="${w.i}" data-s="${w.start}" data-e="${w.end}">${esc(w.text)}</span>`; }).join(" ");
+    return `<div class="cue" data-c="${n}" data-s="${c.start}" data-e="${c.end}"><div class="no">${n + 1}</div>
+      <div class="tc">${tc(c.start)} → ${tc(c.end)}</div><div class="tx">${ws}</div></div>`;
+  }).join("");
+  body.innerHTML = `<div class="cues ${result.lang}">
+    <div class="hint"><span>${cues.length} subtitles · ${LANG[result.lang]}${j.fixes ? ` · ${j.fixes} auto-corrections applied` : ""}</span>
+      <span>Click a subtitle or word to play it · <b>double-click a word to fix it</b> (timing is kept, files update instantly)</span>
+      ${unsure ? `<label><input type="checkbox" id="showunsure" ${document.body.classList.contains("nounsure") ? "" : "checked"}> underline ${unsure} words to double-check</label>` : ""}</div>
+    ${html}</div>`;
+  const su = $("#showunsure");
+  if (su) su.onchange = e => { document.body.classList.toggle("nounsure", !e.target.checked); store.set("nounsure", e.target.checked ? "0" : "1"); };
+  wordEls = [...body.querySelectorAll(".w")];
+  wordEls.forEach(el => { el._s = +el.dataset.s; el._e = +el.dataset.e; });
+  cueEls = [...body.querySelectorAll(".cue")];
+  cueEls.forEach(el => { el._s = +el.dataset.s; el._e = +el.dataset.e; });
+  body.scrollTop = keepScroll;
+}
+
+// ---- word editing ----------------------------------------------------------
+let pop = null;
+function closePop() { if (pop) { pop.remove(); pop = null; } document.querySelectorAll(".w.editing").forEach(x => x.classList.remove("editing")); }
+function openEditor(el) {
+  closePop();
+  const j = S.jobs.find(x => x.id === sel); if (!j || j.status !== "done") return;
+  let end = +el.dataset.i;
+  const start = +el.dataset.i;
+  const range = () => wordEls.filter(w => +w.dataset.i >= start && +w.dataset.i <= end);
+  const original = () => range().map(w => w.textContent).join(" ");
+  pop = document.createElement("div");
+  pop.className = "pop";
+  pop.innerHTML = `<div class="from">Fixing: <b id="p-from"></b></div>
+    <input type="text" id="p-in" spellcheck="false">
+    <label><input type="checkbox" id="p-rem" ${store.get("remember") === "0" ? "" : "checked"}> Remember this fix for future ${LANG[j.lang]} files</label>
+    <div class="row"><button class="btn" id="p-more" title="Also include the next word (to join split words)">＋ next word</button>
+      <button class="btn danger" id="p-del">Delete</button><span class="sp"></span>
+      <button class="btn" id="p-cancel">Cancel</button><button class="btn primary" id="p-ok">Save</button></div>`;
+  document.body.appendChild(pop);
+  const upd = () => { range().forEach(w => w.classList.add("editing")); $("#p-from").textContent = original(); };
+  upd();
+  const inp = $("#p-in"); inp.value = original();
+  const r = el.getBoundingClientRect();
+  pop.style.left = Math.max(8, Math.min(r.left, innerWidth - 410)) + "px";
+  pop.style.top = (r.bottom + 190 > innerHeight ? r.top - 175 : r.bottom + 8) + "px";
+  inp.focus(); inp.select();
+  let saving = false;
+  const save = async text => {
+    if (saving) return; saving = true;
+    const remember = $("#p-rem").checked; store.set("remember", remember ? "1" : "0");
+    const changed = original() !== text;
+    const res = await api("/api/edit", {id: j.id, index: start, end, text, remember});
+    closePop();
+    if (res.error) return toast(res.error);
+    result = res; resultFor = `${j.id}:${res.rev}`;
+    toast(remember && changed ? "Saved and added to corrections" : "Saved");
+    refresh();
+  };
+  $("#p-ok").onclick = () => save(inp.value.trim());
+  $("#p-del").onclick = () => save("");
+  $("#p-cancel").onclick = closePop;
+  $("#p-more").onclick = () => {
+    if (!wordEls.some(w => +w.dataset.i === end + 1)) return;
+    end += 1; upd(); inp.value = original(); inp.focus();
+  };
+  inp.onkeydown = e => { if (e.key === "Enter" && !e.isComposing) save(inp.value.trim()); if (e.key === "Escape") closePop(); };
+}
+
+// ---- corrections list --------------------------------------------------------
+async function openCorrections() {
+  let lang = S.settings.lang || "bn";
+  const bg = document.createElement("div");
+  bg.className = "modal-bg";
+  bg.innerHTML = `<div class="modal"><h3>Corrections list</h3>
+    <div class="seg" id="c-lang"><button data-cl="bn">বাংলা</button><button data-cl="en">English</button></div>
+    <p>One fix per line, as <b>wrong =&gt; right</b>. Every new transcript in this language gets these fixes automatically, and word timing is kept.
+    Use it for names and terms the model keeps getting wrong. Lines starting with # are ignored.</p>
+    <textarea id="c-text" spellcheck="false"></textarea>
+    <div class="row"><span class="sp" id="c-file"></span><button class="btn" id="c-cancel">Cancel</button>
+      <button class="btn" id="c-save">Save</button><button class="btn primary" id="c-apply">Save &amp; fix open files</button></div></div>`;
+  document.body.appendChild(bg);
+  const texts = {}, files = {};
+  const show = async l => {
+    if (texts[lang] !== undefined) texts[lang] = $("#c-text").value;  // keep unsaved edits when switching
+    lang = l;
+    if (texts[l] === undefined) { const c = await api(`/api/corrections?lang=${l}`); texts[l] = c.text; files[l] = c.file; }
+    $("#c-text").value = texts[l]; $("#c-file").textContent = files[l];
+    bg.querySelectorAll("[data-cl]").forEach(b => b.classList.toggle("on", b.dataset.cl === l));
+  };
+  await show(lang);
+  bg.querySelectorAll("[data-cl]").forEach(b => b.onclick = () => show(b.dataset.cl));
+  const saveAll = async apply => {
+    texts[lang] = $("#c-text").value;
+    let fixes = 0;
+    for (const l of Object.keys(texts)) fixes += (await api("/api/corrections", {lang: l, text: texts[l], apply})).fixes || 0;
+    return fixes;
+  };
+  const close = () => bg.remove();
+  bg.onclick = e => { if (e.target === bg) close(); };
+  $("#c-cancel").onclick = close;
+  $("#c-save").onclick = async () => { await saveAll(false); close(); toast("Corrections saved"); };
+  $("#c-apply").onclick = async () => { const n = await saveAll(true); close(); toast(`Saved · ${n} fixes applied`); refresh(); };
+}
+
+// ---- events -----------------------------------------------------------------
+const tip = $("#tip");
+document.addEventListener("mouseover", e => {
+  const w = e.target.closest(".w");
+  if (!w || pop) { tip.style.display = "none"; return; }
+  tip.textContent = `${w._s.toFixed(3)}s → ${w._e.toFixed(3)}s`;
+  const r = w.getBoundingClientRect();
+  tip.style.display = "block"; tip.style.left = r.left + "px"; tip.style.top = (r.top - 26) + "px";
+});
+function selectionInside(el) {
+  const s = window.getSelection();
+  return s && !s.isCollapsed && s.toString().trim() && (el.contains(s.anchorNode) || el.contains(s.focusNode));
+}
+function playFrom(t) { if (audio.src) { audio.currentTime = t; audio.play(); } }
+let clickTimer = null;
+document.addEventListener("click", e => {
+  if (pop && !e.target.closest(".pop")) closePop();   // close the editor, then still handle this click
+  if (e.target.closest(".pop, .modal-bg")) return;
+  const rm = e.target.closest("[data-rm]");
+  if (rm) { e.stopPropagation(); api("/api/remove", {ids: [rm.dataset.rm]}).then(refresh); return; }
+  const job = e.target.closest(".job");
+  if (job) {
+    if (sel !== job.dataset.id) { sel = job.dataset.id; store.set("sel", sel); stopAudio(); }
+    renderSide(); renderMain(); return;
+  }
+  const w = e.target.closest(".w");
+  if (w) {
+    if (selectionInside(w)) return;
+    clearTimeout(clickTimer);
+    clickTimer = setTimeout(() => playFrom(w._s), 230);  // wait: it may be a double-click
+    return;
+  }
+  const cue = e.target.closest(".cue");
+  if (cue && !selectionInside(cue)) playFrom(cue._s);
+});
+document.addEventListener("dblclick", e => {
+  const w = e.target.closest(".w");
+  if (w) { clearTimeout(clickTimer); audio.pause(); window.getSelection().removeAllRanges(); openEditor(w); }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { closePop(); document.querySelector(".modal-bg")?.remove(); }
+  if (e.code === "Space" && !/INPUT|SELECT|TEXTAREA|BUTTON/.test(e.target.tagName) && !pop && audio.src) { e.preventDefault(); audio.paused ? audio.play() : audio.pause(); }
+});
+
+function stopAudio() { audio.pause(); }
+function setPlayIcon() {
+  const p = $("#play"); if (!p) return;
+  p.innerHTML = audio.paused ? '<svg viewBox="0 0 16 16"><path d="M4 2.5v11l9.5-5.5z"/></svg>' : '<svg viewBox="0 0 16 16"><path d="M3.5 2h3.2v12H3.5zM9.3 2h3.2v12H9.3z"/></svg>';
+}
+audio.addEventListener("play", setPlayIcon);
+audio.addEventListener("pause", setPlayIcon);
+
+function locate(els, t, cur) {
+  let i = cur;
+  if (i < 0 || i >= els.length || t < els[i]._s || (i + 1 < els.length && t >= els[i + 1]._s)) {
+    let lo = 0, hi = els.length - 1; i = -1;
+    while (lo <= hi) { const m = (lo + hi) >> 1; if (els[m]._s <= t) { i = m; lo = m + 1; } else hi = m - 1; }
+  }
+  return i >= 0 && t <= els[i]._e + 0.05 ? i : -1;
+}
+function tick() {
+  const t = audio.currentTime, d = audio.duration;
+  const tm = $("#time"), sk = $("#seek");
+  if (tm && audio.src) tm.textContent = `${fmt(t)} / ${d ? fmt(d) : "–"}`;
+  if (sk && d && document.activeElement !== sk) sk.value = t / d * 1000;
+  if (wordEls.length && wordEls[0].isConnected) {
+    const on = locate(wordEls, t, curIdx);
+    if (on !== curIdx) {
+      if (curIdx >= 0 && wordEls[curIdx]) wordEls[curIdx].classList.remove("cur");
+      if (on >= 0) wordEls[on].classList.add("cur");
+      curIdx = on;
+    }
+    const c = locate(cueEls, t, curCue);
+    if (c !== curCue) {
+      if (curCue >= 0 && cueEls[curCue]) cueEls[curCue].classList.remove("cur");
+      if (c >= 0) { cueEls[c].classList.add("cur"); if (!audio.paused) cueEls[c].scrollIntoView({block: "nearest", behavior: "smooth"}); }
+      curCue = c;
+    }
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+async function addFiles() {
+  if (S.native) { await api("/api/pick", {}); return refresh(); }
+  const p = prompt("Paste full path(s) of audio files, transcript .json files or a folder (one per line):");
+  if (p) { await api("/api/add", {paths: p.split("\n").map(s => s.trim()).filter(Boolean)}); refresh(); }
+}
+$("#add").onclick = addFiles;
+$("#corr").onclick = openCorrections;
+document.querySelectorAll("#langseg button").forEach(b => b.onclick = () => api("/api/settings", {lang: b.dataset.lang}).then(refresh));
+$("#model").onchange = e => api("/api/settings", {model: e.target.value}).then(refresh);
+document.querySelectorAll("#quality button").forEach(b => b.onclick = () => api("/api/settings", {beams: +b.dataset.b}).then(refresh));
+for (const k of ["srt", "json", "txt"])
+  $("#o-" + k).onchange = async e => { await api("/api/settings", {[k]: e.target.checked}); await api("/api/rewrite", {}); refresh(); };
+$("#choose").onclick = async () => {
+  if (S.native) await api("/api/pick_folder", {});
+  else { const p = prompt("Output folder path:"); if (p) await api("/api/settings", {out_dir: p}); }
+  refresh();
+};
+$("#reset").onclick = () => api("/api/settings", {out_dir: ""}).then(refresh);
+$("#start").onclick = () => api("/api/start", {}).then(refresh);
+$("#stop").onclick = () => api("/api/cancel", {}).then(refresh);
+
+// Drag & drop: the window passes the real file paths to the app; here we only show a hint.
+// The hint never blocks clicks, and it is cleared however the drag ends.
+let dragDepth = 0;
+const endDrag = () => { dragDepth = 0; document.body.classList.remove("dragging"); };
+document.addEventListener("dragenter", e => { e.preventDefault(); dragDepth++; document.body.classList.add("dragging"); });
+document.addEventListener("dragleave", e => { if (--dragDepth <= 0 || !e.relatedTarget) endDrag(); });
+document.addEventListener("dragover", e => e.preventDefault());
+document.addEventListener("drop", e => { e.preventDefault(); endDrag(); setTimeout(refresh, 300); setTimeout(refresh, 1200); });
+document.addEventListener("dragend", endDrag);
+window.addEventListener("blur", endDrag);
+document.addEventListener("mousemove", e => { if (!e.buttons && document.body.classList.contains("dragging")) endDrag(); });
+
+refresh();
+</script>
+</body>
+</html>

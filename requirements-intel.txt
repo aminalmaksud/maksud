@@ -1,0 +1,9 @@
+# Intel Macs: PyTorch stopped publishing Intel macOS builds after 2.2.2
+torch==2.2.2
+numpy<2
+transformers>=4.46,<4.50
+huggingface_hub>=0.25,<1.0
+safetensors
+av>=12
+uroman>=1.3
+pywebview>=5.0
