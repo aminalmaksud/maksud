@@ -14,12 +14,14 @@ On your Mac (Apple Silicon, macOS 14 or newer), open **Terminal** and paste:
 curl -fsSL https://raw.githubusercontent.com/aminalmaksud/maksud/bangla-transcriber/install.sh | bash
 ```
 
-This downloads the app (273 MB, stored in `release/` as three parts because GitHub limits files to 100 MB), checks that
-the download is intact, puts **Bangla Transcriber** in Applications and opens it. Installed this way, macOS shows no
-"can't verify the developer" warning. The AI models download the first time you transcribe in each language.
+This downloads the app (276 MB, stored in `release/` as three parts because GitHub limits files to 100 MB), checks that
+the download is intact, puts **Bangla Transcriber** in Applications and opens it. If anything goes wrong, it says which
+step failed and shows the app's error log, so you can send that output for help. The AI models download the first time
+you transcribe in each language.
 
-To download the DMG by hand instead, download the three `release/Bangla-Transcriber-1.2.dmg.part*` files, then join them in Terminal:
-`cat Bangla-Transcriber-1.2.dmg.part0 Bangla-Transcriber-1.2.dmg.part1 Bangla-Transcriber-1.2.dmg.part2 > Bangla-Transcriber-1.2.dmg`
+To install by hand instead, download the three `release/BanglaTranscriber-1.2-macos-arm64.tar.gz.part*` files into one
+folder, open Terminal in that folder and run:
+`cat BanglaTranscriber-1.2-macos-arm64.tar.gz.part* | tar -xz -C /Applications`
 
 ## Build the app (once)
 
