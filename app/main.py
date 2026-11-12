@@ -31,6 +31,22 @@ def mac_branding():
         pass
 
 
+def accept_first_click():
+    """macOS normally swallows the first click on a window that is not in front (it only
+    brings the window forward). Make the web view act on that click too."""
+    try:
+        import objc
+        from webview.platforms.cocoa import BrowserView
+
+        def acceptsFirstMouse_(self, event):
+            return True
+
+        objc.classAddMethods(BrowserView.WebKitHost, [
+            objc.selector(acceptsFirstMouse_, selector=b"acceptsFirstMouse:", signature=b"Z@:@")])
+    except Exception as e:
+        print("could not enable first-click:", e)
+
+
 def main():
     httpd, port = server.serve()
     url = f"http://127.0.0.1:{port}/"
@@ -51,6 +67,7 @@ def main():
 
     if sys.platform == "darwin":
         mac_branding()
+        accept_first_click()
     window = webview.create_window(APP_NAME, url, width=1180, height=780, min_size=(900, 600),
                                    background_color="#16161a")
 

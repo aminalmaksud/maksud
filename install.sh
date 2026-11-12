@@ -5,9 +5,9 @@
 set -uo pipefail
 
 BASE="https://raw.githubusercontent.com/aminalmaksud/maksud/bangla-transcriber/release"
-NAME="BanglaTranscriber-1.2-macos-arm64.tar.gz"
+NAME="BanglaTranscriber-1.3-macos-arm64.tar.gz"
 PARTS=3
-SHA256="2021fbca6ee6137e77e245619e0d990f21ba81ff7b2ee7a0c05707cfb88a5e0a"
+SHA256="66844e45aefc9c5b6aa366eb23a1cd1976c661cc2d620a0cbead59a2df4d30dd"
 APP="Bangla Transcriber.app"
 LOG="$HOME/Library/Logs/Bangla Transcriber.log"
 

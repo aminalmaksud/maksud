@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 import threading
+import time
 import traceback
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -20,6 +21,8 @@ AUDIO_EXT = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".opus", ".wma", "
              ".mp4", ".mov", ".mkv", ".webm", ".m4v"}
 SUPPORT = Path.home() / "Library" / "Application Support" / "Bangla Transcriber"
 SETTINGS_FILE = SUPPORT / "settings.json"
+HISTORY_FILE = SUPPORT / "history.json"
+HISTORY_KEEP_DAYS = 60
 CORRECTIONS_FILES = {"bn": SUPPORT / "corrections.txt", "en": SUPPORT / "corrections-en.txt"}
 CORRECTIONS_HELP = {
     "bn": """# Bangla corrections: one per line, wrong => right
@@ -96,6 +99,12 @@ class State:
                 self.corrections[lang] = f.read_text(encoding="utf-8")
             except Exception:
                 self.corrections[lang] = CORRECTIONS_HELP[lang]
+        try:
+            self.history = json.loads(HISTORY_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            self.history = []
+        cutoff = time.time() - HISTORY_KEEP_DAYS * 86400
+        self.history = [h for h in self.history if h.get("finished", 0) >= cutoff]
         self.engine = engine.Engine(os.environ.get("BT_DEVICE", "auto"))
         self.picker = None  # set by main.py when a native window exists
 
@@ -105,6 +114,30 @@ class State:
             SETTINGS_FILE.write_text(json.dumps(self.settings, indent=2))
         except Exception:
             pass
+
+    def save_history(self):
+        try:
+            SUPPORT.mkdir(parents=True, exist_ok=True)
+            HISTORY_FILE.write_text(json.dumps(self.history, ensure_ascii=False, indent=1), encoding="utf-8")
+        except Exception:
+            pass
+
+    def record(self, job):
+        """Add or update this file's entry in the History list."""
+        entry = next((h for h in self.history if h["id"] == job.get("hid")), None)
+        if entry is None:
+            job["hid"] = uuid.uuid4().hex[:12]
+            entry = {"id": job["hid"]}
+            self.history.insert(0, entry)
+        entry.update(name=job["name"], source=job["path"], audio=job.get("audio", ""), lang=job["lang"],
+                     kind=job["kind"], outputs=dict(job["outputs"]), cues=job.get("cues", 0),
+                     words=job.get("words", 0), duration=job.get("duration"), finished=time.time())
+        self.history.sort(key=lambda h: -h.get("finished", 0))
+        self.save_history()
+
+    def out_folder(self, job) -> Path:
+        src = Path(job["path"])
+        return Path(job["out_dir"]) if job.get("out_dir") else src.parent
 
     def save_corrections(self, lang):
         try:
@@ -116,21 +149,23 @@ class State:
     def write(self, job):
         """(Re)write the output files of a finished job from its current words."""
         s, lang = self.settings, job["lang"]
+        folder = self.out_folder(job)
         if job.get("kind") == "json":  # never overwrite the JSON the user gave us
             src = Path(job["path"])
-            job["outputs"] = engine.write_outputs(job["_words"], str(src), s["out_dir"] or str(src.parent),
-                                                  True, False, s["txt"], lang)
+            job["outputs"] = engine.write_outputs(job["_words"], str(src), str(folder), True, False, s["txt"], lang)
             if s["json"]:
-                fixed = (Path(s["out_dir"]) if s["out_dir"] else src.parent) / f"{src.stem}_corrected.json"
+                fixed = folder / f"{src.stem}_corrected.json"
                 fixed.write_text(json.dumps(engine.to_elevenlabs(job["_words"], lang), ensure_ascii=False, indent=2),
                                  encoding="utf-8")
                 job["outputs"]["json"] = str(fixed)
         else:
-            job["outputs"] = engine.write_outputs(job["_words"], job["path"], s["out_dir"] or None,
+            job["outputs"] = engine.write_outputs(job["_words"], job["path"], str(folder),
                                                   s["srt"] or not (s["json"] or s["txt"]), s["json"], s["txt"], lang)
         job["words"] = len(job["_words"])
         job["cues"] = len(engine.make_cues(job["_words"], max_chars=engine.SUB_LAYOUT[lang][0]))
         job["rev"] = job.get("rev", 0) + 1  # tells the window to redraw
+        if job.get("status") == "done" or job.get("kind") == "json":
+            self.record(job)
         job["message"] = f"{job['cues']} subtitles · {job['words']} words"
 
     def import_json(self, job):
@@ -138,8 +173,8 @@ class State:
         job["lang"] = lang
         words, fixes = engine.apply_corrections(words, self.corrections[lang])
         job["_words"] = words
-        self.write(job)
         job.update(status="done", progress=1.0, fixes=fixes)
+        self.write(job)
 
     def add(self, paths):
         files = []
@@ -158,7 +193,7 @@ class State:
                 jid = uuid.uuid4().hex[:10]
                 job = {"id": jid, "path": p, "name": Path(p).name, "status": "queued", "kind": "audio",
                        "progress": 0.0, "message": "", "outputs": {}, "error": "", "audio": p,
-                       "lang": self.settings["lang"], "rev": 0}
+                       "lang": self.settings["lang"], "rev": 0, "out_dir": self.settings["out_dir"]}
                 if ext == ".json":
                     # An existing transcript JSON: make subtitles from it straight away.
                     audio = next((str(Path(p).with_suffix(e)) for e in sorted(AUDIO_EXT)
@@ -217,8 +252,8 @@ class State:
                     words, fixes = engine.apply_corrections(words, self.corrections[lang])
                     with self.lock:
                         job["_words"] = words
-                        self.write(job)
                         job.update(status="done", progress=1.0, duration=dur, fixes=fixes)
+                        self.write(job)
                 except engine.Cancelled:
                     with self.lock:
                         job.update(status="queued", progress=0.0, message="Cancelled")
@@ -282,6 +317,17 @@ class Handler(BaseHTTPRequestHandler):
             lang = self._query().get("lang", STATE.settings["lang"])
             lang = lang if lang in CORRECTIONS_FILES else "bn"
             return self._json({"text": STATE.corrections[lang], "file": str(CORRECTIONS_FILES[lang]), "lang": lang})
+        if p == "/api/history":
+            days = float(self._query().get("days", 7))
+            cutoff = time.time() - days * 86400
+            items = []
+            for h in STATE.history:
+                if h.get("finished", 0) < cutoff:
+                    continue
+                outs = {k: v for k, v in h.get("outputs", {}).items()}
+                items.append({**h, "exists": {k: os.path.exists(v) for k, v in outs.items()},
+                              "folder": str(Path(next(iter(outs.values()))).parent) if outs else ""})
+            return self._json({"items": items})
         if p.startswith("/api/result/"):
             job = STATE.jobs.get(p.rsplit("/", 1)[-1])
             if not job or "_words" not in job:
@@ -343,6 +389,61 @@ class Handler(BaseHTTPRequestHandler):
                         j.update(status="queued", progress=0.0, message="", error="")
             STATE.start()
             return self._json({"ok": True})
+        if p == "/api/job_folder":  # where one file's .srt/.json are saved
+            with STATE.lock:
+                job = STATE.jobs.get(b.get("id"))
+                if not job or job["status"] == "working":
+                    return self._json({"error": "cannot change"}, 400)
+            if b.get("reset"):
+                folder = ""
+            elif b.get("path"):
+                folder = str(Path(b["path"]).expanduser())
+            elif STATE.picker:
+                res = STATE.picker("folder")
+                if not res:
+                    return self._json({"ok": False, "cancelled": True})
+                folder = res[0]
+            else:
+                return self._json({"error": "native dialogs unavailable"}, 400)
+            with STATE.lock:
+                job["out_dir"] = folder
+                if "_words" in job:  # already finished: save the files in the new folder now
+                    STATE.write(job)
+            return self._json({"ok": True, "out_dir": folder, "outputs": job["outputs"]})
+        if p == "/api/history/open":  # load a past transcript back into the window
+            h = next((x for x in STATE.history if x["id"] == b.get("id")), None)
+            if not h:
+                return self._json({"error": "not found"}, 404)
+            src = h["outputs"].get("json")
+            if not src or not os.path.exists(src):
+                return self._json({"error": "The saved .json file was moved or deleted, so this cannot be opened."}, 400)
+            with STATE.lock:
+                for j in STATE.jobs.values():
+                    if j.get("hid") == h["id"]:
+                        return self._json({"id": j["id"]})
+                try:
+                    words, lang = load_words_json(src)
+                except Exception as e:
+                    return self._json({"error": f"Could not read {src}: {e}"}, 400)
+                jid = uuid.uuid4().hex[:10]
+                audio = h.get("audio") if h.get("audio") and os.path.exists(h["audio"]) else ""
+                job = {"id": jid, "path": h["source"], "name": h["name"], "status": "done", "kind": h.get("kind", "audio"),
+                       "progress": 1.0, "message": "", "outputs": dict(h["outputs"]), "error": "", "audio": audio,
+                       "lang": h.get("lang", lang), "rev": 0, "out_dir": str(Path(src).parent), "hid": h["id"],
+                       "_words": words, "duration": h.get("duration")}
+                job["words"], job["cues"] = len(words), h.get("cues", 0)
+                job["message"] = f"{job['cues']} subtitles · {job['words']} words"
+                STATE.jobs[jid] = job
+                STATE.order.append(jid)
+            return self._json({"id": jid})
+        if p == "/api/history/remove":
+            with STATE.lock:
+                STATE.history = [x for x in STATE.history if x["id"] != b.get("id")]
+                STATE.save_history()
+            return self._json({"ok": True})
+        if p == "/api/log":  # errors from the window, so they end up in the log file
+            print("[window]", str(b.get("msg", ""))[:2000], file=sys.stderr, flush=True)
+            return self._json({"ok": True})
         if p == "/api/job_lang":  # language of one file; a finished file is transcribed again
             with STATE.lock:
                 job = STATE.jobs.get(b.get("id"))
@@ -402,10 +503,12 @@ class Handler(BaseHTTPRequestHandler):
                         STATE.jobs.pop(jid)
                         STATE.order.remove(jid)
             return self._json({"ok": True})
-        if p == "/api/reveal":
+        if p == "/api/reveal":  # a file: select it in Finder; a folder: open it
             target = b.get("path")
-            if target and sys.platform == "darwin":
-                subprocess.Popen(["open", "-R", target])
+            if not target or not os.path.exists(target):
+                return self._json({"error": "That file or folder no longer exists."}, 404)
+            if sys.platform == "darwin":
+                subprocess.Popen(["open", target] if os.path.isdir(target) else ["open", "-R", target])
             return self._json({"ok": True})
         self._json({"error": "not found"}, 404)
 

@@ -26,7 +26,7 @@ html, body { height: 100%; margin: 0; }
 body { background: var(--bg); color: var(--text); font: 13px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--bn);
   display: grid; grid-template-columns: 300px 1fr; overflow: hidden; -webkit-user-select: none; user-select: none; }
 button { font: inherit; color: inherit; cursor: pointer; }
-.side { background: var(--side); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+.side { min-width: 0; overflow: hidden; background: var(--side); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
 .side header { padding: 18px 16px 10px; display: flex; align-items: center; gap: 10px; }
 .side header img { width: 30px; height: 30px; border-radius: 7px; }
 .side header h1 { font-size: 15px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
@@ -50,7 +50,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .bar { grid-column: 1 / -1; height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 3px; }
 .bar i { display: block; height: 100%; background: var(--accent); transition: width .4s; }
 .drop { margin: 6px 8px 10px; border: 1.5px dashed var(--line); border-radius: 10px; padding: 14px; text-align: center; color: var(--muted); font-size: 12px; }
-.settings { border-top: 1px solid var(--line); padding: 12px 14px 14px; display: grid; gap: 9px; }
+.settings { border-top: 1px solid var(--line); padding: 12px 14px 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; }
+.settings > * { min-width: 0; }
+.outdir { min-width: 0; }
 .settings label.row { display: grid; gap: 4px; color: var(--muted); font-size: 11.5px; }
 select { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 5px 8px; width: 100%; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 2px; }
@@ -59,7 +61,7 @@ select { font: inherit; color: var(--text); background: var(--panel); border: 1p
 .checks { display: flex; gap: 14px; color: var(--muted); font-size: 12px; }
 .checks label { display: flex; gap: 5px; align-items: center; }
 .outdir { display: flex; gap: 6px; align-items: center; }
-.outdir span { flex: 1; color: var(--text); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; }
+.outdir span { flex: 1; min-width: 0; color: var(--text); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; }
 .go { display: flex; gap: 8px; }
 .go .primary { flex: 1; padding: 8px; }
 .status { color: var(--muted); font-size: 11.5px; min-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -144,6 +146,28 @@ body.nounsure .w.unsure { text-decoration: none; }
 .jl { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
 .jl .seg { width: 170px; }
 .modal .seg { width: 220px; }
+.saveto { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); min-width: 0; }
+.saveto .path { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; min-width: 0; flex: 0 1 auto; max-width: 520px; }
+.saveto .btn { padding: 3px 9px; font-size: 12px; }
+.navbtn { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: none; padding: 8px 10px; border-radius: 8px; text-align: left; font-weight: 550; }
+.navbtn:hover { background: var(--chip); }
+.navbtn.sel { background: var(--hl); }
+.navbtn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; flex: none; }
+.hist { max-width: 940px; }
+.hist h3 { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin: 22px 0 8px; }
+.hist h3:first-of-type { margin-top: 6px; }
+.hrow { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.hrow + .hrow { margin-top: 6px; }
+.hrow .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hrow .meta { color: var(--muted); font-size: 12px; }
+.hrow .loc { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); min-width: 0; }
+.hrow .loc code { font: 11.5px ui-monospace, "SF Mono", Menlo, monospace; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; min-width: 0; }
+.hrow .acts { display: flex; gap: 6px; align-items: center; grid-row: 1 / 3; grid-column: 2; }
+.hrow .acts .btn { padding: 4px 10px; font-size: 12px; }
+.hrow .gone { color: var(--err); font-size: 12px; }
+.histbar { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.histbar h2 { margin: 0; font-size: 18px; flex: 1; }
+.histbar .seg { width: 260px; grid-template-columns: 1fr 1fr 1fr; }
 </style>
 </head>
 <body>
@@ -152,8 +176,11 @@ body.nounsure .w.unsure { text-decoration: none; }
     <img src="/icon.png" alt="">
     <div><h1>Bangla Transcriber</h1><small>Subtitles · বাংলা &amp; English</small></div>
   </header>
-  <div style="padding:0 16px 8px;display:flex;gap:8px">
+  <div style="padding:0 16px 6px;display:flex;gap:8px">
     <button class="btn" id="add" style="flex:1">＋ Add audio…</button>
+  </div>
+  <div style="padding:0 8px 4px">
+    <button class="navbtn" id="histbtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</button>
   </div>
   <div class="list" id="list"></div>
   <div class="settings">
@@ -166,7 +193,7 @@ body.nounsure .w.unsure { text-decoration: none; }
     <div class="row" style="display:grid;gap:4px;color:var(--muted);font-size:11.5px">Mode
       <div class="seg" id="quality"><button data-b="1">Fast</button><button data-b="5">Most accurate</button></div>
     </div>
-    <div class="row" style="display:grid;gap:4px;color:var(--muted);font-size:11.5px">Save files to
+    <div class="row" style="display:grid;gap:4px;color:var(--muted);font-size:11.5px">Default save folder for new files
       <div class="outdir"><span id="outdir">Same folder as audio</span><button class="btn" id="choose" style="padding:3px 9px">Choose…</button><button class="btn" id="reset" title="Same folder as audio" style="padding:3px 8px">↺</button></div>
     </div>
     <div class="outs"><label><input type="checkbox" id="o-srt"> <b>.srt</b> subtitles</label><label><input type="checkbox" id="o-json"> .json</label><label><input type="checkbox" id="o-txt"> .txt</label></div>
@@ -196,6 +223,10 @@ if (store.get("nounsure") === "1") document.body.classList.add("nounsure");
 
 function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("show"); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("show"), 1800); }
 
+function report(msg) { try { fetch("/api/log", {method: "POST", body: JSON.stringify({msg: String(msg)})}); } catch (e) {} }
+window.addEventListener("error", e => report(`${e.message} at ${e.filename}:${e.lineno}`));
+window.addEventListener("unhandledrejection", e => report("unhandled: " + (e.reason && e.reason.stack || e.reason)));
+
 let pollTimer = null;
 async function refresh() {
   clearTimeout(pollTimer);
@@ -216,7 +247,7 @@ function renderSide() {
   }
   if (document.activeElement !== m) m.value = st.models[lang];
   document.querySelectorAll("#quality button").forEach(b => b.classList.toggle("on", +b.dataset.b === +st.beams));
-  $("#outdir").textContent = st.out_dir || "Same folder as audio";
+  $("#outdir").innerHTML = `<bdi>${esc(st.out_dir || "Same folder as audio")}</bdi>`;
   $("#outdir").title = st.out_dir || "";
   $("#o-srt").checked = !!st.srt; $("#o-json").checked = !!st.json; $("#o-txt").checked = !!st.txt;
   const pending = S.jobs.filter(j => j.kind !== "json" && (j.status === "queued" || j.status === "error")).length;
@@ -224,8 +255,9 @@ function renderSide() {
   $("#start").textContent = S.running ? "Working…" : pending > 1 ? `Transcribe ${pending} files` : "Transcribe";
   $("#stop").hidden = !S.running;
   $("#status").textContent = S.running ? S.status : `${S.jobs.filter(j => j.status === "done").length} of ${S.jobs.length} done`;
-  if (sel && !S.jobs.some(j => j.id === sel)) sel = null;
+  if (sel && sel !== "history" && !S.jobs.some(j => j.id === sel)) sel = null;
   if (!sel && S.jobs.length) sel = S.jobs[0].id;
+  $("#histbtn").classList.toggle("sel", sel === "history");
   renderList();
 }
 
@@ -256,7 +288,7 @@ function renderList() {
     const pill = el.querySelector(".pill");
     pill.className = "pill " + j.status;
     pill.textContent = {queued: "Waiting", working: "Working", done: "Done", error: "Failed"}[j.status];
-    el.querySelector(".m").textContent = j.status === "error" ? j.error : j.message || (j.status === "queued" ? "Ready to transcribe" : "");
+    el.querySelector(".m").textContent = j.status === "error" ? j.error : j.message || (j.status === "queued" ? "Ready · saves to " + folderName(j) : "");
     const bar = el.querySelector(".bar");
     bar.style.display = j.status === "working" ? "" : "none";
     bar.firstChild.style.width = (j.progress * 100).toFixed(1) + "%";
@@ -265,9 +297,16 @@ function renderList() {
   rows.forEach(el => el.remove());
 }
 
+const baseName = p => String(p || "").replace(/\/+$/, "").split("/").pop();
+const dirName = p => String(p || "").replace(/\/[^/]*$/, "");
+const jobFolder = j => j.out_dir || dirName(j.path);
+const folderName = j => j.out_dir ? `“${baseName(j.out_dir)}”` : "the audio's folder";
+
 // ---- main area ---------------------------------------------------------------------
 function renderMain() {
-  const main = $("#main"), j = S.jobs.find(x => x.id === sel);
+  const main = $("#main");
+  if (sel === "history") return renderHistory();
+  const j = S.jobs.find(x => x.id === sel);
   if (!j) {
     const k = "empty" + S.models_ready + S.settings.lang;
     if (main._k !== k) {
@@ -285,7 +324,7 @@ function renderMain() {
     return;
   }
   if (j.status !== "done") {
-    const k = `${j.id}:${j.status}:${j.lang}:${j.status === "working" ? "" : j.error}`;
+    const k = `${j.id}:${j.status}:${j.lang}:${j.out_dir}:${j.status === "working" ? "" : j.error}`;
     if (main._k !== k) {
       main._k = k; main._job = j.id;
       main.innerHTML = `${header(j)}<div class="body"><div class="big-progress" id="prog"></div></div>`;
@@ -299,7 +338,7 @@ function renderMain() {
     if (prog._v !== html) { prog.innerHTML = html; prog._v = html; }
     return;
   }
-  const k = `${j.id}:done:${j.rev}:${tab}:${j.lang}`;
+  const k = `${j.id}:done:${j.rev}:${tab}:${j.lang}:${j.out_dir}`;
   if (main._k !== k) {
     const keepScroll = main._job === j.id && $("#body") ? $("#body").scrollTop : 0;
     main._k = k; main._job = j.id;
@@ -318,6 +357,9 @@ function header(j) {
       <button class="btn" id="copy">Copy SRT</button><button class="btn" id="reveal">Show in Finder</button>
       <button class="btn" id="redo" title="${j.kind === "json" ? "Rebuild from the JSON file" : "Transcribe this file again"}">Redo</button>` : ""}
     </div>
+    ${j.status !== "working" ? `<div class="saveto">Save .srt / .json to <span class="path" title="${esc(jobFolder(j))}"><bdi>${esc(jobFolder(j))}</bdi></span>
+      <button class="btn" id="jf-choose">Choose…</button>${j.out_dir && j.kind === "audio" ? `<button class="btn" id="jf-reset" title="Save next to the audio file">Same as audio</button>` : ""}
+      <button class="btn" id="jf-open">Show folder</button></div>` : ""}
     <div class="player"><button class="play" id="play" title="Play / pause (space)" ${j.audio ? "" : "disabled style=opacity:.4"}></button>
       <input type="range" id="seek" min="0" max="1000" value="0" ${j.audio ? "" : "disabled"}><span class="time" id="time">${j.audio ? "0:00.0 / –" : "no audio found"}</span></div>
   </div>`;
@@ -342,8 +384,19 @@ function bindHeader(j) {
     if (j.status === "done") await api("/api/start", {});
     refresh();
   });
+  const jc = $("#jf-choose");
+  if (jc) jc.onclick = async () => {
+    let r;
+    if (S.native) r = await api("/api/job_folder", {id: j.id});
+    else { const p = prompt("Folder for this file's .srt and .json:", jobFolder(j)); if (!p) return; r = await api("/api/job_folder", {id: j.id, path: p}); }
+    if (r.error) return toast(r.error);
+    if (r.ok) toast(j.status === "done" ? "Saved to the new folder" : "Folder set for this file");
+    refresh();
+  };
+  const jr = $("#jf-reset"); if (jr) jr.onclick = () => api("/api/job_folder", {id: j.id, reset: true}).then(refresh);
+  const jo = $("#jf-open"); if (jo) jo.onclick = () => reveal(jobFolder(j));
   const c = $("#copy"); if (c) c.onclick = () => { if (result && resultFor === resultKey(j)) { copy(result.srt); toast("SRT copied"); } };
-  const r = $("#reveal"); if (r) r.onclick = () => api("/api/reveal", {path: j.outputs.srt || j.outputs.json || j.path});
+  const r = $("#reveal"); if (r) r.onclick = () => reveal(j.outputs.srt || j.outputs.json || j.path);
   const d = $("#redo"); if (d) d.onclick = () => api("/api/start", {redo: [j.id]}).then(refresh);
 }
 
@@ -369,7 +422,7 @@ async function loadResult(j, keepScroll = 0) {
   }
   // Only draw if this file and tab are still the ones on screen.
   const body = $("#body");
-  if (!body || $("#main")._k !== `${j.id}:done:${j.rev}:${tab}:${j.lang}` || resultFor !== want || !result || result.error) return;
+  if (!body || $("#main")._k !== `${j.id}:done:${j.rev}:${tab}:${j.lang}:${j.out_dir}` || resultFor !== want || !result || result.error) return;
   wordEls = []; cueEls = []; curIdx = curCue = -1;
   if (tab === "srt") {
     body.innerHTML = result.srt ? `<pre style="font-size:14px;line-height:1.6">${esc(result.srt)}</pre>` : `<div class="msg">No speech was found in this file.</div>`;
@@ -405,6 +458,58 @@ async function loadResult(j, keepScroll = 0) {
   cueEls = [...body.querySelectorAll(".cue")];
   cueEls.forEach(el => { el._s = +el.dataset.s; el._e = +el.dataset.e; });
   body.scrollTop = keepScroll;
+}
+
+async function reveal(path) { const r = await api("/api/reveal", {path}); if (r.error) toast(r.error); }
+
+// ---- history ------------------------------------------------------------------
+let histDays = +(store.get("histDays") || 7), histVer = 0;
+const dayLabel = ts => {
+  const d = new Date(ts * 1000), today = new Date(); today.setHours(0, 0, 0, 0);
+  const diff = Math.round((today - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+  return diff === 0 ? "Today" : diff === 1 ? "Yesterday" : d.toLocaleDateString(undefined, {weekday: "long", day: "numeric", month: "long"});
+};
+async function renderHistory() {
+  const main = $("#main"), k = `history:${histDays}:${histVer}:${S.jobs.reduce((n, j) => n + (j.rev || 0), 0)}`;
+  if (main._k === k) return;
+  main._k = k; main._job = null;
+  stopAudio(); wordEls = []; cueEls = [];
+  main.innerHTML = `<div class="body"><div class="hist"><div class="histbar"><h2>History</h2>
+    <div class="seg" id="hdays"><button data-d="7">Last 7 days</button><button data-d="30">30 days</button><button data-d="60">60 days</button></div></div>
+    <div id="hlist"><div class="msg">Loading…</div></div></div></div>`;
+  main.querySelectorAll("#hdays button").forEach(b => { b.classList.toggle("on", +b.dataset.d === histDays);
+    b.onclick = () => { histDays = +b.dataset.d; store.set("histDays", histDays); renderHistory(); }; });
+  const {items} = await api(`/api/history?days=${histDays}`);
+  const list = $("#hlist");
+  if (!list || main._k !== k) return;
+  if (!items.length) { list.innerHTML = `<div class="msg">Nothing transcribed in the last ${histDays} days yet.</div>`; return; }
+  let html = "", day = "";
+  for (const h of items) {
+    const label = dayLabel(h.finished);
+    if (label !== day) { html += `<h3>${esc(label)}</h3>`; day = label; }
+    const file = h.outputs.srt || h.outputs.json || "";
+    const ok = file && h.exists[h.outputs.srt ? "srt" : "json"];
+    const time = new Date(h.finished * 1000).toLocaleTimeString(undefined, {hour: "numeric", minute: "2-digit"});
+    const files = Object.keys(h.outputs).map(x => "." + x).join(" · ");
+    html += `<div class="hrow" data-h="${h.id}">
+      <div class="t">${esc(h.name)}<span class="lang">${LANG_TAG[h.lang] || ""}</span></div>
+      <div class="acts">
+        <button class="btn" data-hact="open" ${h.exists.json ? "" : "disabled"}>Open</button>
+        <button class="btn" data-hact="finder" ${ok ? "" : "disabled"}>Show in Finder</button>
+        <button class="btn" data-hact="remove" title="Remove from history (files are kept)">✕</button></div>
+      <div class="meta">${time} · ${h.cues} subtitles · ${h.words} words · ${files}</div>
+      <div class="loc">${ok ? `<code title="${esc(h.folder)}"><bdi>${esc(h.folder)}</bdi></code>` : `<span class="gone">The files were moved or deleted (last saved in ${esc(h.folder)})</span>`}</div>
+    </div>`;
+  }
+  list.innerHTML = html;
+  list.querySelectorAll("[data-hact]").forEach(b => b.onclick = async () => {
+    const h = items.find(x => x.id === b.closest(".hrow").dataset.h);
+    if (b.dataset.hact === "finder") return reveal(h.outputs.srt || h.outputs.json);
+    if (b.dataset.hact === "remove") { await api("/api/history/remove", {id: h.id}); histVer++; return renderHistory(); }
+    const r = await api("/api/history/open", {id: h.id});
+    if (r.error) return toast(r.error);
+    sel = r.id; store.set("sel", sel); tab = "subs"; refresh();
+  });
 }
 
 // ---- word editing ----------------------------------------------------------
@@ -504,13 +609,18 @@ function selectionInside(el) {
   const s = window.getSelection();
   return s && !s.isCollapsed && s.toString().trim() && (el.contains(s.anchorNode) || el.contains(s.focusNode));
 }
-function playFrom(t) { if (audio.src) { audio.currentTime = t; audio.play(); } }
-let clickTimer = null;
+function playFrom(t) {
+  if (!audio.src) return toast("No audio file found for this transcript");
+  try { audio.currentTime = t; } catch (e) {}
+  const p = audio.play();
+  if (p && p.catch) p.catch(err => { report("play: " + err); toast("Could not play the audio (" + err.name + ")"); });
+}
 document.addEventListener("click", e => {
   if (pop && !e.target.closest(".pop")) closePop();   // close the editor, then still handle this click
   if (e.target.closest(".pop, .modal-bg")) return;
   const rm = e.target.closest("[data-rm]");
   if (rm) { e.stopPropagation(); api("/api/remove", {ids: [rm.dataset.rm]}).then(refresh); return; }
+  if (e.target.closest("#histbtn")) { sel = "history"; store.set("sel", sel); histVer++; renderSide(); renderMain(); return; }
   const job = e.target.closest(".job");
   if (job) {
     if (sel !== job.dataset.id) { sel = job.dataset.id; store.set("sel", sel); stopAudio(); }
@@ -518,9 +628,7 @@ document.addEventListener("click", e => {
   }
   const w = e.target.closest(".w");
   if (w) {
-    if (selectionInside(w)) return;
-    clearTimeout(clickTimer);
-    clickTimer = setTimeout(() => playFrom(w._s), 230);  // wait: it may be a double-click
+    if (!selectionInside(w) && e.detail < 2) playFrom(w._s);   // play right inside the click (WebKit needs that)
     return;
   }
   const cue = e.target.closest(".cue");
@@ -528,7 +636,7 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("dblclick", e => {
   const w = e.target.closest(".w");
-  if (w) { clearTimeout(clickTimer); audio.pause(); window.getSelection().removeAllRanges(); openEditor(w); }
+  if (w) { audio.pause(); window.getSelection().removeAllRanges(); openEditor(w); }
 });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") { closePop(); document.querySelector(".modal-bg")?.remove(); }

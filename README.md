@@ -19,9 +19,9 @@ the download is intact, puts **Bangla Transcriber** in Applications and opens it
 step failed and shows the app's error log, so you can send that output for help. The AI models download the first time
 you transcribe in each language.
 
-To install by hand instead, download the three `release/BanglaTranscriber-1.2-macos-arm64.tar.gz.part*` files into one
+To install by hand instead, download the three `release/BanglaTranscriber-1.3-macos-arm64.tar.gz.part*` files into one
 folder, open Terminal in that folder and run:
-`cat BanglaTranscriber-1.2-macos-arm64.tar.gz.part* | tar -xz -C /Applications`
+`cat BanglaTranscriber-1.3-macos-arm64.tar.gz.part* | tar -xz -C /Applications`
 
 ## Build the app (once)
 
@@ -61,6 +61,15 @@ Intel Macs work but are slower. You need about 12 GB of free disk space while bu
 5. **Corrections list** (sidebar, one list per language): every fix you make with "Remember this fix" ticked is added here as
    `wrong => right`, and it is applied automatically to every new file. This is the best way to get lore names right every time
    (for example `বেনে জেসারিট => বেনে জেসেরিট`). You can also edit the list by hand, then use **Save & fix all open files**.
+
+**Where files are saved.** Every file has its own **Save .srt / .json to** folder, shown at the top of that file:
+click **Choose…** to pick a folder in Finder, or **Show folder** to open it. New files start with the
+*Default save folder* from the sidebar (normally the audio's own folder), so with several files you can send each one somewhere
+different. Changing the folder of a finished file saves its subtitles into the new folder straight away.
+
+**History** (sidebar) lists everything transcribed in the last 7 days (or 30 or 60), grouped by day, with the folder the
+files are in. **Show in Finder** points at the `.srt`, and **Open** loads it back into the app so you can keep fixing it.
+Files that were moved or deleted are marked as such. History is kept between launches.
 
 **Already have a transcript JSON** (from ElevenLabs or from this app)? Drop the `.json` in. The app makes the `.srt` straight
 away and applies your corrections. Your original JSON is never changed; the corrected version is saved as `name_corrected.json`.
