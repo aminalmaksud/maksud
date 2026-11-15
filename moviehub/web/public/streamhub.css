@@ -506,3 +506,11 @@ html.streamhub .match-dlg .mt-field input { font-family: var(--mono); font-size:
 html.streamhub .match-dlg input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37, 99, 255, .25); }
 html.streamhub .match-dlg label { color: var(--text); font-weight: 600; }
 html.streamhub .match-dlg h3 { font: 600 20px var(--display); color: var(--strong); letter-spacing: -.01em; }
+
+/* Book reader in the Contemporary skin: flat, blue accent, no capitals */
+html.streamhub .rd-bar { background: var(--surface); border-bottom-color: var(--line2); box-shadow: none; }
+html.streamhub .rd-title b { font: 600 15px var(--display); color: var(--strong); }
+html.streamhub .rd-seg { background: var(--bg); border-color: var(--line2); }
+html.streamhub .rd-select select { background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7585' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center; border-color: var(--line2); border-radius: 8px; }
+html.streamhub .rd-progress i { background: var(--blue); }
+html.streamhub .rd-pdf { background: var(--bg); }

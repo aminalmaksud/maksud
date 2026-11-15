@@ -10,9 +10,16 @@ export function createReader({ I, $, esc, enc, api, store, openInfo }) {
   const positions = store.get('readpos', {});
   let cur = null; // { item, save(), teardown(), key(e) }
 
+  /* Reading surfaces: the app's own colours, or a paper, sepia or night page. Chosen once and remembered. */
+  const READ_THEMES = { app: 'Match the app', paper: 'Paper', sepia: 'Sepia', night: 'Night' };
+  const surfaceOf = (name) => ({ paper: { bg: '#fbf8f2', fg: '#26221e', link: '#8a3a2a' }, sepia: { bg: '#f1e7d0', fg: '#3d3022', link: '#8a4a1f' }, night: { bg: '#16120e', fg: '#e6dccb', link: '#e0a66a' } })[name] || null;
+  const readTheme = () => store.get('readerTheme', 'app');
   const remember = (path, v) => { positions[path] = { ...v, at: Date.now() }; store.set('readpos', positions); };
   const btn = (id, html, title) => `<button class="icon-btn" id="${id}" title="${esc(title)}">${html}</button>`;
   const bye = () => { if (cur) { cur.save?.(); cur.teardown?.(); cur = null; } };
+  /** The thin line under the page: how far through the book you are (0 to 1). */
+  const setProgress = (f) => { const p = $('rdProgress'); if (!p) return; const v = Math.min(1, Math.max(0, f || 0)); p.hidden = false; p.firstElementChild.style.width = `${(v * 100).toFixed(2)}%`; };
+  const hideProgress = () => { const p = $('rdProgress'); if (p) p.hidden = true; };
 
   let openItem = null;
   async function open(item) {
@@ -21,7 +28,7 @@ export function createReader({ I, $, esc, enc, api, store, openInfo }) {
     const ext = extOf(item.name);
     const title = stemOf(item.name).replace(/[._]+/g, ' ');
     $('rdTitle').textContent = title; $('rdSub').textContent = ''; ctl.innerHTML = ''; body.innerHTML = '<p class="rd-msg">Opening…</p>';
-    root.hidden = false; root.dataset.kind = ext; document.body.style.overflow = 'hidden';
+    root.hidden = false; root.dataset.kind = ext; root.dataset.page = readTheme(); document.body.style.overflow = 'hidden'; hideProgress();
     try {
       cur = ext === 'pdf' ? await openPdf(item) : ext === 'epub' ? await openEpub(item) : await openCbz(item);
     } catch (e) {
@@ -140,7 +147,7 @@ export function createReader({ I, $, esc, enc, api, store, openInfo }) {
       try { await task.promise; } catch { /* a newer page replaced it */ }
       $('rdPage').value = page; box.scrollTop = 0;
     }
-    const go = (n) => { page = Math.min(Math.max(1, n), doc.numPages); render(); remember(item.path, { p: page, z: zoom }); };
+    const go = (n) => { page = Math.min(Math.max(1, n), doc.numPages); render(); setProgress(page / doc.numPages); remember(item.path, { p: page, z: zoom }); };
     const setZoom = (z) => { zoom = z; render(); remember(item.path, { p: page, z: zoom }); };
     const scaleNow = () => lastScale;
     $('rdPrev').onclick = () => go(page - 1); $('rdNext').onclick = () => go(page + 1);
@@ -151,6 +158,7 @@ export function createReader({ I, $, esc, enc, api, store, openInfo }) {
     const onResize = () => { if (zoom === 'fit') render(); };
     window.addEventListener('resize', onResize);
     $('rdSub').textContent = `${doc.numPages} pages`;
+    setProgress(page / doc.numPages);
     await render();
     return {
       key: (e) => {
@@ -175,16 +183,31 @@ export function createReader({ I, $, esc, enc, api, store, openInfo }) {
     let ch = Math.min(saved.c || 0, info.spine.length - 1), size = saved.s || 100, frac = saved.f || 0;
     body.innerHTML = '<iframe id="rdFrame" title="Book" sandbox="allow-same-origin"></iframe>';
     const frame = $('rdFrame');
-    ctl.innerHTML = `${btn('rdPrev', I.back, 'Previous chapter')}<select id="rdToc" aria-label="Contents"></select>${btn('rdNext', `<span class="flip">${I.back}</span>`, 'Next chapter')}
-      ${btn('rdSmaller', 'A−', 'Smaller text')}${btn('rdBigger', 'A+', 'Bigger text')}`;
+    ctl.innerHTML = `<div class="rd-seg">${btn('rdPrev', I.back, 'Previous chapter')}${btn('rdNext', `<span class="flip">${I.back}</span>`, 'Next chapter')}</div>
+      <label class="rd-select"><select id="rdToc" aria-label="Contents"></select></label>
+      <div class="rd-seg">${btn('rdSmaller', 'A−', 'Smaller text')}${btn('rdBigger', 'A+', 'Bigger text')}${btn('rdTheme', '<i></i>', 'Page colour')}</div>`;
     const toc = info.toc.length ? info.toc : info.spine.map((h, i) => ({ title: `Part ${i + 1}`, href: h }));
     $('rdToc').innerHTML = toc.map((t, i) => `<option value="${i}">${esc(t.title)}</option>`).join('');
     const url = (href) => `/epub/${info.id}/${segs(href)}`;
     const css = () => {
       const cs = getComputedStyle(document.body);
-      const fg = cs.color, bg = getComputedStyle(root).backgroundColor, link = getComputedStyle(document.documentElement).getPropertyValue('--maroon') || '#a3242f';
-      return `html{background:${bg}}body{background:${bg};color:${fg};font:${size}%/1.7 Georgia,'Times New Roman',serif;max-width:40em;margin:0 auto;padding:1.5em 1.4em 5em}
-        img,svg,video{max-width:100%;height:auto}a{color:${link}}h1,h2,h3{line-height:1.25}table{max-width:100%}pre{white-space:pre-wrap}`;
+      const own = { bg: getComputedStyle(root).backgroundColor, fg: cs.color, link: getComputedStyle(document.documentElement).getPropertyValue('--maroon') || '#a3242f' };
+      const t = surfaceOf(readTheme()) || own;
+      const px = (19 * size / 100).toFixed(2);
+      return `html{background:${t.bg}}
+        body{background:${t.bg};color:${t.fg};font:${px}px/1.75 Georgia,'Charter','Iowan Old Style','Times New Roman',serif;
+          max-width:36em;margin:0 auto;padding:4.5em 1.6em 7em;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+        p{margin:0 0 .85em;text-indent:1.4em}
+        p:first-of-type,h1+p,h2+p,h3+p,hr+p,.nobreak{text-indent:0}
+        h1,h2,h3,h4{font-weight:600;line-height:1.25;letter-spacing:.005em;margin:1.6em 0 .6em}
+        h1{font-size:1.7em;text-align:center;margin-top:0;margin-bottom:1.1em} h2{font-size:1.3em} h3{font-size:1.1em}
+        img,svg,video{max-width:100%;height:auto;display:block;margin:1.2em auto}
+        a{color:${t.link};text-decoration:none;border-bottom:1px solid ${t.link}55}
+        blockquote{margin:1em 1.4em;font-style:italic;opacity:.92} hr{border:0;text-align:center;margin:2em 0}
+        hr:before{content:'\\2042\\2042\\2042';letter-spacing:.6em;opacity:.6}
+        table{max-width:100%;border-collapse:collapse} td,th{padding:.3em .5em;border-bottom:1px solid ${t.fg}22}
+        pre{white-space:pre-wrap;font-size:.85em;line-height:1.5} code{font-size:.9em}
+        ::selection{background:${t.link}44}`;
     };
     function onLoad() {
       const doc = frame.contentDocument;
@@ -197,14 +220,19 @@ export function createReader({ I, $, esc, enc, api, store, openInfo }) {
       if (t >= 0) $('rdToc').value = String(t);
       const sc = doc.scrollingElement;
       if (frac) { sc.scrollTop = frac * (sc.scrollHeight - sc.clientHeight); frac = 0; }
-      doc.addEventListener('scroll', () => { const s = doc.scrollingElement; remember(item.path, { c: ch, s: size, f: s.scrollHeight > s.clientHeight ? s.scrollTop / (s.scrollHeight - s.clientHeight) : 0 }); }, { passive: true });
+      const track = () => { const s = doc.scrollingElement; const inCh = s.scrollHeight > s.clientHeight ? s.scrollTop / (s.scrollHeight - s.clientHeight) : 0; setProgress((ch + inCh) / info.spine.length); remember(item.path, { c: ch, s: size, f: inCh }); };
+      doc.addEventListener('scroll', track, { passive: true }); track();
       doc.addEventListener('keydown', (e) => { if (cur?.key(e)) e.preventDefault(); });
     }
     frame.addEventListener('load', onLoad);
-    const show = (i, fragment = '') => { ch = Math.min(Math.max(0, i), info.spine.length - 1); frame.src = url(info.spine[ch]) + fragment; remember(item.path, { c: ch, s: size, f: 0 }); };
+    const show = (i, fragment = '') => { ch = Math.min(Math.max(0, i), info.spine.length - 1); frame.src = url(info.spine[ch]) + fragment; setProgress(ch / info.spine.length); remember(item.path, { c: ch, s: size, f: 0 }); };
     $('rdPrev').onclick = () => show(ch - 1); $('rdNext').onclick = () => show(ch + 1);
     $('rdToc').onchange = (e) => { const t = toc[Number(e.target.value)]; const [f, frag] = t.href.split('#'); const i = info.spine.indexOf(f); if (i >= 0) { ch = i; frame.src = url(f) + (frag ? `#${frag}` : ''); } };
     const resize = (d) => { size = Math.min(220, Math.max(70, size + d)); const doc = frame.contentDocument; const st = doc?.head.querySelector('style:last-of-type'); if (st) st.textContent = css(); remember(item.path, { c: ch, s: size, f: 0 }); };
+    const themeBtn = $('rdTheme');
+    const paintTheme = () => { themeBtn.dataset.theme = readTheme(); root.dataset.page = readTheme(); themeBtn.title = `Page colour: ${READ_THEMES[readTheme()]} (click to change)`; };
+    themeBtn.onclick = () => { const names = Object.keys(READ_THEMES), next = names[(names.indexOf(readTheme()) + 1) % names.length]; store.set('readerTheme', next); paintTheme(); const doc = frame.contentDocument; const st = doc?.head.querySelector('style:last-of-type'); if (st) st.textContent = css(); };
+    paintTheme();
     $('rdSmaller').onclick = () => resize(-10); $('rdBigger').onclick = () => resize(10);
     frame.src = url(info.spine[ch]);
     return {
@@ -243,7 +271,7 @@ export function createReader({ I, $, esc, enc, api, store, openInfo }) {
     const src = (n) => `/api/cbz-page?path=${enc(item.path)}&i=${n}`;
     function show(n) {
       i = Math.min(Math.max(0, n), pages - 1);
-      img.src = src(i); $('rdN').textContent = i + 1; box.scrollTop = 0;
+      img.src = src(i); $('rdN').textContent = i + 1; box.scrollTop = 0; setProgress((i + 1) / pages);
       if (i + 1 < pages) new Image().src = src(i + 1); // the next page is ready when you turn to it
       remember(item.path, { i, fit });
     }
