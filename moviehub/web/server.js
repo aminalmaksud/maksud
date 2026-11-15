@@ -1005,7 +1005,7 @@ function serveStatic(url, res) {
   if (BRAND && rel === 'index.html') {
     // Marked before the first paint, so the StreamHub look shows without a flash of the Mac one.
     return res.end(fs.readFileSync(file, 'utf8').replace('<html lang="en">', `<html lang="en" class="${BRAND}">`)
-      .replace('<title>MusingsofMaksudTV</title>', '<title>StreamHub</title>').replace('href="logo.svg" type="image/svg+xml"', 'href="assets/streamhub-icon.svg" type="image/svg+xml"'));
+      .replace('href="logo.svg" type="image/svg+xml"', 'href="assets/streamhub-icon.svg" type="image/svg+xml"'));
   }
   fs.createReadStream(file).pipe(res);
 }

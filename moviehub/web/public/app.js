@@ -1481,7 +1481,7 @@ async function startPlayback(item, { from } = {}) {
   S.mode = !pr?.ffmpeg || (pr.direct && S.audio === 0 && !S.adelay) ? 'direct' : 'remux';
   // Converted streams are Matroska (exact sync, true timestamps); MP4 only where Matroska can't play.
   S.fmt = video.canPlayType('video/webm') ? 'mkv' : 'mp4';
-  if (pr && !pr.ffmpeg) banner(`Some files may play without sound. Install ffmpeg (${INSTALL_FFMPEG}) or use the MusingsofMaksudTV Mac or Windows app, which includes it.`);
+  if (pr && !pr.ffmpeg) banner(`Some files may play without sound. Install ffmpeg (${INSTALL_FFMPEG}) or use the StreamHub app for Mac or Windows, which includes it.`);
 
   S.stereo = stereos[item.path] || detectStereo(item.name, pr?.video);
   layoutStereo();
@@ -2329,7 +2329,7 @@ window.__mh = { now: () => now(), state: () => ({ mode: S.mode, offset: S.offset
 /* ----- boot ----- */
 if (!location.hash) history.replaceState(null, '', '#/');
 api('/api/config').then((c) => { state.config = c; renderNav(); }).catch(() => {});
-document.title = SH ? 'StreamHub' : 'MusingsofMaksudTV';
+document.title = 'StreamHub';
 document.querySelector('link[rel="icon"]').href = SH ? 'assets/streamhub-icon.svg' : 'logo.svg';
 if (SH) {
   applyShTheme();
