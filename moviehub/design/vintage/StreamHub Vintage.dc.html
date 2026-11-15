@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Cinzel:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#D9CDBB;font-family:'Plus Jakarta Sans','Hind Siliguri',sans-serif;-webkit-font-smoothing:antialiased}*{box-sizing:border-box}a{color:#7A1820;text-decoration:none}a:hover{color:#A3242F}@keyframes vsDrift{0%{transform:translate(0,0);opacity:0}15%{opacity:.85}100%{transform:translate(40px,-160px);opacity:0}}@keyframes vsSpin{to{transform:rotate(360deg)}}</style>
+</helmet>
+
+<section data-screen-label="Overview" style="padding:72px 72px 0;display:flex;flex-direction:column;gap:10px;max-width:1400px">
+  <span style="font:600 13px 'Plus Jakarta Sans';letter-spacing:.14em;text-transform:uppercase;color:#7A1820">StreamHub · Vintage look · v2</span>
+  <h1 style="margin:0;font:700 64px/1 Oswald;text-transform:uppercase;color:#2B1A14;letter-spacing:.01em">A bookshop in the evening</h1>
+  <p style="margin:0;font:400 18px/1.55 'Plus Jakarta Sans';color:#4A372C;max-width:820px;text-wrap:pretty">Parchment is the reading room by day. Night is a wood-panelled cinema lit by candle-gold. Every text and icon colour now passes WCAG AA in both, and one component set covers every button, pill, chip and menu.</p>
+</section>
+
+<section data-screen-label="Brand" style="padding:72px 72px 0;display:flex;flex-direction:column;gap:24px">
+  <span style="font:700 28px Oswald;text-transform:uppercase;color:#2B1A14">01 · Brand</span>
+  <div style="display:flex;gap:32px;flex-wrap:wrap">
+    <sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+      <div style="{{ th.vars }}">
+        <div style="width:660px;height:380px;border-radius:24px;background:var(--canvas);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:28px;box-shadow:0 30px 60px -30px rgba(43,26,20,.45),0 0 0 1px rgba(43,26,20,.12)">
+          <span style="position:absolute;top:20px;left:24px;font:600 12px 'Plus Jakarta Sans';letter-spacing:.12em;text-transform:uppercase;color:var(--faint)">{{ th.name }}</span>
+          <div style="display:flex;align-items:center;gap:18px">
+            <img src="assets/streamhub-vintage-icon.svg" width="112" height="112" alt="StreamHub">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="font:700 64px/0.9 Oswald;letter-spacing:.04em;text-transform:uppercase;color:var(--brand)">StreamHub</span>
+              <div style="display:flex;align-items:center;gap:10px;color:var(--goldInk)"><span style="flex:1;height:1px;background:currentColor;opacity:.6"></span><span style="font-size:12px">✦</span><span style="flex:1;height:1px;background:currentColor;opacity:.6"></span></div>
+              <span style="font:600 14px 'Plus Jakarta Sans';letter-spacing:.06em;color:var(--dim)">Musings of Maksud · <span style="font-family:'Hind Siliguri'">মুসিংস অব মাকসুদ</span></span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:28px">
+            <img src="assets/streamhub-vintage-icon.svg" width="64" height="64" alt="">
+            <img src="assets/streamhub-vintage-icon.svg" width="40" height="40" alt="">
+            <img src="assets/streamhub-vintage-icon.svg" width="24" height="24" alt="">
+            <div style="display:flex;align-items:center;gap:10px;padding-left:16px;border-left:1px solid var(--line)"><img src="assets/streamhub-vintage-icon.svg" width="44" height="44" alt=""><div style="display:flex;flex-direction:column;gap:2px"><span style="font:600 20px/1 Oswald;letter-spacing:.05em;text-transform:uppercase;color:var(--brand)">StreamHub</span><span style="font:500 11px 'Hind Siliguri';color:var(--dim)">মুসিংস অব মাকসুদ • টিভি</span></div></div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+    <div style="width:340px;display:flex;flex-direction:column;gap:12px;padding-top:8px">
+      <span style="font:600 18px Oswald;text-transform:uppercase;color:#2B1A14">Recommendation</span>
+      <p style="margin:0;font:400 15px/1.6 'Plus Jakarta Sans';color:#4A372C;text-wrap:pretty">Lead with StreamHub and keep Musings of Maksud as the byline, the way a publisher's imprint sits on a book spine. Your sun, play mark and open-book tile stays as the Vintage icon. It's the same app under one name, and Vintage keeps its heritage.</p>
+      <p style="margin:0;font:400 13px/1.55 'Plus Jakarta Sans';color:#6E5849">Below 32 px, the light rays and sparkles drop out and only the sun, play mark and book remain.</p>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="Tokens" style="padding:72px 72px 0;display:flex;flex-direction:column;gap:24px">
+  <span style="font:700 28px Oswald;text-transform:uppercase;color:#2B1A14">02 · Tokens &amp; contrast</span>
+  <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+    <sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+      <div style="{{ th.vars }}">
+        <div style="width:660px;border-radius:24px;background:var(--canvas);padding:28px;display:flex;flex-direction:column;gap:22px;color:var(--text);box-shadow:0 30px 60px -30px rgba(43,26,20,.45),0 0 0 1px rgba(43,26,20,.12)">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:700 26px Oswald;text-transform:uppercase;color:var(--brand)">{{ th.name }}</span><span style="font:500 13px 'Plus Jakarta Sans';color:var(--dim)">{{ th.tagline }}</span></div>
+          <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px">
+            <sc-for list="{{ th.swatches }}" as="sw" hint-placeholder-count="15">
+              <div style="display:flex;flex-direction:column;gap:6px"><div style="height:44px;border-radius:12px;background:{{ sw.hex }};box-shadow:inset 0 0 0 1px rgba(127,100,80,.25)"></div><span style="font:600 12px 'Plus Jakarta Sans';color:var(--text)">{{ sw.name }}</span><span style="font:400 11px 'JetBrains Mono';color:var(--dim)">{{ sw.hex }}</span></div>
+            </sc-for>
+          </div>
+          <div style="height:56px;border-radius:18px;background:var(--panel);display:flex;align-items:center;padding:0 18px;justify-content:space-between"><span style="font:600 16px Oswald;text-transform:uppercase;color:var(--panelText)">Crimson panel</span><span style="font:600 13px 'Plus Jakarta Sans';color:#F5CF5B">Hero · Continue watching · Page headers</span></div>
+          <div style="display:flex;flex-direction:column;border-radius:18px;background:var(--surfBg);border:1px solid var(--line);overflow:hidden">
+            <sc-for list="{{ th.pairs }}" as="p" hint-placeholder-count="9">
+              <div style="display:grid;grid-template-columns:28px minmax(0,1fr) 92px 150px;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line)">
+                <span style="width:28px;height:28px;border-radius:8px;background:{{ p.bg }};color:{{ p.fg }};display:flex;align-items:center;justify-content:center;font:700 13px 'Plus Jakarta Sans';box-shadow:inset 0 0 0 1px rgba(127,100,80,.3)">Aa</span>
+                <span style="font:500 13px 'Plus Jakarta Sans';color:var(--text)">{{ p.label }}</span>
+                <span style="font:600 13px 'JetBrains Mono';color:var(--text)">{{ p.ratio }} <span style="color:{{ p.passColor }}">{{ p.pass }}</span></span>
+                <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ p.was }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+            <div style="display:flex;flex-direction:column;gap:2px"><span style="font:700 34px/1 Oswald;text-transform:uppercase;color:var(--text)">Oswald display</span><span style="font:400 12px 'Plus Jakarta Sans';color:var(--dim)">500–700 · uppercase · +0.02–0.06em</span></div>
+            <div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 17px/1.3 'Plus Jakarta Sans';color:var(--text)">Plus Jakarta Sans body, set at 14–17 px for reading.</span><span style="font:400 12px 'Plus Jakarta Sans';color:var(--dim)">400–800</span></div>
+            <div style="display:flex;flex-direction:column;gap:2px"><span style="font:600 22px/1.3 'Hind Siliguri';color:var(--text)">আজকের বাছাই · দেখা চালিয়ে যান</span><span style="font:400 12px 'Plus Jakarta Sans';color:var(--dim)">Hind Siliguri, +1 px over Latin</span></div>
+            <div style="display:flex;align-items:center;gap:16px"><span style="font:600 40px/1 Cinzel;color:transparent;-webkit-text-stroke:1.25px var(--goldInk)">A</span><span style="font:700 40px/1 Fraunces;color:var(--accText)">P</span><span style="font:400 12px 'Plus Jakarta Sans';color:var(--dim)">Cinzel outline monogram · Fraunces filled</span></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;font:500 12px 'Plus Jakarta Sans';color:var(--dim)">
+            <div style="width:64px;height:44px;border-radius:18px;background:var(--surf);box-shadow:var(--shadow)"></div><span>Card 18</span>
+            <div style="width:64px;height:44px;border-radius:28px;background:var(--panel)"></div><span>Panel 26–30</span>
+            <div style="width:64px;height:32px;border-radius:999px;background:var(--surf);box-shadow:var(--ring)"></div><span>Pill · focus ring</span>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section data-screen-label="Components" style="padding:72px 72px 0;display:flex;flex-direction:column;gap:24px">
+  <span style="font:700 28px Oswald;text-transform:uppercase;color:#2B1A14">03 · Components</span>
+  <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+    <sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+      <div style="{{ th.vars }}">
+        <div style="width:1320px;border-radius:24px;background:var(--canvas);padding:28px;display:flex;flex-direction:column;gap:20px;color:var(--text);box-shadow:0 30px 60px -30px rgba(43,26,20,.45),0 0 0 1px rgba(43,26,20,.12)">
+          <span style="font:700 22px Oswald;text-transform:uppercase;color:var(--brand)">{{ th.name }}</span>
+          <div style="border-radius:18px;background:var(--surfBg);border:1px solid var(--line);overflow:hidden">
+            <div style="display:grid;grid-template-columns:170px repeat(7,minmax(0,1fr));border-bottom:1px solid var(--line)">
+              <span style="padding:12px 14px;font:600 12px 'Plus Jakarta Sans';letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Component</span>
+              <sc-for list="{{ stateNames }}" as="sn" hint-placeholder-count="7"><span style="padding:12px 14px;border-left:1px solid var(--line);font:600 12px 'Plus Jakarta Sans';letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">{{ sn }}</span></sc-for>
+            </div>
+            <sc-for list="{{ comps }}" as="c" hint-placeholder-count="8">
+              <div style="display:grid;grid-template-columns:170px repeat(7,minmax(0,1fr));border-bottom:1px solid var(--line)">
+                <div style="padding:14px;display:flex;flex-direction:column;gap:2px;justify-content:center"><span style="font:700 14px 'Plus Jakarta Sans';color:var(--text)">{{ c.name }}</span><span style="font:400 12px 'Plus Jakarta Sans';color:var(--dim)">{{ c.use }}</span></div>
+                <sc-for list="{{ c.cells }}" as="x" hint-placeholder-count="7">
+                  <div style="min-height:72px;padding:14px 12px;border-left:1px solid var(--line);display:flex;align-items:center">
+                    <sc-if value="{{ x.na }}"><span style="font:500 13px 'Plus Jakarta Sans';color:var(--faint)">—</span></sc-if>
+                    <sc-if value="{{ x.ok }}"><span style="{{ x.style }}">
+                      <sc-if value="{{ x.iconL }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ x.iconL }}"></path></svg></sc-if>
+                      <span>{{ x.label }}</span>
+                      <sc-if value="{{ x.iconR }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-left:auto"><path d="{{ x.iconR }}"></path></svg></sc-if>
+                    </span></sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:center">
+            <span style="font:600 12px 'Plus Jakarta Sans';letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Badges</span>
+            <span style="padding:3px 9px;border-radius:999px;background:#F5CF5B;color:#2B1A14;font:700 12px 'Plus Jakarta Sans'">2024</span>
+            <span style="padding:2px 9px;border-radius:999px;border:1px solid var(--edge);color:var(--text);font:600 12px 'Plus Jakarta Sans'">1080p</span>
+            <span style="padding:2px 9px;border-radius:999px;background:var(--accFill);color:var(--accFillText);font:600 12px 'Plus Jakarta Sans'">2160p · HDR</span>
+            <span style="display:flex;align-items:center;gap:5px;padding:2px 9px 2px 5px;border-radius:999px;background:var(--goldSoft);color:var(--text);font:600 12px 'Plus Jakarta Sans'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Watched</span>
+            <span style="display:flex;align-items:center;gap:8px;font:600 12px 'Plus Jakarta Sans';color:var(--dim)"><span style="width:72px;height:4px;border-radius:4px;background:var(--line);overflow:hidden"><span style="display:block;width:62%;height:100%;background:var(--accText)"></span></span>18 min left</span>
+            <span style="display:flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;border:1px solid var(--goldInk);color:var(--goldInk);font:600 12px 'Plus Jakarta Sans'">✦ Exact match for this file</span>
+            <span style="padding:2px 9px;border-radius:999px;background:var(--sunk);color:var(--text);font:600 12px 'Plus Jakarta Sans'">3D SBS</span>
+            <span style="padding:2px 10px;border-radius:999px;border:1px solid rgba(245,207,91,.55);background:#561017;color:#F5CF5B;font:600 12px 'Hind Siliguri'">✦ আজকের বাছাই · Featured</span>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section data-screen-label="Screens · Welcome" style="padding:72px 72px 0;display:flex;flex-direction:column;gap:24px">
+  <span style="font:700 28px Oswald;text-transform:uppercase;color:#2B1A14">04 · Welcome / first run</span>
+  <div style="display:flex;gap:40px;flex-wrap:wrap">
+    <sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+      <div style="{{ th.vars }}">
+        <div data-screen-label="Welcome · {{ th.name }}" style="width:1320px;height:840px;border-radius:10px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--canvas);color:var(--text);box-shadow:0 30px 60px -30px rgba(43,26,20,.45),0 0 0 1px rgba(43,26,20,.14)">
+          {{ specks }}
+          <sc-if value="{{ isWin }}" hint-placeholder-val="{{ true }}"><div style="height:32px;flex:none;display:flex;align-items:center;background:var(--titlebar);font:500 12px 'Plus Jakarta Sans';color:var(--dim);position:relative"><span style="padding-left:12px;flex:1;display:flex;align-items:center;gap:8px"><img src="assets/streamhub-vintage-icon.svg" width="18" height="18" alt="">StreamHub</span><span style="width:46px;text-align:center">─</span><span style="width:46px;text-align:center">☐</span><span style="width:46px;text-align:center">✕</span></div></sc-if>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:36px;position:relative;padding:32px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+              <img src="assets/streamhub-vintage-icon.svg" width="120" height="120" alt="">
+              <span style="font:700 52px/1 Oswald;letter-spacing:.04em;text-transform:uppercase;color:var(--brand)">StreamHub</span>
+              <div style="display:flex;align-items:center;gap:10px;width:260px;color:var(--goldInk)"><span style="flex:1;height:1px;background:currentColor;opacity:.6"></span><span style="font-size:12px">✦</span><span style="flex:1;height:1px;background:currentColor;opacity:.6"></span></div>
+              <span style="font:600 14px 'Plus Jakarta Sans';letter-spacing:.06em;color:var(--dim)">Musings of Maksud · <span style="font-family:'Hind Siliguri'">মুসিংস অব মাকসুদ</span></span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font:700 24px 'Plus Jakarta Sans';color:var(--text)">Where should we find your films?</span><span style="font:500 17px 'Hind Siliguri';color:var(--dim)">আপনার সিনেমা কোথায় খুঁজবো?</span></div>
+            <div style="display:flex;gap:20px">
+              <sc-for list="{{ welcomeOpts }}" as="o" hint-placeholder-count="3">
+                <div style="width:300px;padding:22px;border-radius:22px;background:var(--surfBg);border:{{ o.border }};box-shadow:{{ o.shadow }};display:flex;flex-direction:column;gap:12px;position:relative;cursor:pointer" style-hover="box-shadow:var(--ring)">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="width:48px;height:48px;border-radius:14px;background:var(--accFill);color:#F5CF5B;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ o.icon }}"></path></svg></span><sc-if value="{{ o.sel }}"><span style="width:26px;height:26px;border-radius:50%;background:#F5CF5B;color:#2B1A14;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></span></sc-if></div>
+                  <span style="font:600 20px Oswald;text-transform:uppercase;letter-spacing:.02em;color:var(--text)">{{ o.title }}</span>
+                  <span style="font:400 14px/1.5 'Plus Jakarta Sans';color:var(--dim);text-wrap:pretty">{{ o.desc }}</span>
+                  <span style="font:600 12px 'Plus Jakarta Sans';color:var(--goldInk)">{{ o.tag }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+              <span style="height:48px;padding:0 32px;border-radius:999px;display:inline-flex;align-items:center;gap:10px;font:600 15px Oswald;letter-spacing:.06em;text-transform:uppercase;background:linear-gradient(180deg,#F5CF5B,#D4A33F);color:#2B1A14;border:1px solid #B8862A">Continue<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg></span>
+              <span style="font:400 13px 'Plus Jakarta Sans';color:var(--faint)">You can change this later in Settings → Libraries.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section data-screen-label="Screens · Home" style="padding:72px 72px 0;display:flex;flex-direction:column;gap:24px">
+  <span style="font:700 28px Oswald;text-transform:uppercase;color:#2B1A14">05 · Home</span>
+  <div style="display:flex;gap:40px;flex-wrap:wrap">
+    <sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+      <div style="{{ th.vars }}">
+        <div data-screen-label="Home · {{ th.name }}" style="width:1320px;height:840px;border-radius:10px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--canvas);color:var(--text);box-shadow:0 30px 60px -30px rgba(43,26,20,.45),0 0 0 1px rgba(43,26,20,.14)">
+          {{ specks }}
+          <sc-if value="{{ isWin }}" hint-placeholder-val="{{ true }}"><div style="height:32px;flex:none;display:flex;align-items:center;background:var(--titlebar);font:500 12px 'Plus Jakarta Sans';color:var(--dim);position:relative"><span style="padding-left:12px;flex:1;display:flex;align-items:center;gap:8px"><img src="assets/streamhub-vintage-icon.svg" width="18" height="18" alt="">StreamHub</span><span style="width:46px;text-align:center">─</span><span style="width:46px;text-align:center">☐</span><span style="width:46px;text-align:center">✕</span></div></sc-if>
+          
+          <div style="height:72px;flex:none;display:flex;align-items:center;gap:20px;padding:0 28px;background:var(--bar);border-bottom:1px solid var(--line);position:relative">
+            <sc-if value="{{ isMac }}"><div style="width:72px;flex:none;display:flex;gap:8px"><span style="width:12px;height:12px;border-radius:50%;background:#FF5F57"></span><span style="width:12px;height:12px;border-radius:50%;background:#FEBC2E"></span><span style="width:12px;height:12px;border-radius:50%;background:#28C840"></span></div></sc-if>
+            <div style="display:flex;align-items:center;gap:10px;flex:none"><img src="assets/streamhub-vintage-icon.svg" width="44" height="44" alt=""><div style="display:flex;flex-direction:column;gap:2px"><span style="font:600 20px/1 Oswald;letter-spacing:.05em;text-transform:uppercase;color:var(--brand)">StreamHub</span><span style="font:500 11px 'Hind Siliguri';color:var(--dim)">মুসিংস অব মাকসুদ • টিভি</span></div></div>
+            <div style="display:flex;gap:2px;padding:4px;border-radius:999px;background:var(--surf);border:1px solid var(--line)"><sc-for list="{{ tabsHome }}" as="tb" hint-placeholder-count="5"><span style="height:34px;padding:0 15px;border-radius:999px;display:flex;align-items:center;font:600 14px 'Plus Jakarta Sans';background:{{ tb.bg }};color:{{ tb.color }};cursor:pointer" style-hover="box-shadow:inset 0 0 0 1px var(--edge)">{{ tb.label }}</span></sc-for></div>
+            <span style="flex:1"></span>
+            <div style="width:300px;height:42px;border-radius:999px;border:1px solid var(--edge);background:var(--surf);display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;color:var(--faint)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.search }}"></path></svg><span style="flex:1;font:400 14px 'Plus Jakarta Sans'">Titles, people, years…</span><span style="padding:3px 8px;border-radius:999px;background:var(--sunk);font:600 11px 'Plus Jakarta Sans';color:var(--dim)">{{ kbd }}</span></div>
+            <span style="width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surf);display:flex;align-items:center;justify-content:center;color:var(--text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.refresh }}"></path></svg></span>
+            <span style="width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surf);display:flex;align-items:center;justify-content:center;color:var(--text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.settings }}"></path></svg></span>
+          </div>
+          <div style="flex:1;min-height:0;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:26px;position:relative">
+            <div style="height:340px;flex:none;border-radius:30px;background:var(--panel);position:relative;overflow:hidden;padding:40px 44px;display:flex;flex-direction:column;justify-content:center;gap:16px;box-shadow:var(--shadow)">
+              <div style="position:absolute;inset:10px;border:1px solid rgba(245,207,91,.2);border-radius:22px;pointer-events:none"></div>
+              <span style="align-self:flex-start;padding:6px 13px;border-radius:999px;border:1px solid rgba(245,207,91,.55);color:#F5CF5B;font:600 13px 'Hind Siliguri'">✦ আজকের বাছাই · Featured</span>
+              <span style="font:700 72px/0.95 Oswald;text-transform:uppercase;color:var(--panelText);letter-spacing:.01em">Panchayat</span>
+              <span style="font:600 15px 'Plus Jakarta Sans';color:#F5CF5B">2020 · TV &amp; Web Series · 3 seasons · Hindi</span>
+              <span style="max-width:560px;font:400 15px/1.55 'Plus Jakarta Sans';color:var(--panelDim);text-wrap:pretty">An engineering graduate takes the only job he can get, secretary of a village panchayat office, and slowly finds his place there.</span>
+              <div style="display:flex;gap:12px;margin-top:6px">
+                <span style="height:48px;padding:0 26px;border-radius:999px;display:inline-flex;align-items:center;gap:10px;font:600 15px Oswald;letter-spacing:.06em;text-transform:uppercase;background:linear-gradient(180deg,#F5CF5B,#D4A33F);color:#2B1A14;border:1px solid #B8862A;box-shadow:0 8px 20px -8px rgba(245,207,91,.6)"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.play }}"></path></svg>Play</span>
+                <span style="height:48px;padding:0 22px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font:600 15px Oswald;letter-spacing:.06em;text-transform:uppercase;background:rgba(255,247,234,.1);color:var(--panelText);border:1px solid rgba(255,247,234,.4)">More info</span>
+                <span style="height:48px;padding:0 22px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font:600 15px Oswald;letter-spacing:.06em;text-transform:uppercase;background:rgba(255,247,234,.1);color:var(--panelText);border:1px solid rgba(255,247,234,.4)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="{{ ic.plus }}"></path></svg>My List</span>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:4px"><span style="width:28px;height:6px;border-radius:6px;background:#F5CF5B"></span><span style="width:6px;height:6px;border-radius:6px;background:rgba(255,247,234,.45)"></span><span style="width:6px;height:6px;border-radius:6px;background:rgba(255,247,234,.45)"></span><span style="width:6px;height:6px;border-radius:6px;background:rgba(255,247,234,.45)"></span></div>
+              <div style="position:absolute;left:0;bottom:0;width:36%;height:3px;background:#F5CF5B"></div>
+              <div style="position:absolute;right:120px;top:40px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(245,207,91,.35),transparent 65%)"></div>
+              <div style="position:absolute;right:110px;top:30px;transform:rotate(5deg)"><dc-import name="VintageJacket" t="{{ T.panchayat }}" w="{{ 184 }}" featured="{{ true }}" hint-size="184px,276px"></dc-import></div>
+            </div>
+            <div style="flex:none;border-radius:26px;background:var(--panel);padding:20px 26px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow)">
+              <div style="display:flex;align-items:baseline;gap:12px"><span style="font:600 20px Oswald;text-transform:uppercase;letter-spacing:.03em;color:var(--panelText)">Continue watching</span><span style="font:500 14px 'Hind Siliguri';color:#F5CF5B">দেখা চালিয়ে যান</span></div>
+              <div style="display:flex;gap:16px">
+                <sc-for list="{{ cw }}" as="c" hint-placeholder-count="4">
+                  <div style="width:262px;display:flex;flex-direction:column;gap:8px;cursor:pointer">
+                    <div style="height:140px;border-radius:16px;background:{{ c.bg }};position:relative;overflow:hidden" style-hover="box-shadow:0 0 0 3px #F5CF5B">
+                      <div style="position:absolute;inset:7px;border:1px solid rgba(245,207,91,.45);border-radius:11px"></div>
+                      <span style="position:absolute;right:18px;top:50%;transform:translateY(-50%);font:600 76px/1 Cinzel;color:transparent;-webkit-text-stroke:1.25px rgba(245,207,91,.85)">{{ c.ini }}</span>
+                      <span style="position:absolute;left:16px;bottom:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,247,234,.95);color:#7A1820;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.play }}"></path></svg></span>
+                      <div style="position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,247,234,.25)"><div style="width:{{ c.pct }};height:100%;background:#F5CF5B"></div></div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:1px"><span style="font:600 15px Oswald;text-transform:uppercase;letter-spacing:.02em;color:var(--panelText)">{{ c.title }}</span><span style="font:500 12px 'Plus Jakarta Sans';color:var(--panelDim)">{{ c.meta }}</span></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:center;gap:12px"><span style="width:36px;height:36px;border-radius:11px;background:#1F5F8B;color:#FFF7EA;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.globe }}"></path></svg></span><span style="font:600 22px Oswald;text-transform:uppercase;letter-spacing:.02em;color:var(--text)">English Movies</span><span style="padding:3px 10px;border-radius:999px;background:var(--selBg);color:var(--accText);font:600 12px 'Plus Jakarta Sans'">Movies</span><span style="flex:1"></span><span style="font:600 13px 'Plus Jakarta Sans';color:var(--accText)">See all</span></div>
+              <div style="display:flex;gap:16px"><sc-for list="{{ rowEng }}" as="j" hint-placeholder-count="7"><dc-import name="VintageJacket" t="{{ j }}" w="{{ 156 }}" hint-size="156px,234px"></dc-import></sc-for></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section data-screen-label="Screens · Section" style="padding:72px 72px 0;display:flex;flex-direction:column;gap:24px">
+  <span style="font:700 28px Oswald;text-transform:uppercase;color:#2B1A14">06 · Section / folder page</span>
+  <div style="display:flex;gap:40px;flex-wrap:wrap">
+    <sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+      <div style="{{ th.vars }}">
+        <div data-screen-label="Section · {{ th.name }}" style="width:1320px;height:840px;border-radius:10px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--canvas);color:var(--text);box-shadow:0 30px 60px -30px rgba(43,26,20,.45),0 0 0 1px rgba(43,26,20,.14)">
+          {{ specks }}
+          <sc-if value="{{ isWin }}" hint-placeholder-val="{{ true }}"><div style="height:32px;flex:none;display:flex;align-items:center;background:var(--titlebar);font:500 12px 'Plus Jakarta Sans';color:var(--dim);position:relative"><span style="padding-left:12px;flex:1;display:flex;align-items:center;gap:8px"><img src="assets/streamhub-vintage-icon.svg" width="18" height="18" alt="">StreamHub</span><span style="width:46px;text-align:center">─</span><span style="width:46px;text-align:center">☐</span><span style="width:46px;text-align:center">✕</span></div></sc-if>
+          <div style="height:72px;flex:none;display:flex;align-items:center;gap:20px;padding:0 28px;background:var(--bar);border-bottom:1px solid var(--line);position:relative">
+            <sc-if value="{{ isMac }}"><div style="width:72px;flex:none;display:flex;gap:8px"><span style="width:12px;height:12px;border-radius:50%;background:#FF5F57"></span><span style="width:12px;height:12px;border-radius:50%;background:#FEBC2E"></span><span style="width:12px;height:12px;border-radius:50%;background:#28C840"></span></div></sc-if>
+            <div style="display:flex;align-items:center;gap:10px;flex:none"><img src="assets/streamhub-vintage-icon.svg" width="44" height="44" alt=""><div style="display:flex;flex-direction:column;gap:2px"><span style="font:600 20px/1 Oswald;letter-spacing:.05em;text-transform:uppercase;color:var(--brand)">StreamHub</span><span style="font:500 11px 'Hind Siliguri';color:var(--dim)">মুসিংস অব মাকসুদ • টিভি</span></div></div>
+            <div style="display:flex;gap:2px;padding:4px;border-radius:999px;background:var(--surf);border:1px solid var(--line)"><sc-for list="{{ tabsTV }}" as="tb" hint-placeholder-count="5"><span style="height:34px;padding:0 15px;border-radius:999px;display:flex;align-items:center;font:600 14px 'Plus Jakarta Sans';background:{{ tb.bg }};color:{{ tb.color }}">{{ tb.label }}</span></sc-for></div>
+            <span style="flex:1"></span>
+            <div style="width:300px;height:42px;border-radius:999px;border:1px solid var(--edge);background:var(--surf);display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;color:var(--faint)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.search }}"></path></svg><span style="flex:1;font:400 14px 'Plus Jakarta Sans'">Titles, people, years…</span><span style="padding:3px 8px;border-radius:999px;background:var(--sunk);font:600 11px 'Plus Jakarta Sans';color:var(--dim)">{{ kbd }}</span></div>
+            <span style="width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surf);display:flex;align-items:center;justify-content:center;color:var(--text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.refresh }}"></path></svg></span>
+            <span style="width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surf);display:flex;align-items:center;justify-content:center;color:var(--text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.settings }}"></path></svg></span>
+          </div>
+          <div style="flex:1;min-height:0;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:20px;position:relative">
+            <div style="flex:none;border-radius:28px;background:var(--panel);padding:26px 32px;display:flex;align-items:flex-end;gap:24px;position:relative;overflow:hidden;box-shadow:var(--shadow)">
+              <div style="position:absolute;inset:10px;border:1px solid rgba(245,207,91,.2);border-radius:20px;pointer-events:none"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:6px;font:500 13px 'Plus Jakarta Sans';color:var(--panelDim)"><span>Home</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="{{ ic.chevR }}"></path></svg><span>TV &amp; Web Series</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="{{ ic.chevR }}"></path></svg><span style="color:#F5CF5B;font-weight:600">Panchayat</span></div>
+                <span style="font:700 52px/1 Oswald;text-transform:uppercase;color:var(--panelText)">Panchayat</span>
+                <div style="display:flex;gap:8px;align-items:center"><span style="padding:3px 9px;border-radius:999px;background:#F5CF5B;color:#2B1A14;font:700 12px 'Plus Jakarta Sans'">2020–</span><span style="padding:2px 9px;border-radius:999px;border:1px solid rgba(255,247,234,.6);color:var(--panelText);font:600 12px 'Plus Jakarta Sans'">1080p</span><span style="font:500 14px 'Plus Jakarta Sans';color:var(--panelDim)">3 seasons · 24 episodes · Hindi</span></div>
+              </div>
+              <span style="height:48px;padding:0 24px;border-radius:999px;display:inline-flex;align-items:center;gap:10px;font:600 15px Oswald;letter-spacing:.06em;text-transform:uppercase;background:linear-gradient(180deg,#F5CF5B,#D4A33F);color:#2B1A14;border:1px solid #B8862A"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.play }}"></path></svg>Resume S2 · E5</span>
+              <span style="width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,247,234,.1);color:var(--panelText);border:1px solid rgba(255,247,234,.4)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="{{ ic.check }}"></path></svg></span>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;gap:24px">
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="height:34px;padding:0 15px;border-radius:999px;display:flex;align-items:center;font:600 14px 'Plus Jakarta Sans';border:1px solid var(--edge);color:var(--text)">Season 1</span>
+                  <span style="height:34px;padding:0 15px;border-radius:999px;display:flex;align-items:center;font:600 14px 'Plus Jakarta Sans';background:var(--accFill);color:var(--accFillText)">Season 2</span>
+                  <span style="height:34px;padding:0 15px;border-radius:999px;display:flex;align-items:center;font:600 14px 'Plus Jakarta Sans';border:1px solid var(--edge);color:var(--text)">Season 3</span>
+                  <span style="flex:1"></span><span style="font:500 13px 'Plus Jakarta Sans';color:var(--dim)">8 episodes · 4 watched</span>
+                </div>
+                <div style="border-radius:20px;background:var(--surfBg);border:1px solid var(--line);overflow:hidden;box-shadow:var(--shadow)">
+                  <sc-for list="{{ eps }}" as="e" hint-placeholder-count="5">
+                    <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;border-bottom:1px solid var(--line);background:{{ e.rowBg }}" style-hover="background:var(--raised)">
+                      <div style="width:124px;height:70px;border-radius:12px;flex:none;background:linear-gradient(150deg,#8A2457,#3A0C24);position:relative;overflow:hidden"><div style="position:absolute;inset:5px;border:1px solid rgba(245,207,91,.4);border-radius:8px"></div><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 30px Cinzel;color:transparent;-webkit-text-stroke:1px rgba(245,207,91,.9)">{{ e.n }}</span><sc-if value="{{ e.hasPct }}"><div style="position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,247,234,.25)"><div style="width:{{ e.pct }};height:100%;background:#F5CF5B"></div></div></sc-if></div>
+                      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font:700 15px 'Plus Jakarta Sans';color:var(--text)">{{ e.title }}</span><span style="font:500 13px 'Plus Jakarta Sans';color:var(--faint)">{{ e.meta }}</span></div>
+                      <span style="padding:2px 9px;border-radius:999px;border:1px solid var(--edge);color:var(--text);font:600 12px 'Plus Jakarta Sans'">1080p</span>
+                      <span style="width:120px;display:flex;justify-content:flex-end;font:600 12px 'Plus Jakarta Sans';color:{{ e.stColor }}">{{ e.status }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="width:352px;flex:none;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;align-items:center;gap:10px;height:34px"><span style="width:30px;height:30px;border-radius:9px;background:#7A1820;color:#F5CF5B;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.tv }}"></path></svg></span><span style="font:600 18px Oswald;text-transform:uppercase;color:var(--text)">More in TV &amp; Web Series</span></div>
+                <div style="display:grid;grid-template-columns:repeat(3,108px);gap:14px 14px"><sc-for list="{{ moreTV }}" as="j" hint-placeholder-count="6"><dc-import name="VintageJacket" t="{{ j }}" w="{{ 108 }}" hint-size="108px,162px"></dc-import></sc-for></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section data-screen-label="Screens · Details" style="padding:72px 72px 0;display:flex;flex-direction:column;gap:24px">
+  <span style="font:700 28px Oswald;text-transform:uppercase;color:#2B1A14">07 · Title details sheet</span>
+  <div style="display:flex;gap:40px;flex-wrap:wrap">
+    <sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+      <div style="{{ th.vars }}">
+        <div data-screen-label="Details · {{ th.name }}" style="width:1320px;height:840px;border-radius:10px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--canvas);color:var(--text);box-shadow:0 30px 60px -30px rgba(43,26,20,.45),0 0 0 1px rgba(43,26,20,.14)">
+          <sc-if value="{{ isWin }}" hint-placeholder-val="{{ true }}"><div style="height:32px;flex:none;display:flex;align-items:center;background:var(--titlebar);font:500 12px 'Plus Jakarta Sans';color:var(--dim);position:relative"><span style="padding-left:12px;flex:1;display:flex;align-items:center;gap:8px"><img src="assets/streamhub-vintage-icon.svg" width="18" height="18" alt="">StreamHub</span><span style="width:46px;text-align:center">─</span><span style="width:46px;text-align:center">☐</span><span style="width:46px;text-align:center">✕</span></div></sc-if>
+          <div style="flex:1;position:relative;display:flex;align-items:center;justify-content:center">
+            <div style="position:absolute;inset:0;background:var(--scrim)"></div>
+            <div style="position:relative;width:960px;border-radius:30px;background:var(--surfBg);overflow:hidden;box-shadow:0 40px 80px -30px rgba(0,0,0,.6),0 0 0 1px var(--line)">
+              <div style="height:230px;position:relative;background:linear-gradient(160deg,#11605A,#062A27);overflow:hidden">
+                <div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 1px,transparent 1px 12px)"></div>
+                <span style="position:absolute;right:90px;top:-30px;font:600 300px/1 Cinzel;color:transparent;-webkit-text-stroke:1.5px rgba(245,207,91,.45)">O</span>
+                <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,var(--surf))"></div>
+                <span style="position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;background:rgba(18,6,4,.55);color:#FFF7EA;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,247,234,.35)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.x }}"></path></svg></span>
+              </div>
+              <div style="display:flex;gap:32px;padding:0 40px 36px;margin-top:-140px;position:relative">
+                <dc-import name="VintageJacket" t="{{ T.oppenheimer }}" w="{{ 190 }}" hint-size="190px,285px"></dc-import>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;padding-top:100px">
+                  <span style="font:700 48px/1 Oswald;text-transform:uppercase;color:var(--text)">Oppenheimer</span>
+                  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="padding:3px 9px;border-radius:999px;background:#F5CF5B;color:#2B1A14;font:700 12px 'Plus Jakarta Sans'">2023</span><span style="font:500 14px 'Plus Jakarta Sans';color:var(--dim)">3h 0m · Drama, History · English</span></div>
+                  <span style="max-width:620px;font:400 15px/1.6 'Plus Jakarta Sans';color:var(--dim);text-wrap:pretty">The story of J. Robert Oppenheimer and the race to build the atomic bomb during the Second World War.</span>
+                  <div style="display:flex;align-items:center;gap:14px"><span style="font:600 12px 'Plus Jakarta Sans';letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Quality</span><div style="display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--sunk)"><span style="height:30px;padding:0 14px;border-radius:999px;display:flex;align-items:center;font:600 13px 'Plus Jakarta Sans';background:var(--accFill);color:var(--accFillText)">1080p · 3.8 GB</span><span style="height:30px;padding:0 14px;border-radius:999px;display:flex;align-items:center;font:600 13px 'Plus Jakarta Sans';color:var(--text)">720p · 1.9 GB</span></div></div>
+                  <div style="display:flex;flex-direction:column;gap:6px;max-width:420px"><div style="height:4px;border-radius:4px;background:var(--line);overflow:hidden"><div style="width:40%;height:100%;background:var(--accText)"></div></div><span style="font:500 12px 'Plus Jakarta Sans';color:var(--faint)">1h 12m watched · 1h 48m left</span></div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+                    <span style="height:46px;padding:0 24px;border-radius:999px;display:inline-flex;align-items:center;gap:10px;font:600 15px Oswald;letter-spacing:.06em;text-transform:uppercase;background:linear-gradient(180deg,#F5CF5B,#D4A33F);color:#2B1A14;border:1px solid #B8862A"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.play }}"></path></svg>Resume</span>
+                    <span style="height:46px;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font:600 14px Oswald;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--edge);color:var(--text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.restart }}"></path></svg>Start over</span>
+                    <span style="height:46px;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font:600 14px Oswald;letter-spacing:.06em;text-transform:uppercase;background:var(--selBg);border:1px solid var(--accText);color:var(--accText)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.check }}"></path></svg>My List</span>
+                    <span style="height:46px;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font:600 14px Oswald;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--edge);color:var(--text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.download }}"></path></svg>Download</span>
+                    <span style="height:46px;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font:600 14px Oswald;letter-spacing:.06em;text-transform:uppercase;color:var(--text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.folder }}"></path></svg>All files</span>
+                  </div>
+                  <span style="align-self:flex-start;display:flex;align-items:center;gap:6px;font:600 13px 'Plus Jakarta Sans';color:var(--accText);padding-top:4px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.trash }}"></path></svg>Remove from Continue watching</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section data-screen-label="Screens · Player" style="padding:72px 72px 0;display:flex;flex-direction:column;gap:24px">
+  <span style="font:700 28px Oswald;text-transform:uppercase;color:#2B1A14">08 · Player · subtitles → Search online</span>
+  <div style="display:flex;gap:40px;flex-wrap:wrap">
+    <sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+      <div style="{{ th.vars }}">
+        <div data-screen-label="Player · {{ th.name }}" style="width:1320px;height:840px;border-radius:10px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0B0705;color:#FFF7EA;box-shadow:0 30px 60px -30px rgba(43,26,20,.45),0 0 0 1px rgba(43,26,20,.14)">
+          <div style="position:absolute;inset:0;background:radial-gradient(70% 60% at 35% 45%,#3B2A1C,#0B0705 75%)"></div>
+          <span style="position:absolute;left:36%;top:40%;transform:translate(-50%,-50%);font:500 12px 'JetBrains Mono';letter-spacing:.2em;color:rgba(255,247,234,.3)">VIDEO</span>
+          <div style="position:absolute;left:0;right:0;top:0;height:120px;background:linear-gradient(180deg,rgba(0,0,0,.7),transparent)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:240px;background:linear-gradient(0deg,rgba(0,0,0,.85),transparent)"></div>
+          <div style="position:relative;display:flex;align-items:center;gap:14px;padding:22px 28px"><span style="width:42px;height:42px;border-radius:50%;background:rgba(255,247,234,.12);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.arrowL }}"></path></svg></span><div style="display:flex;flex-direction:column"><span style="font:600 20px Oswald;text-transform:uppercase;letter-spacing:.03em">Panchayat</span><span style="font:500 13px 'Plus Jakarta Sans';color:#E8D8C6">S2 · E5 · Episode 5</span></div></div>
+          <span style="position:absolute;left:36%;bottom:150px;transform:translateX(-50%);font:600 28px 'Plus Jakarta Sans';color:#FFFFFF;text-shadow:0 0 3px #000,0 2px 2px #000;white-space:nowrap">Did I say something wrong?</span>
+          <div style="position:absolute;left:28px;right:28px;bottom:24px;display:flex;flex-direction:column;gap:14px">
+            <div style="position:relative;height:18px;display:flex;align-items:center">
+              <div style="position:absolute;left:0;right:0;height:5px;border-radius:5px;background:rgba(255,247,234,.22)"></div>
+              <div style="position:absolute;left:0;width:62%;height:5px;border-radius:5px;background:rgba(255,247,234,.42)"></div>
+              <div style="position:absolute;left:0;width:41%;height:5px;border-radius:5px;background:#F5CF5B"></div>
+              <div style="position:absolute;left:41%;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#F5CF5B;box-shadow:0 0 0 4px rgba(245,207,91,.3)"></div>
+              <span style="position:absolute;left:48%;bottom:24px;transform:translateX(-50%);padding:5px 10px;border-radius:999px;background:#2B1E15;border:1px solid rgba(245,207,91,.5);font:600 12px 'JetBrains Mono'">21:06</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="width:46px;height:46px;border-radius:50%;background:#F5CF5B;color:#2B1A14;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.pause }}"></path></svg></span>
+              <sc-for list="{{ plBtnsL }}" as="b" hint-placeholder-count="3"><span title="{{ b.t }}" style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#FFF7EA" style-hover="background:rgba(255,247,234,.12)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ b.i }}"></path></svg></span></sc-for>
+              <span style="width:80px;height:4px;border-radius:4px;background:rgba(255,247,234,.25)"><span style="display:block;width:70%;height:100%;border-radius:4px;background:#FFF7EA"></span></span>
+              <span style="font:500 14px 'JetBrains Mono';color:#E8D8C6;padding-left:8px">18:42 / 45:10</span>
+              <span style="flex:1"></span>
+              <sc-for list="{{ pills }}" as="p" hint-placeholder-count="4"><span style="height:34px;padding:0 13px;border-radius:999px;display:flex;align-items:center;gap:7px;font:600 13px 'Plus Jakarta Sans';background:{{ p.bg }};color:{{ p.color }};border:1px solid {{ p.bd }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ p.i }}"></path></svg>{{ p.label }}</span></sc-for>
+              <sc-for list="{{ plBtnsR }}" as="b" hint-placeholder-count="3"><span title="{{ b.t }}" style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#FFF7EA"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ b.i }}"></path></svg></span></sc-for>
+            </div>
+          </div>
+          <div style="position:absolute;right:28px;bottom:108px;width:420px;border-radius:24px;background:var(--surfBg);color:var(--text);border:1px solid var(--line);box-shadow:0 30px 60px -20px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column">
+            <div style="padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between"><span style="font:600 18px Oswald;text-transform:uppercase;letter-spacing:.03em;color:var(--text)">Subtitles</span><div style="display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--sunk)"><span style="height:28px;padding:0 12px;border-radius:999px;display:flex;align-items:center;font:600 13px 'Plus Jakarta Sans';background:var(--accFill);color:var(--accFillText)">Tracks</span><span style="height:28px;padding:0 12px;border-radius:999px;display:flex;align-items:center;font:600 13px 'Plus Jakarta Sans';color:var(--text)">Style</span><span style="height:28px;padding:0 12px;border-radius:999px;display:flex;align-items:center;font:600 13px 'Plus Jakarta Sans';color:var(--text)">Sync</span></div></div>
+            <div style="padding:0 18px 12px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)">
+              <div style="display:flex;align-items:center;gap:6px;font:600 13px 'Plus Jakarta Sans';color:var(--accText)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.arrowL }}"></path></svg>Search online…</div>
+              <div style="height:40px;border-radius:12px;border:1px solid var(--accText);box-shadow:var(--ring);background:var(--surf);display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.search }}"></path></svg><span style="font:500 14px 'Plus Jakarta Sans'">Panchayat S02E05</span></div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ langs }}" as="l" hint-placeholder-count="5"><span style="height:30px;padding:0 12px;border-radius:999px;display:flex;align-items:center;gap:5px;font:600 13px 'Plus Jakarta Sans', 'Hind Siliguri';background:{{ l.bg }};border:1px solid {{ l.bd }};color:var(--text)">{{ l.label }}</span></sc-for></div>
+            </div>
+            <sc-for list="{{ subResults }}" as="r" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid var(--line)" style-hover="background:var(--raised)">
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:500 12.5px 'JetBrains Mono';color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.file }}</span><div style="display:flex;gap:8px;align-items:center;font:500 12px 'Plus Jakarta Sans';color:var(--dim)"><span>{{ r.prov }}</span><span>·</span><span>{{ r.lang }}</span><span>·</span><span>{{ r.dl }} downloads</span></div><sc-if value="{{ r.exact }}"><span style="align-self:flex-start;padding:1px 8px;border-radius:999px;border:1px solid var(--goldInk);color:var(--goldInk);font:600 11px 'Plus Jakarta Sans'">✦ Exact match for this file</span></sc-if></div>
+                <span style="width:34px;height:34px;border-radius:50%;border:1px solid var(--edge);display:flex;align-items:center;justify-content:center;color:var(--text);flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.download }}"></path></svg></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section data-screen-label="Screens · Downloads" style="padding:72px 72px 0;display:flex;flex-direction:column;gap:24px">
+  <span style="font:700 28px Oswald;text-transform:uppercase;color:#2B1A14">09 · Downloads + mini player</span>
+  <div style="display:flex;gap:40px;flex-wrap:wrap">
+    <sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+      <div style="{{ th.vars }}">
+        <div data-screen-label="Downloads · {{ th.name }}" style="width:1320px;height:840px;border-radius:10px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--canvas);color:var(--text);box-shadow:0 30px 60px -30px rgba(43,26,20,.45),0 0 0 1px rgba(43,26,20,.14)">
+          {{ specks }}
+          <sc-if value="{{ isWin }}" hint-placeholder-val="{{ true }}"><div style="height:32px;flex:none;display:flex;align-items:center;background:var(--titlebar);font:500 12px 'Plus Jakarta Sans';color:var(--dim);position:relative"><span style="padding-left:12px;flex:1;display:flex;align-items:center;gap:8px"><img src="assets/streamhub-vintage-icon.svg" width="18" height="18" alt="">StreamHub</span><span style="width:46px;text-align:center">─</span><span style="width:46px;text-align:center">☐</span><span style="width:46px;text-align:center">✕</span></div></sc-if>
+          <div style="height:72px;flex:none;display:flex;align-items:center;gap:20px;padding:0 28px;background:var(--bar);border-bottom:1px solid var(--line);position:relative">
+            <sc-if value="{{ isMac }}"><div style="width:72px;flex:none;display:flex;gap:8px"><span style="width:12px;height:12px;border-radius:50%;background:#FF5F57"></span><span style="width:12px;height:12px;border-radius:50%;background:#FEBC2E"></span><span style="width:12px;height:12px;border-radius:50%;background:#28C840"></span></div></sc-if>
+            <div style="display:flex;align-items:center;gap:10px;flex:none"><img src="assets/streamhub-vintage-icon.svg" width="44" height="44" alt=""><div style="display:flex;flex-direction:column;gap:2px"><span style="font:600 20px/1 Oswald;letter-spacing:.05em;text-transform:uppercase;color:var(--brand)">StreamHub</span><span style="font:500 11px 'Hind Siliguri';color:var(--dim)">মুসিংস অব মাকসুদ • টিভি</span></div></div>
+            <div style="display:flex;gap:2px;padding:4px;border-radius:999px;background:var(--surf);border:1px solid var(--line)"><sc-for list="{{ tabsNone }}" as="tb" hint-placeholder-count="5"><span style="height:34px;padding:0 15px;border-radius:999px;display:flex;align-items:center;font:600 14px 'Plus Jakarta Sans';background:{{ tb.bg }};color:{{ tb.color }}">{{ tb.label }}</span></sc-for></div>
+            <span style="flex:1"></span>
+            <div style="width:300px;height:42px;border-radius:999px;border:1px solid var(--edge);background:var(--surf);display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;color:var(--faint)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.search }}"></path></svg><span style="flex:1;font:400 14px 'Plus Jakarta Sans'">Titles, people, years…</span><span style="padding:3px 8px;border-radius:999px;background:var(--sunk);font:600 11px 'Plus Jakarta Sans';color:var(--dim)">{{ kbd }}</span></div>
+            <span style="width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surf);display:flex;align-items:center;justify-content:center;color:var(--text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.refresh }}"></path></svg></span>
+            <span style="width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surf);display:flex;align-items:center;justify-content:center;color:var(--text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.settings }}"></path></svg></span>
+          </div>
+          <div style="flex:1;min-height:0;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:22px;position:relative">
+            <div style="flex:none;border-radius:28px;background:var(--panel);padding:24px 32px;display:flex;align-items:flex-end;gap:20px;position:relative;overflow:hidden;box-shadow:var(--shadow)">
+              <div style="position:absolute;inset:10px;border:1px solid rgba(245,207,91,.2);border-radius:20px"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:6px;font:500 13px 'Plus Jakarta Sans';color:var(--panelDim)"><span>Home</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="{{ ic.chevR }}"></path></svg><span style="color:#F5CF5B;font-weight:600">Downloads</span></div><span style="font:700 44px/1 Oswald;text-transform:uppercase;color:var(--panelText)">Downloads</span></div>
+              <span style="font:500 14px 'Plus Jakarta Sans';color:var(--panelDim)">2 downloading · 1 waiting · 412 GB free on D:</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <span style="font:600 16px Oswald;text-transform:uppercase;letter-spacing:.04em;color:var(--dim)">In progress</span>
+              <div style="border-radius:20px;background:var(--surfBg);border:1px solid var(--line);overflow:hidden;box-shadow:var(--shadow)">
+                <sc-for list="{{ dlActive }}" as="d" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;border-bottom:1px solid var(--line)">
+                    <dc-import name="VintageJacket" t="{{ d.t }}" w="{{ 44 }}" hint-size="44px,66px"></dc-import>
+                    <div style="width:300px;display:flex;flex-direction:column;gap:3px"><span style="font:700 15px 'Plus Jakarta Sans';color:var(--text)">{{ d.t.title }}</span><span style="font:500 13px 'Plus Jakarta Sans';color:var(--faint)">{{ d.meta }}</span></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:6px"><div style="height:6px;border-radius:6px;background:var(--line);overflow:hidden"><div style="width:{{ d.pct }};height:100%;background:{{ d.barC }}"></div></div><div style="display:flex;justify-content:space-between;font:600 12px 'Plus Jakarta Sans';color:var(--dim)"><span>{{ d.pct }}</span><span>{{ d.speed }}</span></div></div>
+                    <span style="width:38px;height:38px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--text)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ d.icon }}"></path></svg></span>
+                    <span style="width:38px;height:38px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--text)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.x }}"></path></svg></span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <span style="font:600 16px Oswald;text-transform:uppercase;letter-spacing:.04em;color:var(--dim)">Finished</span>
+              <div style="border-radius:20px;background:var(--surfBg);border:1px solid var(--line);overflow:hidden;box-shadow:var(--shadow);margin-right:360px">
+                <sc-for list="{{ dlDone }}" as="d" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;border-bottom:1px solid var(--line)">
+                    <dc-import name="VintageJacket" t="{{ d.t }}" w="{{ 44 }}" hint-size="44px,66px"></dc-import>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font:700 15px 'Plus Jakarta Sans';color:var(--text)">{{ d.t.title }}</span><span style="font:500 13px 'Plus Jakarta Sans';color:var(--faint)">{{ d.meta }}</span></div>
+                    <span style="height:36px;padding:0 14px;border-radius:999px;display:inline-flex;align-items:center;gap:7px;font:600 13px 'Plus Jakarta Sans';border:1px solid var(--edge);color:var(--text)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.folder }}"></path></svg>{{ revealLbl }}</span>
+                    <span style="width:38px;height:38px;border-radius:50%;background:var(--accFill);color:var(--accFillText);display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.play }}"></path></svg></span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="position:absolute;right:28px;bottom:24px;width:336px;border-radius:18px;overflow:hidden;border:2px solid #F5CF5B;background:#0B0705;box-shadow:0 24px 48px -16px rgba(0,0,0,.6),0 0 30px -10px rgba(245,207,91,.5)">
+              <div style="height:189px;position:relative;background:radial-gradient(70% 70% at 40% 45%,#3B2A1C,#0B0705 80%)">
+                <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 11px 'JetBrains Mono';letter-spacing:.2em;color:rgba(255,247,234,.3)">VIDEO</span>
+                <div style="position:absolute;top:8px;right:8px;display:flex;gap:6px"><span style="width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.55);color:#FFF7EA;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.maximize }}"></path></svg></span><span style="width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.55);color:#FFF7EA;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.x }}"></path></svg></span></div>
+                <div style="position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,247,234,.25)"><div style="width:41%;height:100%;background:#F5CF5B"></div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;color:#FFF7EA"><span style="width:34px;height:34px;border-radius:50%;background:#F5CF5B;color:#2B1A14;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.pause }}"></path></svg></span><div style="flex:1;display:flex;flex-direction:column"><span style="font:600 14px Oswald;text-transform:uppercase">Panchayat</span><span style="font:500 11px 'Plus Jakarta Sans';color:#E8D8C6">S2 · E5 · 18:42 / 45:10</span></div><span style="font:600 11px 'Plus Jakarta Sans';color:#E8D8C6">Esc</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section data-screen-label="Screens · Settings" style="padding:72px 72px 0;display:flex;flex-direction:column;gap:24px">
+  <span style="font:700 28px Oswald;text-transform:uppercase;color:#2B1A14">10 · Settings</span>
+  <div style="display:flex;gap:40px;flex-wrap:wrap">
+    <sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+      <div style="{{ th.vars }}">
+        <div data-screen-label="Settings · {{ th.name }}" style="width:1320px;height:840px;border-radius:10px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--canvas);color:var(--text);box-shadow:0 30px 60px -30px rgba(43,26,20,.45),0 0 0 1px rgba(43,26,20,.14)">
+          <sc-if value="{{ isWin }}" hint-placeholder-val="{{ true }}"><div style="height:32px;flex:none;display:flex;align-items:center;background:var(--titlebar);font:500 12px 'Plus Jakarta Sans';color:var(--dim);position:relative"><span style="padding-left:12px;flex:1;display:flex;align-items:center;gap:8px"><img src="assets/streamhub-vintage-icon.svg" width="18" height="18" alt="">StreamHub</span><span style="width:46px;text-align:center">─</span><span style="width:46px;text-align:center">☐</span><span style="width:46px;text-align:center">✕</span></div></sc-if>
+          <div style="height:72px;flex:none;display:flex;align-items:center;gap:20px;padding:0 28px;background:var(--bar);border-bottom:1px solid var(--line);position:relative">
+            <sc-if value="{{ isMac }}"><div style="width:72px;flex:none;display:flex;gap:8px"><span style="width:12px;height:12px;border-radius:50%;background:#FF5F57"></span><span style="width:12px;height:12px;border-radius:50%;background:#FEBC2E"></span><span style="width:12px;height:12px;border-radius:50%;background:#28C840"></span></div></sc-if>
+            <div style="display:flex;align-items:center;gap:10px;flex:none"><img src="assets/streamhub-vintage-icon.svg" width="44" height="44" alt=""><div style="display:flex;flex-direction:column;gap:2px"><span style="font:600 20px/1 Oswald;letter-spacing:.05em;text-transform:uppercase;color:var(--brand)">StreamHub</span><span style="font:500 11px 'Hind Siliguri';color:var(--dim)">মুসিংস অব মাকসুদ • টিভি</span></div></div>
+            <div style="display:flex;gap:2px;padding:4px;border-radius:999px;background:var(--surf);border:1px solid var(--line)"><sc-for list="{{ tabsNone }}" as="tb" hint-placeholder-count="5"><span style="height:34px;padding:0 15px;border-radius:999px;display:flex;align-items:center;font:600 14px 'Plus Jakarta Sans';background:{{ tb.bg }};color:{{ tb.color }}">{{ tb.label }}</span></sc-for></div>
+            <span style="flex:1"></span>
+            <div style="width:300px;height:42px;border-radius:999px;border:1px solid var(--edge);background:var(--surf);display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;color:var(--faint)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.search }}"></path></svg><span style="flex:1;font:400 14px 'Plus Jakarta Sans'">Titles, people, years…</span><span style="padding:3px 8px;border-radius:999px;background:var(--sunk);font:600 11px 'Plus Jakarta Sans';color:var(--dim)">{{ kbd }}</span></div>
+            <span style="width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surf);display:flex;align-items:center;justify-content:center;color:var(--text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.refresh }}"></path></svg></span>
+            <span style="width:42px;height:42px;border-radius:50%;border:1px solid var(--accFill);background:var(--accFill);display:flex;align-items:center;justify-content:center;color:var(--accFillText)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.settings }}"></path></svg></span>
+          </div>
+          <div style="flex:1;min-height:0;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:18px">
+            <span style="font:700 36px/1 Oswald;text-transform:uppercase;color:var(--text)">Settings</span>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start">
+              <div style="display:flex;flex-direction:column;gap:18px">
+                <div style="border-radius:20px;background:var(--surfBg);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)">
+                  <span style="font:600 18px Oswald;text-transform:uppercase;letter-spacing:.03em;color:var(--text)">Libraries</span>
+                  <div style="border-radius:12px;border:1px solid var(--edge);background:var(--surf);padding:10px 12px;display:flex;flex-direction:column;gap:6px;font:400 13px/1.4 'JetBrains Mono';color:var(--text)"><span>http://172.16.50.7/DHAKA-FLIX-7/English Movies/</span><span>http://172.16.50.14/DHAKA-FLIX-14/TV-WEB-Series/</span><span>http://172.16.50.9/DHAKA-FLIX-9/Anime &amp; Cartoon/</span><span>{{ localPath }}</span></div>
+                  <div style="display:flex;gap:10px"><span style="height:38px;padding:0 16px;border-radius:999px;display:inline-flex;align-items:center;gap:7px;font:600 13px 'Plus Jakarta Sans';border:1px solid var(--edge);color:var(--text)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.folder }}"></path></svg>Add folder…</span><span style="height:38px;padding:0 16px;border-radius:999px;display:inline-flex;align-items:center;gap:7px;font:600 13px 'Plus Jakarta Sans';background:var(--accFill);color:var(--accFillText)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.server }}"></path></svg>Fill in DhakaFlix servers</span></div>
+                </div>
+                <div style="border-radius:20px;background:var(--surfBg);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)">
+                  <span style="font:600 18px Oswald;text-transform:uppercase;letter-spacing:.03em;color:var(--text)">Accounts</span>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <sc-for list="{{ acctFields }}" as="fl" hint-placeholder-count="3"><label style="display:flex;flex-direction:column;gap:5px;grid-column:{{ fl.span }}"><span style="font:600 12px 'Plus Jakarta Sans';color:var(--dim)">{{ fl.label }}</span><span style="height:40px;border-radius:12px;border:1px solid var(--edge);background:var(--surf);display:flex;align-items:center;padding:0 12px;font:500 14px 'Plus Jakarta Sans';color:{{ fl.color }}">{{ fl.value }}</span></label></sc-for>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:18px">
+                <div style="border-radius:20px;background:var(--surfBg);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)">
+                  <span style="font:600 18px Oswald;text-transform:uppercase;letter-spacing:.03em;color:var(--text)">Online subtitles</span>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <sc-for list="{{ subFields }}" as="fl" hint-placeholder-count="4"><label style="display:flex;flex-direction:column;gap:5px;grid-column:{{ fl.span }}"><span style="font:600 12px 'Plus Jakarta Sans';color:var(--dim)">{{ fl.label }}</span><span style="height:40px;border-radius:12px;border:1px solid var(--edge);background:var(--surf);display:flex;align-items:center;padding:0 12px;font:500 14px 'Plus Jakarta Sans';color:{{ fl.color }}">{{ fl.value }}</span></label></sc-for>
+                  </div>
+                </div>
+                <div style="border-radius:20px;background:var(--surfBg);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow)">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;flex-direction:column;gap:2px"><span style="font:600 18px Oswald;text-transform:uppercase;letter-spacing:.03em;color:var(--text)">Look</span><span style="font:400 13px 'Plus Jakarta Sans';color:var(--dim)">Vintage or the flat Windows 11 Contemporary look.</span></div><div style="display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--sunk)"><span style="height:32px;padding:0 14px;border-radius:999px;display:flex;align-items:center;font:600 13px 'Plus Jakarta Sans';background:var(--accFill);color:var(--accFillText)">Vintage</span><span style="height:32px;padding:0 14px;border-radius:999px;display:flex;align-items:center;font:600 13px 'Plus Jakarta Sans';color:var(--text)">Contemporary</span></div></div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid var(--line)"><div style="display:flex;flex-direction:column;gap:2px"><span style="font:600 18px Oswald;text-transform:uppercase;letter-spacing:.03em;color:var(--text)">Theme</span><span style="font:400 13px 'Plus Jakarta Sans';color:var(--dim)">Parchment by day, Night for a dark room.</span></div><div style="display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--sunk)"><sc-for list="{{ th.themeSeg }}" as="o" hint-placeholder-count="2"><span style="height:32px;padding:0 14px;border-radius:999px;display:flex;align-items:center;font:600 13px 'Plus Jakarta Sans';background:{{ o.bg }};color:{{ o.color }}">{{ o.label }}</span></sc-for></div></div>
+                </div>
+                <div style="border-radius:16px;background:var(--raised);padding:14px 16px;display:flex;gap:12px;align-items:flex-start"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:var(--goldInk);margin-top:1px"><path d="{{ ic.terminal }}"></path></svg><span style="font:400 13px/1.5 'Plus Jakarta Sans';color:var(--dim)">ffmpeg ships with StreamHub. It handles 3D → 2D, audio sync and subtitle extraction, and nothing needs installing.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section data-screen-label="Screens · Narrow" style="padding:72px;display:flex;flex-direction:column;gap:24px">
+  <span style="font:700 28px Oswald;text-transform:uppercase;color:#2B1A14">11 · Narrow window · 760 × 500</span>
+  <div style="display:flex;gap:40px;flex-wrap:wrap">
+    <sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+      <div style="{{ th.vars }}"><div style="display:flex;flex-direction:column;gap:32px">
+        <div data-screen-label="Home 760 · {{ th.name }}" style="width:760px;height:500px;border-radius:10px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--canvas);color:var(--text);box-shadow:0 30px 60px -30px rgba(43,26,20,.45),0 0 0 1px rgba(43,26,20,.14)">
+          <sc-if value="{{ isWin }}" hint-placeholder-val="{{ true }}"><div style="height:32px;flex:none;display:flex;align-items:center;background:var(--titlebar);font:500 12px 'Plus Jakarta Sans';color:var(--dim)"><span style="padding-left:12px;flex:1;display:flex;align-items:center;gap:8px"><img src="assets/streamhub-vintage-icon.svg" width="18" height="18" alt="">StreamHub</span><span style="width:46px;text-align:center">─</span><span style="width:46px;text-align:center">☐</span><span style="width:46px;text-align:center">✕</span></div></sc-if>
+          <div style="height:56px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--bar);border-bottom:1px solid var(--line)">
+            <sc-if value="{{ isMac }}"><div style="width:72px;flex:none;display:flex;gap:8px"><span style="width:12px;height:12px;border-radius:50%;background:#FF5F57"></span><span style="width:12px;height:12px;border-radius:50%;background:#FEBC2E"></span><span style="width:12px;height:12px;border-radius:50%;background:#28C840"></span></div></sc-if>
+            <img src="assets/streamhub-vintage-icon.svg" width="36" height="36" alt="StreamHub">
+            <span style="height:36px;padding:0 12px 0 15px;border-radius:999px;display:flex;align-items:center;gap:6px;font:600 14px 'Plus Jakarta Sans';background:var(--accFill);color:var(--accFillText)">Home<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="{{ ic.chevD }}"></path></svg></span>
+            <span style="flex:1"></span>
+            <span style="width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surf);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.search }}"></path></svg></span>
+            <span style="width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surf);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.settings }}"></path></svg></span>
+          </div>
+          <div style="flex:1;min-height:0;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:16px">
+            <div style="height:206px;flex:none;border-radius:22px;background:var(--panel);position:relative;overflow:hidden;padding:22px 24px;display:flex;flex-direction:column;justify-content:center;gap:9px">
+              <span style="align-self:flex-start;padding:4px 10px;border-radius:999px;border:1px solid rgba(245,207,91,.55);color:#F5CF5B;font:600 12px 'Hind Siliguri'">✦ আজকের বাছাই · Featured</span>
+              <span style="font:700 40px/0.95 Oswald;text-transform:uppercase;color:var(--panelText)">Panchayat</span>
+              <span style="font:600 13px 'Plus Jakarta Sans';color:#F5CF5B">2020 · TV &amp; Web Series</span>
+              <div style="display:flex;gap:8px;margin-top:4px"><span style="height:40px;padding:0 20px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font:600 14px Oswald;letter-spacing:.06em;text-transform:uppercase;background:linear-gradient(180deg,#F5CF5B,#D4A33F);color:#2B1A14;border:1px solid #B8862A"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.play }}"></path></svg>Play</span><span style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,247,234,.1);color:var(--panelText);border:1px solid rgba(255,247,234,.4)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.info }}"></path></svg></span><span style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,247,234,.1);color:var(--panelText);border:1px solid rgba(255,247,234,.4)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="{{ ic.plus }}"></path></svg></span></div>
+              <div style="position:absolute;right:34px;top:22px;transform:rotate(5deg)"><dc-import name="VintageJacket" t="{{ T.panchayat }}" w="{{ 106 }}" featured="{{ true }}" hint-size="106px,159px"></dc-import></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 17px Oswald;text-transform:uppercase;color:var(--text)">Continue watching</span><span style="font:500 13px 'Hind Siliguri';color:var(--goldInk)">দেখা চালিয়ে যান</span></div>
+              <div style="display:flex;gap:12px"><sc-for list="{{ cw3 }}" as="c" hint-placeholder-count="3"><div style="width:228px;height:128px;flex:none;border-radius:14px;background:{{ c.bg }};position:relative;overflow:hidden"><div style="position:absolute;inset:6px;border:1px solid rgba(245,207,91,.45);border-radius:10px"></div><span style="position:absolute;right:14px;top:10px;font:600 54px/1 Cinzel;color:transparent;-webkit-text-stroke:1px rgba(245,207,91,.85)">{{ c.ini }}</span><span style="position:absolute;left:14px;bottom:14px;font:600 14px Oswald;text-transform:uppercase;color:#FFF7EA">{{ c.title }}</span><div style="position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,247,234,.25)"><div style="width:{{ c.pct }};height:100%;background:#F5CF5B"></div></div></div></sc-for></div>
+            </div>
+          </div>
+        </div>
+        <div data-screen-label="Player 760 · {{ th.name }}" style="width:760px;height:500px;border-radius:10px;overflow:hidden;position:relative;background:#0B0705;color:#FFF7EA;box-shadow:0 30px 60px -30px rgba(43,26,20,.45),0 0 0 1px rgba(43,26,20,.14)">
+          <div style="position:absolute;inset:0;background:radial-gradient(70% 60% at 30% 45%,#3B2A1C,#0B0705 75%)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:150px;background:linear-gradient(0deg,rgba(0,0,0,.85),transparent)"></div>
+          <div style="position:absolute;left:16px;top:14px;display:flex;align-items:center;gap:10px"><span style="width:38px;height:38px;border-radius:50%;background:rgba(255,247,234,.12);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.arrowL }}"></path></svg></span><span style="font:600 16px Oswald;text-transform:uppercase">Panchayat · S2 E5</span></div>
+          <div style="position:absolute;right:16px;top:64px;width:300px;border-radius:20px;background:var(--surfBg);color:var(--text);border:1px solid var(--line);box-shadow:0 24px 48px -16px rgba(0,0,0,.7);overflow:hidden">
+            <div style="padding:14px 16px 8px;display:flex;justify-content:space-between;align-items:center"><span style="font:600 16px Oswald;text-transform:uppercase;color:var(--text)">Audio</span><span style="font:500 12px 'Plus Jakarta Sans';color:var(--dim)">A · [ ]</span></div>
+            <sc-for list="{{ audioTracks }}" as="a" hint-placeholder-count="3"><div style="height:40px;margin:0 8px;padding:0 10px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;font:{{ a.font }};color:{{ a.color }};background:{{ a.bg }}"><span>{{ a.label }}</span><sc-if value="{{ a.sel }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ic.check }}"></path></svg></sc-if></div></sc-for>
+            <div style="margin-top:8px;padding:12px 16px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px"><span style="font:600 12px 'Plus Jakarta Sans';letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Sync</span><div style="display:flex;align-items:center;gap:6px"><sc-for list="{{ syncL }}" as="s" hint-placeholder-count="2"><span style="height:32px;padding:0 9px;border-radius:999px;border:1px solid var(--edge);display:flex;align-items:center;font:600 12px 'JetBrains Mono';color:var(--text)">{{ s }}</span></sc-for><span style="flex:1;text-align:center;font:600 15px 'JetBrains Mono';color:var(--accText)">+0.2 s</span><sc-for list="{{ syncR }}" as="s" hint-placeholder-count="2"><span style="height:32px;padding:0 9px;border-radius:999px;border:1px solid var(--edge);display:flex;align-items:center;font:600 12px 'JetBrains Mono';color:var(--text)">{{ s }}</span></sc-for></div></div>
+          </div>
+          <div style="position:absolute;left:16px;right:16px;bottom:14px;display:flex;flex-direction:column;gap:10px">
+            <div style="position:relative;height:14px;display:flex;align-items:center"><div style="position:absolute;left:0;right:0;height:4px;border-radius:4px;background:rgba(255,247,234,.22)"></div><div style="position:absolute;left:0;width:62%;height:4px;border-radius:4px;background:rgba(255,247,234,.42)"></div><div style="position:absolute;left:0;width:41%;height:4px;border-radius:4px;background:#F5CF5B"></div><div style="position:absolute;left:41%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#F5CF5B"></div></div>
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="width:42px;height:42px;border-radius:50%;background:#F5CF5B;color:#2B1A14;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="{{ ic.pause }}"></path></svg></span>
+              <sc-for list="{{ plBtnsL }}" as="b" hint-placeholder-count="3"><span style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ b.i }}"></path></svg></span></sc-for>
+              <span style="font:500 12px 'JetBrains Mono';color:#E8D8C6;padding-left:4px">18:42 / 45:10</span>
+              <span style="flex:1"></span>
+              <span style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#F5CF5B;color:#2B1A14"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.audio }}"></path></svg></span>
+              <span style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.captions }}"></path></svg></span>
+              <span style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.more }}"></path></svg></span>
+              <span style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ ic.maximize }}"></path></svg></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;platform&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;windows&quot;,&quot;mac&quot;],&quot;default&quot;:&quot;windows&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;showNight&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;motion&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;drift&quot;,&quot;still&quot;],&quot;default&quot;:&quot;drift&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const IC = {
+  search:'M21 21l-4.34-4.34 M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z',
+  refresh:'M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8 M21 3v5h-5 M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16 M8 16H3v5',
+  settings:'M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+  play:'M6 3l14 9-14 9V3z', pause:'M6 4h4v16H6z M14 4h4v16h-4z', plus:'M5 12h14 M12 5v14', check:'M20 6L9 17l-5-5',
+  info:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 16v-4 M12 8h.01',
+  download:'M12 15V3 M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5',
+  folder:'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z',
+  server:'M4 2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z M4 14h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z M6 6h.01 M6 18h.01',
+  globe:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20 M2 12h20',
+  tv:'M4 7h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z M17 2l-5 5-5-5',
+  chevR:'M9 18l6-6-6-6', chevD:'M6 9l6 6 6-6', x:'M18 6L6 18 M6 6l12 12', arrowL:'M12 19l-7-7 7-7 M19 12H5',
+  back10:'M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5', fwd10:'M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8 M21 3v5h-5',
+  restart:'M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5',
+  volume:'M11 4.7a.7.7 0 0 0-1.2-.5L6.4 7.6A1.4 1.4 0 0 1 5.4 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.4a1.4 1.4 0 0 1 1 .4l3.4 3.4a.7.7 0 0 0 1.2-.5z M16 9a5 5 0 0 1 0 6 M19.4 18.4a9 9 0 0 0 0-12.7',
+  pip:'M21 9V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5 M13 13h9v8h-9z',
+  maximize:'M8 3H5a2 2 0 0 0-2 2v3 M21 8V5a2 2 0 0 0-2-2h-3 M3 16v3a2 2 0 0 0 2 2h3 M16 21h3a2 2 0 0 0 2-2v-3',
+  next:'M5 4l10 8-10 8V4z M19 5v14',
+  captions:'M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M7 15h4 M15 15h2 M7 11h2 M13 11h4',
+  audio:'M2 10v3 M6 6v11 M10 3v18 M14 8v7 M18 5v13 M22 10v3', gauge:'M12 14l4-4 M3.34 19a10 10 0 1 1 17.32 0',
+  glasses:'M6 18a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M18 18a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M10 14a2 2 0 0 1 4 0 M2.5 13L5 7c.7-1.3 1.4-2 3-2 M21.5 13L19 7c-.7-1.3-1.5-2-3-2',
+  trash:'M3 6h18 M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6 M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2',
+  terminal:'M4 17l6-6-6-6 M12 19h8', more:'M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z M19 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z M5 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+  loader:'M21 12a9 9 0 1 1-6.22-8.56', key:'M15.5 7.5l2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4 M21 2l-9.6 9.6 M7.5 21a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11z'
+};
+const T = {
+  panchayat:{title:'Panchayat',y:'2020',q:'1080p',a:'#8A2457',b:'#3A0C24'},
+  arrival:{title:'Arrival',y:'2016',q:'1080p',a:'#1F5A3E',b:'#0D2A1E'},
+  civilwar:{title:'Civil War',y:'2024',q:'1080p',a:'#0F5560',b:'#082A33'},
+  dune:{title:'Dune Part Two',y:'2024',q:'2160p',a:'#23338F',b:'#101A4E'},
+  insideout:{title:'Inside Out 2',y:'2024',q:'1080p',a:'#6B5A14',b:'#2E2608'},
+  interstellar:{title:'Interstellar',y:'2014',q:'2160p',a:'#9A4A12',b:'#3F1A06'},
+  oppenheimer:{title:'Oppenheimer',y:'2023',q:'1080p',a:'#11605A',b:'#062A27'},
+  pastlives:{title:'Past Lives',y:'2023',q:'720p',a:'#2F6B2A',b:'#11300F'},
+  frieren:{title:'Frieren',y:'2023',q:'1080p',a:'#4B3A8A',b:'#1D1640'},
+  shogun:{title:'Shōgun',y:'2024',q:'2160p',a:'#7A1820',b:'#2E080B'},
+  severance:{title:'Severance',y:'2022',q:'2160p',a:'#1A3A5C',b:'#0A1828'},
+  mirzapur:{title:'Mirzapur',y:'2018',q:'1080p',a:'#5C2A14',b:'#241006'},
+  kota:{title:'Kota Factory',y:'2019',q:'1080p',a:'#3B4A55',b:'#151D24'},
+  gullak:{title:'Gullak',y:'2019',q:'1080p',a:'#8A5A12',b:'#3A2406'}
+};
+const lum = h => { h=h.replace('#',''); return [0,2,4].map(i=>parseInt(h.substr(i,2),16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)).reduce((s,v,i)=>s+v*[.2126,.7152,.0722][i],0); };
+const cr = (a,b) => { const x=lum(a), y=lum(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); };
+const P = { key:'parchment', name:'Parchment', tagline:'Reading room by day',
+  bg:'#F6EFE4', canvas:'radial-gradient(rgba(122,24,32,.10) 1px, transparent 1.6px) 0 0/22px 22px, #F6EFE4',
+  surf:'#FFFCF7', surfBg:'#FFFCF7', raised:'#FBF5EC', sunk:'#EFE4D3', line:'#EADBC8', edge:'#9C8168',
+  text:'#2B1A14', dim:'#6E5849', faint:'#7A6352', brand:'#7A1820', accText:'#A3242F', accFill:'#7A1820', accFillHover:'#8E1E28', accFillPress:'#5E1117', accFillText:'#FFF7EA',
+  selBg:'#F7E4DF', gold:'#D4A33F', gold2:'#F5CF5B', goldInk:'#7E5A0E', goldSoft:'#F8E7BC', onGold:'#2B1A14', pink:'#E23D6D',
+  panel:'linear-gradient(118deg,#2a070b,#561017 38%,#8a1b26 72%,#a52734)', panelMid:'#561017', panelText:'#FFF7EA', panelDim:'#F1D9C6',
+  bar:'rgba(255,252,247,.85)', titlebar:'#EFE4D3', scrim:'rgba(43,26,20,.5)',
+  shadow:'0 1px 2px rgba(74,38,18,.08), 0 12px 28px -12px rgba(122,24,32,.28)', shadowSm:'0 1px 2px rgba(74,38,18,.14)',
+  ring:'0 0 0 2px #F6EFE4, 0 0 0 4px #7A1820, 0 0 0 7px rgba(212,163,63,.45)',
+  was:{faint:'#9c8573', goldInk:'#d4a33f', accText:'#a3242f', edge:'#eadbc8'} };
+const N = { key:'night', name:'Night', tagline:'Wood-panelled cinema, candle-gold',
+  bg:'#140D09', canvas:'radial-gradient(120% 60% at 50% -10%, rgba(240,196,99,.10), transparent 60%), radial-gradient(rgba(240,196,99,.05) 1px, transparent 1.6px) 0 0/22px 22px, #140D09',
+  surf:'#211710', surfBg:'repeating-linear-gradient(90deg, rgba(255,220,170,.022) 0 1px, transparent 1px 6px, rgba(0,0,0,.06) 6px 7px, transparent 7px 13px), linear-gradient(180deg,#261A11,#1E140D)',
+  raised:'#2E2017', sunk:'#0F0906', line:'#3C2C22', edge:'#8C7259',
+  text:'#F7ECE0', dim:'#D3BFA9', faint:'#A99179', brand:'#F0C463', accText:'#F0C463', accFill:'#7A1820', accFillHover:'#8E1E28', accFillPress:'#5E1117', accFillText:'#FFF1DE',
+  selBg:'rgba(240,196,99,.12)', gold:'#D4A33F', gold2:'#F5CF5B', goldInk:'#F0C463', goldSoft:'rgba(240,196,99,.16)', onGold:'#2B1A14', pink:'#E23D6D',
+  panel:'radial-gradient(120% 90% at 85% 0%, rgba(240,196,99,.20), transparent 55%), linear-gradient(118deg,#1A0507,#3A0B11 45%,#5A121A 80%,#6E1A22)', panelMid:'#3A0B11', panelText:'#FFF1DE', panelDim:'#E8CDB6',
+  bar:'repeating-linear-gradient(90deg, rgba(255,220,170,.02) 0 1px, transparent 1px 7px), linear-gradient(180deg,#261A11,#1C130C)', titlebar:'#0F0906', scrim:'rgba(8,4,2,.68)',
+  shadow:'inset 0 1px 0 rgba(255,220,170,.06), 0 16px 32px -14px rgba(0,0,0,.75), 0 0 48px -24px rgba(240,196,99,.35)', shadowSm:'0 1px 2px rgba(0,0,0,.5)',
+  ring:'0 0 0 2px #140D09, 0 0 0 4px #F5CF5B, 0 0 14px 4px rgba(240,196,99,.35)',
+  was:{faint:'#9a8471', goldInk:'#d4a33f', accText:'#c43744', edge:'#3c2c22'} };
+const PAIRS = [['Body text','text','bg',4.5],['Dim text','dim','bg',4.5],['Faint text on surface','faint','surf',4.5],['Accent text / links','accText','bg',4.5],['Gold text','goldInk','bg',4.5],['Text on maroon fill','accFillText','accFill',4.5],['Text on gold fill','onGold','gold',4.5],['Gold on crimson panel','gold2','panelMid',4.5],['Control borders','edge','surf',3]];
+const SW = [['bg','Background'],['surf','Surface'],['raised','Raised'],['sunk','Sunk'],['line','Line'],['edge','Edge'],['text','Text'],['dim','Dim'],['faint','Faint'],['accText','Accent text'],['accFill','Maroon'],['gold','Gold'],['gold2','Gold 2'],['goldInk','Gold text'],['pink','Pink']];
+const F = { j:"'Plus Jakarta Sans', 'Hind Siliguri', sans-serif", o:"Oswald, 'Hind Siliguri', sans-serif" };
+const DIS = { background:'var(--sunk)', color:'var(--faint)', borderColor:'var(--line)', boxShadow:'none', opacity:.75 };
+function row(name, use, base, st) {
+  const order = ['Default','Hover','Focus','Pressed','Selected','Disabled','Loading'];
+  return { name, use, cells: order.map(k => { const v = st[k]; if (!v) return { na:true, ok:false };
+    return { na:false, ok:true, label:v.label ?? st.label, iconL:v.iconL ?? st.iconL ?? '', iconR:v.iconR ?? '', style:{...base, ...(st.Default.s||{}), ...(v.s||{})} }; }) };
+}
+class Component extends DCLogic {
+  state = { reduce: false };
+  componentDidMount(){ try { const m = matchMedia('(prefers-reduced-motion: reduce)'); this.setState({ reduce: m.matches }); } catch(e){} }
+  renderVals() {
+    const plat = this.props.platform ?? 'windows', isMac = plat === 'mac';
+    const still = (this.props.motion ?? 'drift') === 'still' || this.state.reduce;
+    const list = (this.props.showNight ?? true) ? [P, N] : [P];
+    const vars = t => Object.fromEntries(Object.entries(t).filter(([k,v])=>typeof v==='string').map(([k,v])=>['--'+k, v]));
+    const themes = list.map(t => ({ ...t, vars: vars(t),
+      swatches: SW.map(([k,n]) => ({ name:n, hex:t[k] })),
+      pairs: PAIRS.map(([label,fg,bg,min]) => { const r = cr(t[fg], t[bg]); const w = t.was[fg]; const rw = w ? cr(w, t[bg]) : 0;
+        return { label, fg:t[fg], bg:t[bg], ratio:r.toFixed(1)+':1', pass:r>=min?'AA':'✗', passColor:r>=min?'var(--text)':'#E23D6D', was: w ? `was ${w} · ${rw.toFixed(1)}:1` : '' }; }),
+      themeSeg: [P,N].map(o => ({ label:o.name, bg:o.key===t.key?'var(--accFill)':'transparent', color:o.key===t.key?'var(--accFillText)':'var(--text)' }))
+    }));
+    const specks = React.createElement('div', { style:{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden', zIndex:0 } },
+      [[12,82,14,0],[28,64,18,4],[46,90,16,8],[63,72,20,2],[78,86,15,6],[90,58,19,10],[36,40,22,12],[70,30,17,3]].map(([l,t,d,del],i) =>
+        React.createElement('span', { key:i, style:{ position:'absolute', left:l+'%', top:t+'%', width:3, height:3, borderRadius:3, background:'#D4A33F', opacity: still ? .5 : 0, animation: still ? 'none' : `vsDrift ${d}s linear ${-del}s infinite` } })));
+    const TABS = ['Home','Movies','TV & Web Series','Anime','My List'];
+    const tabs = a => TABS.map(l => ({ label:l, bg:l===a?'var(--accFill)':'transparent', color:l===a?'var(--accFillText)':'var(--text)' }));
+    const thumb = t => `linear-gradient(150deg, ${t.a}, ${t.b})`;
+    const cw = [[T.severance,'S2 · E3 · 31 min left','42%'],[T.dune,'2h 03m left','28%'],[T.panchayat,'S2 · E5 · 18 min left','70%'],[T.frieren,'S1 · E12 · 20 min left','15%']]
+      .map(([t,meta,pct]) => ({ title:t.title, ini:t.title[0], meta, pct, bg:thumb(t) }));
+    const eps = [1,2,3,4,5].map(n => { const w = n<5, cur = n===5;
+      return { n:'E'+n, title:'Episode '+n, meta:[33,36,31,38,45][n-1]+' min · Hindi · 5.1', hasPct:cur, pct:'58%', rowBg:cur?'var(--selBg)':'transparent',
+        status: w ? '✓ Watched' : '18 min left', stColor: w ? 'var(--goldInk)' : 'var(--accText)' }; });
+    const sp = s => ({ background:'var(--surf)', color:'var(--text)', ...s });
+    const btn = { height:40, padding:'0 18px', borderRadius:999, display:'inline-flex', alignItems:'center', gap:8, fontFamily:F.o, fontWeight:600, fontSize:14, letterSpacing:'.06em', textTransform:'uppercase', whiteSpace:'nowrap', border:'1px solid transparent' };
+    const comps = [
+      row('Primary', 'Play, Continue', btn, { label:'Play', iconL:IC.play,
+        Default:{ s:{ background:'linear-gradient(180deg,#F5CF5B,#D4A33F)', color:'#2B1A14', borderColor:'#B8862A', boxShadow:'var(--shadowSm)' } },
+        Hover:{ s:{ background:'linear-gradient(180deg,#F9DC7E,#DDB24F)', boxShadow:'0 8px 18px -6px rgba(212,163,63,.7)', transform:'translateY(-1px)' } },
+        Focus:{ s:{ boxShadow:'var(--ring)' } }, Pressed:{ s:{ background:'#C99A38', boxShadow:'inset 0 2px 4px rgba(74,38,18,.35)', transform:'translateY(1px)' } },
+        Disabled:{ s:DIS }, Loading:{ label:'Loading', iconL:IC.loader, s:{ opacity:.9 } } }),
+      row('Secondary', 'Fill in servers', btn, { label:'Save',
+        Default:{ s:{ background:'var(--accFill)', color:'var(--accFillText)', borderColor:'var(--accFill)' } },
+        Hover:{ s:{ background:'var(--accFillHover)' } }, Focus:{ s:{ boxShadow:'var(--ring)' } }, Pressed:{ s:{ background:'var(--accFillPress)' } },
+        Disabled:{ s:DIS }, Loading:{ label:'Saving', iconL:IC.loader } }),
+      row('Outline', 'More info, My List', btn, { label:'My List', iconL:IC.plus,
+        Default:{ s:{ background:'transparent', color:'var(--text)', borderColor:'var(--edge)' } },
+        Hover:{ s:{ background:'var(--raised)', borderColor:'var(--accText)', color:'var(--accText)' } }, Focus:{ s:{ boxShadow:'var(--ring)' } }, Pressed:{ s:{ background:'var(--sunk)' } },
+        Selected:{ iconL:IC.check, s:{ background:'var(--selBg)', borderColor:'var(--accText)', color:'var(--accText)' } }, Disabled:{ s:DIS }, Loading:{ label:'Adding', iconL:IC.loader } }),
+      row('Icon button', 'Refresh, settings', { width:40, height:40, borderRadius:999, display:'inline-flex', alignItems:'center', justifyContent:'center', border:'1px solid var(--line)' }, { label:'', iconL:IC.refresh,
+        Default:{ s:sp() }, Hover:{ s:{ background:'var(--raised)', color:'var(--accText)', borderColor:'var(--edge)' } }, Focus:{ s:{ boxShadow:'var(--ring)' } }, Pressed:{ s:{ background:'var(--sunk)' } },
+        Selected:{ iconL:IC.settings, s:{ background:'var(--accFill)', color:'var(--accFillText)', borderColor:'var(--accFill)' } }, Disabled:{ s:DIS }, Loading:{ iconL:IC.loader, s:{ color:'var(--accText)' } } }),
+      row('Tab', 'Section tabs, seasons', { height:36, padding:'0 16px', borderRadius:999, display:'inline-flex', alignItems:'center', fontFamily:F.j, fontWeight:600, fontSize:14, border:'1px solid transparent', whiteSpace:'nowrap' }, { label:'Movies',
+        Default:{ s:{ background:'transparent', color:'var(--text)' } }, Hover:{ s:{ background:'var(--raised)', borderColor:'var(--edge)' } }, Focus:{ s:{ boxShadow:'var(--ring)' } }, Pressed:{ s:{ background:'var(--sunk)' } },
+        Selected:{ s:{ background:'var(--accFill)', color:'var(--accFillText)' } }, Disabled:{ s:{ color:'var(--faint)', opacity:.7 } } }),
+      row('Chip', 'Language, filters', { height:32, padding:'0 13px', borderRadius:999, display:'inline-flex', alignItems:'center', gap:5, fontFamily:F.j, fontWeight:600, fontSize:13, border:'1px solid var(--edge)', whiteSpace:'nowrap' }, { label:'বাংলা',
+        Default:{ s:sp() }, Hover:{ s:{ borderColor:'var(--accText)', color:'var(--accText)' } }, Focus:{ s:{ boxShadow:'var(--ring)' } }, Pressed:{ s:{ background:'var(--sunk)' } },
+        Selected:{ iconL:IC.check, s:{ background:'var(--goldSoft)', borderColor:'var(--goldInk)' } }, Disabled:{ s:DIS } }),
+      row('Player pill', 'Audio, subtitles, speed', { height:34, padding:'0 12px', borderRadius:999, display:'inline-flex', alignItems:'center', gap:6, fontFamily:F.j, fontWeight:600, fontSize:13, border:'1px solid rgba(245,207,91,.4)', whiteSpace:'nowrap' }, { label:'1.0×', iconL:IC.gauge,
+        Default:{ s:{ background:'#1E140D', color:'#FFF7EA' } }, Hover:{ s:{ background:'#2E2017', borderColor:'#F5CF5B' } }, Focus:{ s:{ boxShadow:'0 0 0 2px #140D09, 0 0 0 4px #F5CF5B' } }, Pressed:{ s:{ background:'#0F0906' } },
+        Selected:{ s:{ background:'#F5CF5B', color:'#2B1A14', borderColor:'#F5CF5B' } }, Disabled:{ s:{ background:'#1E140D', color:'#8A7461', borderColor:'#3C2C22' } } }),
+      row('Menu item', 'Track lists', { width:'100%', height:40, padding:'0 12px', borderRadius:10, display:'flex', alignItems:'center', gap:8, fontFamily:F.j, fontWeight:500, fontSize:14 }, { label:'English',
+        Default:{ s:{ background:'transparent', color:'var(--text)' } }, Hover:{ s:{ background:'var(--raised)' } }, Focus:{ s:{ boxShadow:'inset 0 0 0 2px var(--accText)' } }, Pressed:{ s:{ background:'var(--sunk)' } },
+        Selected:{ iconR:IC.check, s:{ color:'var(--accText)', fontWeight:700 } }, Disabled:{ s:{ color:'var(--faint)', opacity:.75 } }, Loading:{ iconR:IC.loader, s:{ color:'var(--dim)' } } }),
+      row('Input', 'Keys, passwords', { width:'100%', height:40, padding:'0 12px', borderRadius:12, display:'flex', alignItems:'center', gap:8, fontFamily:F.j, fontSize:14, border:'1px solid var(--edge)', whiteSpace:'nowrap', overflow:'hidden' }, { label:'TMDB key',
+        Default:{ s:sp({ color:'var(--faint)' }) }, Hover:{ s:{ borderColor:'var(--dim)' } }, Focus:{ label:'a41f…', s:{ borderColor:'var(--accText)', boxShadow:'var(--ring)', color:'var(--text)' } },
+        Selected:{ label:'a41f…92c', iconR:IC.check, s:{ color:'var(--text)' } }, Disabled:{ s:DIS }, Loading:{ label:'Checking…', iconR:IC.loader, s:{ color:'var(--dim)' } } })
+    ];
+    return {
+      themes, specks, ic: IC, T, isWin: !isMac, isMac, kbd: isMac ? '⌘K' : 'Ctrl K', revealLbl: isMac ? 'Show in Finder' : 'Show in Explorer',
+      localPath: isMac ? '/Users/maksud/Movies/Bangla' : 'D:\\Movies\\Bangla',
+      tabsHome: tabs('Home'), tabsTV: tabs('TV & Web Series'), tabsNone: tabs(''),
+      stateNames: ['Default','Hover','Focus','Pressed','Selected','Disabled','Loading'], comps,
+      welcomeOpts: [
+        { title:'Use DhakaFlix servers', desc:'Browse the BDIX servers your ISP already gives you. Nothing to set up.', tag:'✦ Recommended on BDIX', icon:IC.globe, sel:true, border:'2px solid var(--goldInk)', shadow:'var(--shadow), 0 0 0 4px var(--goldSoft)' },
+        { title:'Add my own server', desc:'Point StreamHub at any “Index of /” or h5ai address on your network.', tag:'FTP-style or h5ai', icon:IC.server, sel:false, border:'1px solid var(--line)', shadow:'var(--shadow)' },
+        { title:'Add a folder from this computer', desc:'Play films and series stored on this PC, even when you’re offline.', tag:'Works offline', icon:IC.folder, sel:false, border:'1px solid var(--line)', shadow:'var(--shadow)' }
+      ],
+      cw, cw3: cw.slice(0,3), rowEng: [T.arrival,T.civilwar,T.dune,T.insideout,T.interstellar,T.oppenheimer,T.pastlives],
+      eps, moreTV: [T.shogun,T.severance,T.frieren,T.mirzapur,T.kota,T.gullak],
+      plBtnsL: [{t:'Back 10 s (←)',i:IC.back10},{t:'Forward 10 s (→)',i:IC.fwd10},{t:'Mute (M)',i:IC.volume}],
+      plBtnsR: [{t:'Next episode (N)',i:IC.next},{t:'Picture in picture',i:IC.pip},{t:'Full screen (F)',i:IC.maximize}],
+      pills: [['Hindi 5.1',IC.audio,false],['English',IC.captions,true],['1.0×',IC.gauge,false],['3D → 2D',IC.glasses,false]].map(([label,i,on]) => ({ label, i, bg:on?'#F5CF5B':'rgba(30,20,13,.75)', color:on?'#2B1A14':'#FFF7EA', bd:on?'#F5CF5B':'rgba(245,207,91,.4)' })),
+      langs: ['English','বাংলা','हिन्दी','اردو','Español'].map((l,i) => ({ label:i===0?'✓ '+l:l, bg:i===0?'var(--goldSoft)':'var(--surf)', bd:i===0?'var(--goldInk)':'var(--edge)' })),
+      subResults: [
+        { file:'Panchayat.S02E05.1080p.AMZN.WEB-DL.en.srt', prov:'OpenSubtitles', lang:'English', exact:true, dl:'12.4k' },
+        { file:'Panchayat S2 E5 English.srt', prov:'SubDL', lang:'English', exact:false, dl:'3.1k' },
+        { file:'Panchayat.S02E05.WEBRip.en.sdh.srt', prov:'OpenSubtitles', lang:'English SDH', exact:false, dl:'1.8k' },
+        { file:'Panchayat.S02E05.720p.en.srt', prov:'SubDL', lang:'English', exact:false, dl:'940' }
+      ],
+      dlActive: [
+        { t:T.dune, meta:'2160p · 14.2 GB', pct:'64%', speed:'8.4 MB/s · 6 min left', barC:'var(--accText)', icon:IC.pause },
+        { t:T.interstellar, meta:'2160p · 11.8 GB', pct:'22%', speed:'5.1 MB/s · 29 min left', barC:'var(--accText)', icon:IC.pause },
+        { t:T.pastlives, meta:'720p · 1.4 GB', pct:'0%', speed:'Waiting', barC:'var(--faint)', icon:IC.play }
+      ],
+      dlDone: [
+        { t:T.oppenheimer, meta:'1080p · 3.8 GB · Yesterday' },
+        { t:T.panchayat, meta:'S2 · E5 · 1080p · 1.1 GB · Today' },
+        { t:T.arrival, meta:'1080p · 2.2 GB · 12 Oct' }
+      ],
+      acctFields: [
+        { label:'DhakaFlix username', value:'maksud', color:'var(--text)', span:'auto' },
+        { label:'DhakaFlix password', value:'••••••••', color:'var(--text)', span:'auto' },
+        { label:'TMDB API key', value:'a41f • • • • • • • 92c', color:'var(--text)', span:'1 / -1' }
+      ],
+      subFields: [
+        { label:'OpenSubtitles API key', value:'Paste your key', color:'var(--faint)', span:'1 / -1' },
+        { label:'OpenSubtitles username', value:'maksud', color:'var(--text)', span:'auto' },
+        { label:'OpenSubtitles password', value:'••••••••', color:'var(--text)', span:'auto' },
+        { label:'SubDL API key', value:'Paste your key', color:'var(--faint)', span:'1 / -1' }
+      ],
+      audioTracks: [['Hindi · 5.1 · AAC',true],['Hindi · Stereo',false],['English · Commentary',false]].map(([label,sel]) => ({ label, sel, font:(sel?'700':'500')+" 14px 'Plus Jakarta Sans'", color:sel?'var(--accText)':'var(--text)', bg:sel?'var(--selBg)':'transparent' })),
+      syncL: ['−0.5','−0.1'], syncR: ['+0.1','+0.5']
+    };
+  }
+}
+</script>
+</body>
+</html>

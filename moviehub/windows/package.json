@@ -1,0 +1,19 @@
+{
+  "name": "streamhub-windows",
+  "productName": "StreamHub",
+  "version": "1.0.5",
+  "description": "StreamHub, the Windows version of MusingsofMaksudTV: the web/ app in a Tauri window, with its server and ffmpeg built in",
+  "private": true,
+  "scripts": {
+    "build-server": "node scripts/build-server.mjs",
+    "dev": "npm run build-server && tauri dev",
+    "build": "npm run build-server && tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.4",
+    "esbuild": "0.28.2",
+    "ffmpeg-static": "5.2.0",
+    "ffprobe-static": "3.1.0",
+    "postject": "1.0.0-alpha.6"
+  }
+}
