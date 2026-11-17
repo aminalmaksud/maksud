@@ -192,7 +192,7 @@ body.nounsure .w.unsure { text-decoration: none; }
 <aside class="side">
   <header>
     <img src="/icon.png" alt="">
-    <div><h1>Bangla Transcriber</h1><small>Subtitles · বাংলা &amp; English</small></div>
+    <div><h1>Bangla Transcriber</h1><small>Subtitles · বাংলা &amp; English · <span id="ver"></span></small></div>
   </header>
   <div style="padding:0 16px 6px;display:flex;gap:8px">
     <button class="btn" id="add" style="flex:1">＋ Add audio…</button>
@@ -248,7 +248,7 @@ window.addEventListener("unhandledrejection", e => report("unhandled: " + (e.rea
 let pollTimer = null;
 async function refresh() {
   clearTimeout(pollTimer);
-  try { S = await api("/api/state"); renderSide(); renderMain(); } catch {}
+  try { S = await api("/api/state"); if (S.version) $("#ver").textContent = "v" + S.version; renderSide(); renderMain(); } catch {}
   pollTimer = setTimeout(refresh, S.running ? 500 : 1500);
 }
 const refresh0 = () => refresh();
@@ -379,6 +379,8 @@ function header(j) {
     ${j.status !== "working" ? `<div class="saveto">Save .srt / .json to <span class="path" title="${esc(jobFolder(j))}"><bdi>${esc(jobFolder(j))}</bdi></span>
       <button class="btn" id="jf-choose">Choose…</button>${j.out_dir && j.kind === "audio" ? `<button class="btn" id="jf-reset" title="Save next to the audio file">Same as audio</button>` : ""}
       <button class="btn" id="jf-open">Show folder</button></div>` : ""}
+    ${!done && j.status !== "working" ? `<div class="tools"><button class="btn" disabled>✂ Cut silences</button><button class="btn" disabled>Split by script…</button>
+      <span>These become available once this file is transcribed. Press <b>Transcribe</b>.</span></div>` : ""}
     ${done && j.status !== "working" ? `<div class="tools">
       <button class="btn" id="cutbtn" ${j.audio ? "" : "disabled"} title="Make a shorter copy: every pause between words longer than the limit is shortened to it. Words are never cut.">✂ Cut silences</button>
       <span>longer than <input type="number" id="gap" min="0.1" max="5" step="0.05" value="${S.settings.max_gap ?? 0.75}"> s</span>

@@ -11,7 +11,7 @@ cd "$(dirname "$0")"
 
 APP_NAME="Bangla Transcriber"
 BUNDLE_ID="local.bangla-transcriber"
-VERSION="1.4.0"
+VERSION="1.4.1"
 PY_VER="3.12"
 BUNDLE_MODELS=1; MAKE_DMG=1; INSTALL=0
 for a in "$@"; do

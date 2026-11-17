@@ -19,9 +19,9 @@ the download is intact, puts **Bangla Transcriber** in Applications and opens it
 step failed and shows the app's error log, so you can send that output for help. The AI models download the first time
 you transcribe in each language.
 
-To install by hand instead, download the three `release/BanglaTranscriber-1.4-macos-arm64.tar.gz.part*` files into one
+To install by hand instead, download the three `release/BanglaTranscriber-1.4.1-macos-arm64.tar.gz.part*` files into one
 folder, open Terminal in that folder and run:
-`cat BanglaTranscriber-1.4-macos-arm64.tar.gz.part* | tar -xz -C /Applications`
+`cat BanglaTranscriber-1.4.1-macos-arm64.tar.gz.part* | tar -xz -C /Applications`
 
 ## Build the app (once)
 

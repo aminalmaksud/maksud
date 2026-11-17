@@ -5,9 +5,10 @@
 set -uo pipefail
 
 BASE="https://raw.githubusercontent.com/aminalmaksud/maksud/bangla-transcriber/release"
-NAME="BanglaTranscriber-1.4-macos-arm64.tar.gz"
+NAME="BanglaTranscriber-1.4.1-macos-arm64.tar.gz"
 PARTS=3
-SHA256="b33edec5444781ff99f26285cdf7b70b713aa4b7a482cc9f87ff959ccfd96cf3"
+VERSION="1.4.1"
+SHA256="abea6cb80a2d002792c9dcfbe479d835ee5d219f868105c4cf95e281e4b34c6b"
 APP="Bangla Transcriber.app"
 LOG="$HOME/Library/Logs/Bangla Transcriber.log"
 
@@ -39,6 +40,15 @@ echo "Unpacking…"
 mkdir -p "$TMP/x" && tar -xzf "$TMP/$NAME" -C "$TMP/x" || fail "could not unpack the app."
 [[ -x "$TMP/x/$APP/Contents/MacOS/Bangla Transcriber" ]] || fail "the unpacked app is incomplete."
 
+# An app that is still open keeps running the old version (macOS would just bring it to the front), so close it first.
+if pgrep -f "Resources/app/main.py" >/dev/null; then
+  echo "Closing the open Bangla Transcriber…"
+  pkill -f "Resources/app/main.py"
+  for _ in $(seq 1 10); do pgrep -f "Resources/app/main.py" >/dev/null || break; sleep 0.5; done
+  pkill -9 -f "Resources/app/main.py" 2>/dev/null || true
+  sleep 1
+fi
+
 echo "Installing…"
 DEST="/Applications"
 if ! { rm -rf "$DEST/$APP" && mv "$TMP/x/$APP" "$DEST/"; } 2>/dev/null; then
@@ -52,7 +62,7 @@ echo "Opening it…"
 open "$DEST/$APP" || fail "macOS refused to open the app."
 for _ in $(seq 1 12); do
   sleep 1
-  pgrep -f "Resources/app/main.py" >/dev/null && { echo "Done! Bangla Transcriber is running."; exit 0; }
+  pgrep -f "Resources/app/main.py" >/dev/null && { echo "Done! Bangla Transcriber $VERSION is running (the version is shown at the top left of the window)."; exit 0; }
 done
 echo
 echo "The app was installed but did not stay open. Its log says:"

@@ -20,6 +20,7 @@ import cutter
 import engine
 import sections
 
+VERSION = "1.4.1"
 UI_DIR = Path(__file__).resolve().parent / "ui"
 AUDIO_EXT = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".opus", ".wma", ".aiff", ".aif",
              ".mp4", ".mov", ".mkv", ".webm", ".m4v"}
@@ -292,7 +293,7 @@ class State:
     def snapshot(self):
         with self.lock:
             jobs = [{k: v for k, v in self.jobs[j].items() if not k.startswith("_")} for j in self.order]
-            return {"jobs": jobs, "running": self.running,
+            return {"jobs": jobs, "running": self.running, "version": VERSION,
                     "status": self.status, "settings": self.settings, "native": self.picker is not None,
                     "models": engine.ASR_MODELS, "languages": engine.LANGUAGES,
                     "models_ready": engine.model_available(self.settings["models"][self.settings["lang"]])
@@ -678,6 +679,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Accept-Ranges", "bytes")
+        if not ranged:
+            self.send_header("Cache-Control", "no-store")  # always load the newest window after an update
         self.send_header("Content-Length", str(end - start + 1))
         self.end_headers()
         try:
