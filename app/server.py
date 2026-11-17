@@ -10,11 +10,15 @@ import sys
 import threading
 import time
 import traceback
+import base64
+import tempfile
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+import cutter
 import engine
+import sections
 
 UI_DIR = Path(__file__).resolve().parent / "ui"
 AUDIO_EXT = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".opus", ".wma", ".aiff", ".aif",
@@ -77,7 +81,7 @@ class State:
         self.cancel = False
         self.status = "Ready"
         self.settings = {"lang": "bn", "models": dict(engine.DEFAULT_MODELS), "beams": 5, "out_dir": "",
-                         "srt": True, "json": True, "txt": False}
+                         "srt": True, "json": True, "txt": False, "max_gap": cutter.DEFAULT_GAP}
         try:
             saved = json.loads(SETTINGS_FILE.read_text())
             saved.pop("srt", None)  # subtitles are now always on by default
@@ -132,6 +136,12 @@ class State:
         entry.update(name=job["name"], source=job["path"], audio=job.get("audio", ""), lang=job["lang"],
                      kind=job["kind"], outputs=dict(job["outputs"]), cues=job.get("cues", 0),
                      words=job.get("words", 0), duration=job.get("duration"), finished=time.time())
+        cut = job.get("cut") or {}
+        if cut.get("state") == "done":
+            entry["cut"] = {k: cut[k] for k in ("path", "srt", "json", "removed", "before", "after") if k in cut}
+        secs = job.get("sections") or {}
+        if secs.get("state") == "done":
+            entry["sections"] = {"folder": secs["folder"], "count": len(secs["items"])}
         self.history.sort(key=lambda h: -h.get("finished", 0))
         self.save_history()
 
@@ -161,12 +171,82 @@ class State:
         else:
             job["outputs"] = engine.write_outputs(job["_words"], job["path"], str(folder),
                                                   s["srt"] or not (s["json"] or s["txt"]), s["json"], s["txt"], lang)
+        self.write_cut_subs(job)
         job["words"] = len(job["_words"])
         job["cues"] = len(engine.make_cues(job["_words"], max_chars=engine.SUB_LAYOUT[lang][0]))
         job["rev"] = job.get("rev", 0) + 1  # tells the window to redraw
         if job.get("status") == "done" or job.get("kind") == "json":
             self.record(job)
         job["message"] = f"{job['cues']} subtitles · {job['words']} words"
+
+    def write_cut_subs(self, job):
+        """Subtitles for the shortened copy: same words, moved to its timeline (kept up to date after edits)."""
+        cut = job.get("cut") or {}
+        if cut.get("state") != "done" or "_cuts" not in job:
+            return
+        s = self.settings
+        outs = engine.write_outputs(cutter.shift_words(job["_words"], job["_cuts"]), cut["path"],
+                                    str(Path(cut["path"]).parent), True, s["json"], False, job["lang"])
+        cut.update(srt=outs.get("srt", ""), json=outs.get("json", ""))
+
+    def cut(self, job, max_gap):
+        """Make '<name>-shortened' with every pause longer than max_gap shortened to max_gap."""
+        def progress(f):
+            job["cut"]["progress"] = round(f, 3)
+        try:
+            folder = str(self.out_folder(job))
+            res = cutter.cut_file(job["audio"], list(job["_words"]), folder, max_gap, progress)
+            with self.lock:
+                job["_cuts"] = res["cut_list"]
+                job["cut"] = {"state": "done", "path": res["path"], "cuts": res["cuts"], "removed": res["removed"],
+                              "before": res["before"], "after": res["after"], "gap": max_gap}
+                self.write_cut_subs(job)
+                job["rev"] = job.get("rev", 0) + 1
+                self.record(job)
+        except Exception as e:
+            traceback.print_exc()
+            with self.lock:
+                job["cut"] = {"state": "error", "error": f"{e.__class__.__name__}: {e}"}
+
+    def split_sections(self, job, plan, use_short):
+        """Save every section of the plan as its own audio/video file (plus .srt/.json) in one folder."""
+        try:
+            words, lang, s = list(job["_words"]), job["lang"], self.settings
+            src, cuts = job["audio"], None
+            if use_short and (job.get("cut") or {}).get("state") == "done" and os.path.exists(job["cut"]["path"]):
+                src, cuts = job["cut"]["path"], job.get("_cuts") or []
+            folder = self.out_folder(job) / sections.safe_name(f"{Path(src).stem} - sections")
+            folder.mkdir(parents=True, exist_ok=True)
+            items, total = [], len(plan)
+            ext = cutter.output_path(src, str(folder))[0].suffix
+            for i, sec in enumerate(plan):
+                a, b = sec["start"], sec["end"]
+                if cuts is not None:
+                    a, b = cutter.map_time(a, cuts), cutter.map_time(b, cuts)
+                name = sections.safe_name(f"{sec['n']:02d} - {sec['title']}")
+                dst = folder / f"{name}{ext}"
+
+                def prog(f, i=i):
+                    job["sections"]["progress"] = round((i + f) / total, 3)
+                cutter.extract(src, dst, a, b, prog)
+                check = cutter.check_piece(str(dst), b - a)
+                seg = words[sec["first"]: sec["last"] + 1]
+                if cuts is not None:
+                    seg = cutter.shift_words(seg, cuts)
+                seg = [engine.Word(w.text, round(w.start - a, 3), round(w.end - a, 3), w.logprob) for w in seg]
+                outs = engine.write_outputs(seg, str(dst), str(folder), True, s["json"], False, lang)
+                items.append({"n": sec["n"], "title": sec["title"], "path": str(dst), "srt": outs.get("srt", ""),
+                              "start": round(a, 2), "end": round(b, 2), "match": sec["match"], "ok": sec["ok"], **check})
+                job["sections"]["items"] = list(items)
+            with self.lock:
+                job["sections"] = {"state": "done", "folder": str(folder), "items": items, "progress": 1.0}
+                job["rev"] = job.get("rev", 0) + 1
+                self.record(job)
+        except Exception as e:
+            traceback.print_exc()
+            with self.lock:
+                job["sections"] = {"state": "error", "error": f"{e.__class__.__name__}: {e}"}
+                job["rev"] = job.get("rev", 0) + 1
 
     def import_json(self, job):
         words, lang = load_words_json(job["path"])
@@ -388,6 +468,72 @@ class Handler(BaseHTTPRequestHandler):
                     else:
                         j.update(status="queued", progress=0.0, message="", error="")
             STATE.start()
+            return self._json({"ok": True})
+        if p == "/api/cut":  # shorten long pauses in this file's audio/video
+            with STATE.lock:
+                job = STATE.jobs.get(b.get("id"))
+                if not job or "_words" not in job:
+                    return self._json({"error": "Transcribe this file first."}, 400)
+                if not job.get("audio") or not os.path.exists(job["audio"]):
+                    return self._json({"error": "The audio file for this transcript was not found."}, 400)
+                if (job.get("cut") or {}).get("state") == "working":
+                    return self._json({"error": "Already cutting this file."}, 400)
+                try:
+                    gap = float(b.get("gap", STATE.settings.get("max_gap", cutter.DEFAULT_GAP)))
+                except (TypeError, ValueError):
+                    gap = cutter.DEFAULT_GAP
+                gap = min(5.0, max(0.1, gap))
+                STATE.settings["max_gap"] = gap
+                job["cut"] = {"state": "working", "progress": 0.0, "gap": gap}
+                job["rev"] = job.get("rev", 0) + 1
+            STATE.save_settings()
+            threading.Thread(target=STATE.cut, args=(job, gap), daemon=True).start()
+            return self._json({"ok": True})
+        if p == "/api/sections/plan":  # read the script and find its sections in the audio
+            job = STATE.jobs.get(b.get("id"))
+            if not job or "_words" not in job:
+                return self._json({"error": "Transcribe this file first."}, 400)
+            path, text = b.get("path"), b.get("text")
+            if b.get("pick"):
+                if not STATE.picker:
+                    return self._json({"error": "native dialogs unavailable"}, 400)
+                res = STATE.picker("script")
+                if not res:
+                    return self._json({"cancelled": True})
+                path = res[0]
+            tmp = None
+            if b.get("data"):  # a file chosen in browser mode
+                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=Path(b.get("name", "s.txt")).suffix)
+                tmp.write(base64.b64decode(b["data"]))
+                tmp.close()
+                path = tmp.name
+            try:
+                res = sections.plan(path, text, job["_words"])
+                if path and "error" not in res:
+                    res["script_text"] = "\n".join(l for l, _ in sections.read_script(path))
+            except Exception as e:
+                res = {"error": f"Could not read the script: {e}"}
+            finally:
+                if tmp:
+                    os.unlink(tmp.name)
+            if "error" in res:
+                return self._json(res, 400)
+            job["_plan"] = res["sections"]
+            res["has_short"] = (job.get("cut") or {}).get("state") == "done"
+            return self._json(res)
+        if p == "/api/sections/save":
+            with STATE.lock:
+                job = STATE.jobs.get(b.get("id"))
+                if not job or not job.get("_plan"):
+                    return self._json({"error": "Load the script first."}, 400)
+                if not job.get("audio") or not os.path.exists(job["audio"]):
+                    return self._json({"error": "The audio file for this transcript was not found."}, 400)
+                if (job.get("sections") or {}).get("state") == "working":
+                    return self._json({"error": "Already saving the sections."}, 400)
+                plan = [s for s in job["_plan"] if s["n"] in set(b.get("only") or [s["n"] for s in job["_plan"]])]
+                job["sections"] = {"state": "working", "progress": 0.0, "items": [], "total": len(plan)}
+                job["rev"] = job.get("rev", 0) + 1
+            threading.Thread(target=STATE.split_sections, args=(job, plan, bool(b.get("short"))), daemon=True).start()
             return self._json({"ok": True})
         if p == "/api/job_folder":  # where one file's .srt/.json are saved
             with STATE.lock:

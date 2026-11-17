@@ -19,9 +19,9 @@ the download is intact, puts **Bangla Transcriber** in Applications and opens it
 step failed and shows the app's error log, so you can send that output for help. The AI models download the first time
 you transcribe in each language.
 
-To install by hand instead, download the three `release/BanglaTranscriber-1.3-macos-arm64.tar.gz.part*` files into one
+To install by hand instead, download the three `release/BanglaTranscriber-1.4-macos-arm64.tar.gz.part*` files into one
 folder, open Terminal in that folder and run:
-`cat BanglaTranscriber-1.3-macos-arm64.tar.gz.part* | tar -xz -C /Applications`
+`cat BanglaTranscriber-1.4-macos-arm64.tar.gz.part* | tar -xz -C /Applications`
 
 ## Build the app (once)
 
@@ -67,9 +67,32 @@ click **Choose…** to pick a folder in Finder, or **Show folder** to open it. N
 *Default save folder* from the sidebar (normally the audio's own folder), so with several files you can send each one somewhere
 different. Changing the folder of a finished file saves its subtitles into the new folder straight away.
 
-**History** (sidebar) lists everything transcribed in the last 7 days (or 30 or 60), grouped by day, with the folder the
+**History** (sidebar) lists everything transcribed (with links to shortened copies and section folders) in the last 7 days (or 30 or 60), grouped by day, with the folder the
 files are in. **Show in Finder** points at the `.srt`, and **Open** loads it back into the app so you can keep fixing it.
 Files that were moved or deleted are marked as such. History is kept between launches.
+
+### Cut silences (shorter audio/video, no words cut)
+
+Open a finished file and click **✂ Cut silences**. Every pause between words that is longer than **0.75 s** (you can change
+the number next to the button) is shortened to exactly 0.75 s. The extra silence is taken from the middle of the pause, so
+there is always about 0.37 s of real silence after the last word and before the next one. Pauses up to 0.75 s are left alone.
+
+Words are never removed. A stretch is only cut if no transcribed word is in it *and* the audio is really quiet there, so a word
+the transcription missed is kept too. You get `name-shortened.mp3` (or `.mp4` for video, with picture and sound kept in sync),
+plus `name-shortened.srt` and `.json` moved to the new timing. These are saved in the file's save folder.
+
+### Split by script (one file per section)
+
+After transcribing, click **Split by script…** and choose your script (.txt, .md, .docx or .rtf) or paste it. Put each
+section's title on its own line: `# Part 1: The Fall`, `Part 2`, `পর্ব ৩`, `[Intro]`, a Word heading, or a `---` line between sections.
+Notes in brackets such as `[B-roll]` or `(Infographic 3)` are ignored.
+
+The app lines the script up with what was actually said, and shows every section with its start time, the script's opening
+words next to the words actually **heard** there, and a match score. Press ▶ to listen to each start before saving. Sections the
+app is unsure about are marked ⚠. **Save sections** writes `01 - Intro.mp4`, `02 - Part 1 The Fall.mp4`, … with a matching `.srt` and
+`.json` each, into a `name - sections` folder. You can also cut the sections from the shortened copy. Each saved file is then
+opened again and checked: right length, starts and ends in a pause (no word cut off), and matches the script. Anything to look
+at is listed under **Details**.
 
 **Already have a transcript JSON** (from ElevenLabs or from this app)? Drop the `.json` in. The app makes the `.srt` straight
 away and applies your corrections. Your original JSON is never changed; the corrected version is saved as `name_corrected.json`.

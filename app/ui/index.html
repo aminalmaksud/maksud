@@ -149,6 +149,24 @@ body.nounsure .w.unsure { text-decoration: none; }
 .saveto { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); min-width: 0; }
 .saveto .path { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; min-width: 0; flex: 0 1 auto; max-width: 520px; }
 .saveto .btn { padding: 3px 9px; font-size: 12px; }
+.tools { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); flex-wrap: wrap; min-width: 0; }
+.tools .btn { padding: 3px 9px; font-size: 12px; }
+.tools input[type=number] { width: 54px; font: inherit; padding: 2px 4px; border: 1px solid var(--line); border-radius: 5px; background: var(--bg); color: var(--text); }
+.tools .st { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.tools .st b { color: var(--text); font-weight: 600; }
+.tools .sep { width: 1px; height: 16px; background: var(--line); margin: 0 4px; }
+.minibar { width: 90px; height: 4px; border-radius: 2px; background: var(--chip); overflow: hidden; display: inline-block; }
+.minibar i { display: block; height: 100%; background: var(--accent); }
+.good { color: var(--ok); } .warn { color: #d97706; } .bad { color: var(--err); }
+.modal.wide { width: min(860px, 94vw); height: min(720px, 90vh); }
+.secs { flex: 1; overflow: auto; border: 1px solid var(--line); border-radius: 9px; }
+.sec { display: grid; grid-template-columns: auto auto 1fr auto; gap: 2px 12px; padding: 10px 12px; align-items: start; border-bottom: 1px solid var(--line); }
+.sec:last-child { border-bottom: 0; }
+.sec .ti { font-weight: 600; }
+.sec .tm { font: 12px ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); white-space: nowrap; }
+.sec .op { grid-column: 3 / 5; font-size: 12.5px; color: var(--muted); font-family: var(--bn); line-height: 1.5; }
+.sec .op b { color: var(--text); font-weight: 500; }
+.sec .pl { width: 26px; height: 26px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; font-size: 11px; }
 .navbtn { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: none; padding: 8px 10px; border-radius: 8px; text-align: left; font-weight: 550; }
 .navbtn:hover { background: var(--chip); }
 .navbtn.sel { background: var(--hl); }
@@ -339,6 +357,7 @@ function renderMain() {
     return;
   }
   const k = `${j.id}:done:${j.rev}:${tab}:${j.lang}:${j.out_dir}`;
+  if (main._k === k) updateTools(j);
   if (main._k !== k) {
     const keepScroll = main._job === j.id && $("#body") ? $("#body").scrollTop : 0;
     main._k = k; main._job = j.id;
@@ -360,6 +379,12 @@ function header(j) {
     ${j.status !== "working" ? `<div class="saveto">Save .srt / .json to <span class="path" title="${esc(jobFolder(j))}"><bdi>${esc(jobFolder(j))}</bdi></span>
       <button class="btn" id="jf-choose">Choose…</button>${j.out_dir && j.kind === "audio" ? `<button class="btn" id="jf-reset" title="Save next to the audio file">Same as audio</button>` : ""}
       <button class="btn" id="jf-open">Show folder</button></div>` : ""}
+    ${done && j.status !== "working" ? `<div class="tools">
+      <button class="btn" id="cutbtn" ${j.audio ? "" : "disabled"} title="Make a shorter copy: every pause between words longer than the limit is shortened to it. Words are never cut.">✂ Cut silences</button>
+      <span>longer than <input type="number" id="gap" min="0.1" max="5" step="0.05" value="${S.settings.max_gap ?? 0.75}"> s</span>
+      <span class="sep"></span>
+      <button class="btn" id="secbtn" ${j.audio ? "" : "disabled"} title="Give the script; each of its sections is saved as its own audio/video file">Split by script…</button>
+      <span class="st" id="toolst">${toolStatus(j)}</span></div>` : ""}
     <div class="player"><button class="play" id="play" title="Play / pause (space)" ${j.audio ? "" : "disabled style=opacity:.4"}></button>
       <input type="range" id="seek" min="0" max="1000" value="0" ${j.audio ? "" : "disabled"}><span class="time" id="time">${j.audio ? "0:00.0 / –" : "no audio found"}</span></div>
   </div>`;
@@ -398,6 +423,43 @@ function bindHeader(j) {
   const c = $("#copy"); if (c) c.onclick = () => { if (result && resultFor === resultKey(j)) { copy(result.srt); toast("SRT copied"); } };
   const r = $("#reveal"); if (r) r.onclick = () => reveal(j.outputs.srt || j.outputs.json || j.path);
   const d = $("#redo"); if (d) d.onclick = () => api("/api/start", {redo: [j.id]}).then(refresh);
+  const cb = $("#cutbtn");
+  if (cb) cb.onclick = async () => {
+    const gap = parseFloat($("#gap").value);
+    if (!(gap >= 0.1 && gap <= 5)) return toast("Enter a pause length between 0.1 and 5 seconds");
+    const r = await api("/api/cut", {id: j.id, gap});
+    if (r.error) return toast(r.error);
+    toast("Cutting silences…"); refresh();
+  };
+  const sb = $("#secbtn"); if (sb) sb.onclick = () => openSplit(j);
+  bindTools(j);
+}
+
+function toolStatus(j) {
+  const c = j.cut || {}, x = j.sections || {}, parts = [];
+  if (c.state === "working") parts.push(`Cutting silences… <span class="minibar"><i style="width:${(c.progress * 100).toFixed(0)}%"></i></span>`);
+  if (c.state === "done") parts.push(`<span class="good">✓</span> <b>${esc(baseName(c.path))}</b> ${mmss(c.before)} → ${mmss(c.after)} (${mmss(c.removed)} of pauses removed) <button class="btn" data-show="${esc(c.path)}">Show</button>`);
+  if (c.state === "error") parts.push(`<span class="bad">Cutting failed: ${esc(c.error)}</span>`);
+  if (x.state === "working") parts.push(`Saving sections ${(x.items || []).length + 1} of ${x.total}… <span class="minibar"><i style="width:${(x.progress * 100).toFixed(0)}%"></i></span>`);
+  if (x.state === "done") {
+    const bad = x.items.filter(i => !(i.ok && i.length_ok && i.clean_start && i.clean_end)).length;
+    parts.push(`<span class="${bad ? "warn" : "good"}">${bad ? "⚠" : "✓"}</span> ${x.items.length} sections saved${bad ? `, ${bad} to check` : ", all checked"}
+      <button class="btn" id="secdetails">Details</button><button class="btn" data-show="${esc(x.folder)}">Show folder</button>`);
+  }
+  if (x.state === "error") parts.push(`<span class="bad">Splitting failed: ${esc(x.error)}</span>`);
+  return parts.join(`<span class="sep"></span>`);
+}
+const mmss = t => { t = Math.max(0, Math.round(+t || 0)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`; };
+function bindTools(j) {
+  const st = $("#toolst");
+  if (!st) return;
+  st.querySelectorAll("[data-show]").forEach(b => b.onclick = () => reveal(b.dataset.show));
+  const d = $("#secdetails"); if (d) d.onclick = () => showSections(j);
+}
+function updateTools(j) {
+  const st = $("#toolst"); if (!st) return;
+  const html = toolStatus(j);
+  if (st._v !== html) { st.innerHTML = html; st._v = html; bindTools(j); }
 }
 
 function copy(t) {
@@ -496,12 +558,15 @@ async function renderHistory() {
       <div class="acts">
         <button class="btn" data-hact="open" ${h.exists.json ? "" : "disabled"}>Open</button>
         <button class="btn" data-hact="finder" ${ok ? "" : "disabled"}>Show in Finder</button>
+        ${h.cut ? `<button class="btn" data-hshow="${esc(h.cut.path)}" title="${esc(h.cut.path)}">Shortened copy</button>` : ""}
+        ${h.sections ? `<button class="btn" data-hshow="${esc(h.sections.folder)}" title="${esc(h.sections.folder)}">${h.sections.count} sections</button>` : ""}
         <button class="btn" data-hact="remove" title="Remove from history (files are kept)">✕</button></div>
       <div class="meta">${time} · ${h.cues} subtitles · ${h.words} words · ${files}</div>
       <div class="loc">${ok ? `<code title="${esc(h.folder)}"><bdi>${esc(h.folder)}</bdi></code>` : `<span class="gone">The files were moved or deleted (last saved in ${esc(h.folder)})</span>`}</div>
     </div>`;
   }
   list.innerHTML = html;
+  list.querySelectorAll("[data-hshow]").forEach(b => b.onclick = () => reveal(b.dataset.hshow));
   list.querySelectorAll("[data-hact]").forEach(b => b.onclick = async () => {
     const h = items.find(x => x.id === b.closest(".hrow").dataset.h);
     if (b.dataset.hact === "finder") return reveal(h.outputs.srt || h.outputs.json);
@@ -558,6 +623,92 @@ function openEditor(el) {
     end += 1; upd(); inp.value = original(); inp.focus();
   };
   inp.onkeydown = e => { if (e.key === "Enter" && !e.isComposing) save(inp.value.trim()); if (e.key === "Escape") closePop(); };
+}
+
+// ---- split by script ---------------------------------------------------------
+async function openSplit(j) {
+  const bg = document.createElement("div");
+  bg.className = "modal-bg";
+  bg.innerHTML = `<div class="modal wide"><h3>Split “${esc(j.name)}” by its script</h3>
+    <p>Give the script this was recorded from. Each section's title must be on its own line, for example
+    <b># Part 1: The Fall</b>, <b>Part 2</b>, <b>পর্ব ৩</b>, <b>[Intro]</b>, a Word heading, or a line with <b>---</b> between sections.
+    The app finds where every section starts in the audio, checks it against what was actually said, and saves each section as its own file in one folder.</p>
+    <div class="row" style="justify-content:flex-start"><button class="btn" id="s-file">Choose script file…</button>
+      <span class="sp">.txt, .md, .docx or .rtf, or paste it below</span><input type="file" id="s-input" accept=".txt,.md,.docx,.rtf,text/plain" hidden></div>
+    <textarea id="s-text" spellcheck="false" placeholder="# Intro\n…\n\n# Part 1\n…" style="flex:0 0 120px"></textarea>
+    <div class="row" style="justify-content:flex-start"><button class="btn primary" id="s-find">Find sections</button><span class="sp" id="s-msg"></span></div>
+    <div class="secs" id="s-list" hidden></div>
+    <div class="row" id="s-foot" hidden><label class="sp" id="s-shortl"><input type="checkbox" id="s-short"> Cut from the shortened copy (pauses already trimmed)</label>
+      <button class="btn" id="s-cancel">Cancel</button><button class="btn primary" id="s-save">Save sections</button></div></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.onclick = e => { if (e.target === bg) close(); };
+  $("#s-cancel").onclick = close;
+  const msg = t => $("#s-msg").innerHTML = t;
+  const show = r => {
+    if (r.cancelled) return;
+    if (r.error) { msg(`<span class="bad">${esc(r.error)}</span>`); $("#s-list").hidden = $("#s-foot").hidden = true; return; }
+    if (r.script_text) $("#s-text").value = r.script_text;
+    const bad = r.sections.filter(s => !s.ok).length;
+    msg(`Found <b>${r.sections.length}</b> of ${r.total} sections in the audio` + (bad ? ` · <span class="warn">${bad} to check: listen with ▶</span>` : ` · <span class="good">all match the script</span>`) +
+      (r.missing.length ? ` · <span class="bad">not found: ${r.missing.map(esc).join(", ")}</span>` : ""));
+    $("#s-list").innerHTML = r.sections.map(s => `<div class="sec">
+      <input type="checkbox" data-n="${s.n}" checked style="margin-top:6px">
+      <button class="pl" data-t="${s.start}" title="Listen from the start of this section">▶</button>
+      <div><div class="ti">${s.n}. ${esc(s.title)}</div><div class="tm">${tc(s.start)} → ${tc(s.end)} · ${mmss(s.end - s.start)}</div></div>
+      <div class="${s.ok ? "good" : "warn"}" title="How much of this section's script was heard in this part of the audio">${s.ok ? "✓" : "⚠"} ${Math.round(s.match * 100)}% match</div>
+      <div class="op">Script: <b>${esc(s.script_opening)}…</b><br>Heard: <b>${esc(s.heard_opening)}…</b></div></div>`).join("");
+    $("#s-list").hidden = $("#s-foot").hidden = false;
+    $("#s-shortl").style.visibility = r.has_short ? "visible" : "hidden";
+    $("#s-short").checked = false;
+    bg.querySelectorAll(".pl").forEach(b => b.onclick = () => playFrom(+b.dataset.t));
+    $("#s-save").textContent = `Save ${r.sections.length} sections`;
+    bg.querySelectorAll("[data-n]").forEach(c => c.onchange = () => {
+      const n = bg.querySelectorAll("[data-n]:checked").length; $("#s-save").textContent = `Save ${n} section${n === 1 ? "" : "s"}`; $("#s-save").disabled = !n; });
+  };
+  $("#s-find").onclick = async () => {
+    const text = $("#s-text").value;
+    if (!text.trim()) return msg(`<span class="bad">Choose a script file or paste the script first.</span>`);
+    msg("Matching the script with the audio…"); show(await api("/api/sections/plan", {id: j.id, text}));
+  };
+  $("#s-file").onclick = async () => {
+    if (S.native) { msg("Reading the script…"); const r = await api("/api/sections/plan", {id: j.id, pick: true}); if (r.cancelled) msg(""); else show(r); return; }
+    $("#s-input").click();
+  };
+  $("#s-input").onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const buf = new Uint8Array(await f.arrayBuffer()); let bin = "";
+    for (let i = 0; i < buf.length; i += 8192) bin += String.fromCharCode(...buf.subarray(i, i + 8192));
+    msg("Reading the script…"); show(await api("/api/sections/plan", {id: j.id, name: f.name, data: btoa(bin)}));
+  };
+  $("#s-save").onclick = async () => {
+    const only = [...bg.querySelectorAll("[data-n]:checked")].map(c => +c.dataset.n);
+    const r = await api("/api/sections/save", {id: j.id, only, short: $("#s-short").checked});
+    if (r.error) return msg(`<span class="bad">${esc(r.error)}</span>`);
+    close(); toast("Saving the sections…"); refresh();
+  };
+}
+function showSections(j) {
+  const x = j.sections, bg = document.createElement("div");
+  bg.className = "modal-bg";
+  const why = i => [!i.ok && `the audio matches only ${Math.round(i.match * 100)}% of the script`, !i.length_ok && `length is ${i.duration}s, expected ${(i.end - i.start).toFixed(2)}s`,
+    !i.clean_start && "the file starts in the middle of a sound", !i.clean_end && "the file ends in the middle of a sound"].filter(Boolean);
+  bg.innerHTML = `<div class="modal wide"><h3>Sections of “${esc(j.name)}”</h3>
+    <p>Saved in <bdi>${esc(x.folder)}</bdi>. After saving, each file was opened again and checked: its length, that it starts and ends in a pause
+    (no word cut off), and how well its audio matches the script.</p>
+    <div class="secs">${x.items.map(i => { const w = why(i); return `<div class="sec">
+      <span class="${w.length ? "warn" : "good"}" style="margin-top:4px">${w.length ? "⚠" : "✓"}</span>
+      <button class="btn" data-p="${esc(i.path)}" style="padding:3px 9px;font-size:12px">Show</button>
+      <div><div class="ti">${esc(baseName(i.path))}</div><div class="tm">${mmss(i.duration)} · from ${tc(i.start)}</div></div>
+      <div class="tm">${Math.round(i.match * 100)}% match</div>
+      <div class="op">${w.length ? `<span class="warn">Check: ${esc(w.join("; "))}</span>` : "Checked: right length, clean start and end, matches the script."}</div></div>`; }).join("")}</div>
+    <div class="row"><span class="sp"></span><button class="btn" id="d-folder">Show folder</button><button class="btn primary" id="d-close">Close</button></div></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.onclick = e => { if (e.target === bg) close(); };
+  $("#d-close").onclick = close;
+  $("#d-folder").onclick = () => reveal(x.folder);
+  bg.querySelectorAll("[data-p]").forEach(b => b.onclick = () => reveal(b.dataset.p));
 }
 
 // ---- corrections list --------------------------------------------------------

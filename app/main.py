@@ -78,6 +78,8 @@ def main():
     def picker(kind):
         if kind == "folder":
             res = window.create_file_dialog(FOLDER)
+        elif kind == "script":
+            res = window.create_file_dialog(OPEN, file_types=("Script (*.txt;*.md;*.docx;*.rtf)", "All files (*.*)"))
         else:
             exts = ";".join(f"*{e}" for e in sorted(server.AUDIO_EXT))
             res = window.create_file_dialog(OPEN, allow_multiple=True,
