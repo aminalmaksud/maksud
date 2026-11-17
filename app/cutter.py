@@ -122,7 +122,8 @@ def output_path(src: str, folder: str) -> tuple[Path, list[str], bool]:
     return Path(folder) / f"{p.stem}-shortened{out_ext}", encs, False
 
 
-def render(src: str, dst: Path, cuts, audio_encoders: list[str], video: bool, progress=None, cancel=None):
+def render(src: str, dst: Path, cuts, audio_encoders: list[str], video: bool, progress=None, cancel=None,
+           window: tuple[float, float] | None = None):
     """Write a copy of src with the `cuts` removed (audio, and video if present, kept in sync)."""
     import av
 
@@ -157,7 +158,7 @@ def render(src: str, dst: Path, cuts, audio_encoders: list[str], video: bool, pr
             to_enc = av.AudioResampler(format=a_fmt, layout=layout, rate=rate)
             scuts = [(int(round(a * rate)), int(round(b * rate))) for a, b in cuts]
             fade = max(1, int(FADE * rate))
-            pos = 0  # samples read
+            pos = None  # samples read (set from the first audio frame, which matters after a seek)
             written = 0  # samples written
 
             # ---- video
@@ -183,6 +184,8 @@ def render(src: str, dst: Path, cuts, audio_encoders: list[str], video: bool, pr
 
             def emit_audio(frame):
                 nonlocal pos, written
+                if pos is None:
+                    pos = int(round(((frame.time or 0.0) - a_t0) * rate)) if frame is not None else 0
                 for f in to_float.resample(frame):
                     arr = f.to_ndarray().astype(np.float32)  # (channels, n)
                     n = arr.shape[1]
@@ -217,19 +220,34 @@ def render(src: str, dst: Path, cuts, audio_encoders: list[str], video: bool, pr
                 return any(a <= t < b for a, b in cuts)
 
             streams = [a_in] + ([v_in] if v_in is not None else [])
+            done = set()
+            if window:  # only a part is needed: jump close to it instead of decoding from the start
+                if window[0] > 3:
+                    inp.seek(int((window[0] - 3 + a_t0) * 1_000_000))
+                span = max(0.1, window[1] - window[0])
             for packet in inp.demux(*streams):
                 if cancel and cancel():
                     raise InterruptedError
+                if len(done) == len(streams):
+                    break
                 if packet.stream.type == "audio":
                     for frame in packet.decode():
                         emit_audio(frame)
-                        if progress and dur:
-                            progress(min(1.0, pos / rate / dur))
+                        t_now = (pos or 0) / rate
+                        if window and t_now > window[1] + 0.3:
+                            done.add("audio")
+                        if progress:
+                            if window:
+                                progress(max(0.0, min(1.0, (t_now - window[0]) / span)))
+                            elif dur:
+                                progress(min(1.0, t_now / dur))
                 else:
                     for frame in packet.decode():
                         if frame.time is None:
                             continue
                         t = frame.time - a_t0
+                        if window and t > window[1] + 0.3:
+                            done.add("video")
                         if in_cut(t):
                             continue
                         pts = max(int(round(map_time(t, cuts) / v_tb)), last_pts + 1)
@@ -278,7 +296,7 @@ def extract(src: str, dst: Path, start: float, end: float, progress=None, cancel
     """Copy the part start..end of src into dst (audio, and video if present)."""
     _, encoders, video = output_path(src, str(dst.parent))
     return render(src, dst, [(0.0, max(0.0, start)), (end, 1e9)] if start > 0 else [(end, 1e9)],
-                  encoders, video, progress, cancel)
+                  encoders, video, progress, cancel, window=(start, end))
 
 
 def check_piece(path: str, want: float, threshold_db: float = -35.0) -> dict:

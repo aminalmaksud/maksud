@@ -19,9 +19,9 @@ the download is intact, puts **Bangla Transcriber** in Applications and opens it
 step failed and shows the app's error log, so you can send that output for help. The AI models download the first time
 you transcribe in each language.
 
-To install by hand instead, download the three `release/BanglaTranscriber-1.4.1-macos-arm64.tar.gz.part*` files into one
+To install by hand instead, download the three `release/BanglaTranscriber-1.5-macos-arm64.tar.gz.part*` files into one
 folder, open Terminal in that folder and run:
-`cat BanglaTranscriber-1.4.1-macos-arm64.tar.gz.part* | tar -xz -C /Applications`
+`cat BanglaTranscriber-1.5-macos-arm64.tar.gz.part* | tar -xz -C /Applications`
 
 ## Build the app (once)
 
@@ -93,6 +93,18 @@ app is unsure about are marked ⚠. **Save sections** writes `01 - Intro.mp4`, `
 `.json` each, into a `name - sections` folder. You can also cut the sections from the shortened copy. Each saved file is then
 opened again and checked: right length, starts and ends in a pause (no word cut off), and matches the script. Anything to look
 at is listed under **Details**.
+
+#### Section Pack scripts
+
+A Section Pack (blocks headed `S001 · I1`, `S002 · A`, `S012 · B (2–5)`, `S014 · Q (8)` …) is read as it is: paste the whole pack.
+Every block becomes its own clip, in S-number order, even when the same block appears in several lists (the longest copy is
+used). Text-overlay lines (`S015 · বাল্মীকি`) and the Full Section Map are skipped. The numbers after B-roll sentences are image
+numbers, not spoken words. A chapter heading that was only shown on screen and not spoken is reported as "not heard" and skipped.
+
+The clips go into one folder per type (`A Roll`, `A Roll Infographics`, `Infographics`, `Map Animations`, `B-roll`,
+`Quote cards`, `Chapter headings`), named like `S012 - B.mp4`, each with its own `.srt`. Tick or untick whole types before saving.
+The folder also gets `Section list.csv` (every block with its start, end, length, how much of its script was heard, and the check
+result) and `B-roll image timings.csv` (when each image number should appear, in the full video and inside its clip).
 
 **Already have a transcript JSON** (from ElevenLabs or from this app)? Drop the `.json` in. The app makes the `.srt` straight
 away and applies your corrections. Your original JSON is never changed; the corrected version is saved as `name_corrected.json`.

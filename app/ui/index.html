@@ -634,11 +634,14 @@ async function openSplit(j) {
   bg.innerHTML = `<div class="modal wide"><h3>Split “${esc(j.name)}” by its script</h3>
     <p>Give the script this was recorded from. Each section's title must be on its own line, for example
     <b># Part 1: The Fall</b>, <b>Part 2</b>, <b>পর্ব ৩</b>, <b>[Intro]</b>, a Word heading, or a line with <b>---</b> between sections.
-    The app finds where every section starts in the audio, checks it against what was actually said, and saves each section as its own file in one folder.</p>
+    A <b>Section Pack</b> works as is: every block like <b>S012 · B (2–5)</b> becomes its own clip, sorted into a folder per type, and the
+    image numbers in B-roll text give the time each image should appear. The app finds where every section starts in the audio,
+    checks it against what was actually said, and saves each section as its own file.</p>
     <div class="row" style="justify-content:flex-start"><button class="btn" id="s-file">Choose script file…</button>
       <span class="sp">.txt, .md, .docx or .rtf, or paste it below</span><input type="file" id="s-input" accept=".txt,.md,.docx,.rtf,text/plain" hidden></div>
     <textarea id="s-text" spellcheck="false" placeholder="# Intro\n…\n\n# Part 1\n…" style="flex:0 0 120px"></textarea>
     <div class="row" style="justify-content:flex-start"><button class="btn primary" id="s-find">Find sections</button><span class="sp" id="s-msg"></span></div>
+    <div class="row" id="s-types" hidden style="justify-content:flex-start;flex-wrap:wrap;gap:12px;font-size:12.5px"></div>
     <div class="secs" id="s-list" hidden></div>
     <div class="row" id="s-foot" hidden><label class="sp" id="s-shortl"><input type="checkbox" id="s-short"> Cut from the shortened copy (pauses already trimmed)</label>
       <button class="btn" id="s-cancel">Cancel</button><button class="btn primary" id="s-save">Save sections</button></div></div>`;
@@ -649,15 +652,18 @@ async function openSplit(j) {
   const msg = t => $("#s-msg").innerHTML = t;
   const show = r => {
     if (r.cancelled) return;
-    if (r.error) { msg(`<span class="bad">${esc(r.error)}</span>`); $("#s-list").hidden = $("#s-foot").hidden = true; return; }
+    if (r.error) { msg(`<span class="bad">${esc(r.error)}</span>`); $("#s-list").hidden = $("#s-foot").hidden = $("#s-types").hidden = true; return; }
     if (r.script_text) $("#s-text").value = r.script_text;
     const bad = r.sections.filter(s => !s.ok).length;
-    msg(`Found <b>${r.sections.length}</b> of ${r.total} sections in the audio` + (bad ? ` · <span class="warn">${bad} to check: listen with ▶</span>` : ` · <span class="good">all match the script</span>`) +
-      (r.missing.length ? ` · <span class="bad">not found: ${r.missing.map(esc).join(", ")}</span>` : ""));
+    msg(`Found <b>${r.sections.length}</b> of ${r.total} ${r.pack ? "blocks" : "sections"} in the audio` + (bad ? ` · <span class="warn">${bad} to check: listen with ▶</span>` : ` · <span class="good">all match the script</span>`) +
+      (r.missing.length ? ` · <span class="warn">not heard in the recording, skipped: ${r.missing.map(esc).join(", ")}</span>` : ""));
+    const kinds = [...new Set(r.sections.filter(x => x.label).map(x => x.label))];
+    $("#s-types").hidden = !kinds.length;
+    $("#s-types").innerHTML = kinds.length ? `<span>Save:</span>` + kinds.map(k => `<label><input type="checkbox" data-kind="${esc(k)}" checked> ${esc(k)} (${r.sections.filter(x => x.label === k).length})</label>`).join("") : "";
     $("#s-list").innerHTML = r.sections.map(s => `<div class="sec">
-      <input type="checkbox" data-n="${s.n}" checked style="margin-top:6px">
+      <input type="checkbox" data-n="${s.n}" data-k="${esc(s.label || "")}" checked style="margin-top:6px">
       <button class="pl" data-t="${s.start}" title="Listen from the start of this section">▶</button>
-      <div><div class="ti">${s.n}. ${esc(s.title)}</div><div class="tm">${tc(s.start)} → ${tc(s.end)} · ${mmss(s.end - s.start)}</div></div>
+      <div><div class="ti">${s.sid ? "" : s.n + ". "}${esc(s.title)}${s.label ? ` <span class="lang">${esc(s.label)}</span>` : ""}</div><div class="tm">${tc(s.start)} → ${tc(s.end)} · ${mmss(s.end - s.start)}${s.images && s.images.length ? ` · ${s.images.length} image${s.images.length > 1 ? "s" : ""}` : ""}</div></div>
       <div class="${s.ok ? "good" : "warn"}" title="How much of this section's script was heard in this part of the audio">${s.ok ? "✓" : "⚠"} ${Math.round(s.match * 100)}% match</div>
       <div class="op">Script: <b>${esc(s.script_opening)}…</b><br>Heard: <b>${esc(s.heard_opening)}…</b></div></div>`).join("");
     $("#s-list").hidden = $("#s-foot").hidden = false;
@@ -665,8 +671,12 @@ async function openSplit(j) {
     $("#s-short").checked = false;
     bg.querySelectorAll(".pl").forEach(b => b.onclick = () => playFrom(+b.dataset.t));
     $("#s-save").textContent = `Save ${r.sections.length} sections`;
-    bg.querySelectorAll("[data-n]").forEach(c => c.onchange = () => {
-      const n = bg.querySelectorAll("[data-n]:checked").length; $("#s-save").textContent = `Save ${n} section${n === 1 ? "" : "s"}`; $("#s-save").disabled = !n; });
+    const count = () => { const n = bg.querySelectorAll("[data-n]:checked").length; $("#s-save").textContent = `Save ${n} ${r.pack ? "clip" : "section"}${n === 1 ? "" : "s"}`; $("#s-save").disabled = !n; };
+    bg.querySelectorAll("[data-n]").forEach(c => c.onchange = count);
+    bg.querySelectorAll("[data-kind]").forEach(c => c.onchange = () => {
+      bg.querySelectorAll(`[data-n][data-k="${CSS.escape(c.dataset.kind)}"]`).forEach(x => { x.checked = c.checked; x.closest(".sec").style.opacity = c.checked ? "" : ".45"; });
+      count(); });
+    count();
   };
   $("#s-find").onclick = async () => {
     const text = $("#s-text").value;
@@ -696,12 +706,12 @@ function showSections(j) {
   const why = i => [!i.ok && `the audio matches only ${Math.round(i.match * 100)}% of the script`, !i.length_ok && `length is ${i.duration}s, expected ${(i.end - i.start).toFixed(2)}s`,
     !i.clean_start && "the file starts in the middle of a sound", !i.clean_end && "the file ends in the middle of a sound"].filter(Boolean);
   bg.innerHTML = `<div class="modal wide"><h3>Sections of “${esc(j.name)}”</h3>
-    <p>Saved in <bdi>${esc(x.folder)}</bdi>. After saving, each file was opened again and checked: its length, that it starts and ends in a pause
+    <p>Saved in <bdi>${esc(x.folder)}</bdi>${x.items.some(i => i.sid) ? ", one folder per type, with <b>Section list.csv</b> and <b>B-roll image timings.csv</b>" : ""}. After saving, each file was opened again and checked: its length, that it starts and ends in a pause
     (no word cut off), and how well its audio matches the script.</p>
     <div class="secs">${x.items.map(i => { const w = why(i); return `<div class="sec">
       <span class="${w.length ? "warn" : "good"}" style="margin-top:4px">${w.length ? "⚠" : "✓"}</span>
       <button class="btn" data-p="${esc(i.path)}" style="padding:3px 9px;font-size:12px">Show</button>
-      <div><div class="ti">${esc(baseName(i.path))}</div><div class="tm">${mmss(i.duration)} · from ${tc(i.start)}</div></div>
+      <div><div class="ti">${esc(i.label ? i.label + " / " : "")}${esc(baseName(i.path))}</div><div class="tm">${mmss(i.duration)} · from ${tc(i.start)}</div></div>
       <div class="tm">${Math.round(i.match * 100)}% match</div>
       <div class="op">${w.length ? `<span class="warn">Check: ${esc(w.join("; "))}</span>` : "Checked: right length, clean start and end, matches the script."}</div></div>`; }).join("")}</div>
     <div class="row"><span class="sp"></span><button class="btn" id="d-folder">Show folder</button><button class="btn primary" id="d-close">Close</button></div></div>`;

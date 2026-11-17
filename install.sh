@@ -5,10 +5,10 @@
 set -uo pipefail
 
 BASE="https://raw.githubusercontent.com/aminalmaksud/maksud/bangla-transcriber/release"
-NAME="BanglaTranscriber-1.4.1-macos-arm64.tar.gz"
+NAME="BanglaTranscriber-1.5-macos-arm64.tar.gz"
 PARTS=3
-VERSION="1.4.1"
-SHA256="abea6cb80a2d002792c9dcfbe479d835ee5d219f868105c4cf95e281e4b34c6b"
+VERSION="1.5"
+SHA256="aca4762734abc4441e6d63c0c6f1867f9b53fba59c1c58c683ea6c6888726306"
 APP="Bangla Transcriber.app"
 LOG="$HOME/Library/Logs/Bangla Transcriber.log"
 

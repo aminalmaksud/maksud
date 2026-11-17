@@ -20,7 +20,7 @@ import cutter
 import engine
 import sections
 
-VERSION = "1.4.1"
+VERSION = "1.5"
 UI_DIR = Path(__file__).resolve().parent / "ui"
 AUDIO_EXT = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".opus", ".wma", ".aiff", ".aif",
              ".mp4", ".mov", ".mkv", ".webm", ".m4v"}
@@ -220,12 +220,18 @@ class State:
             folder.mkdir(parents=True, exist_ok=True)
             items, total = [], len(plan)
             ext = cutter.output_path(src, str(folder))[0].suffix
+            pack = any("sid" in sec for sec in plan)
             for i, sec in enumerate(plan):
                 a, b = sec["start"], sec["end"]
                 if cuts is not None:
                     a, b = cutter.map_time(a, cuts), cutter.map_time(b, cuts)
-                name = sections.safe_name(f"{sec['n']:02d} - {sec['title']}")
-                dst = folder / f"{name}{ext}"
+                if "sid" in sec:  # Section Pack: one folder per type, files named by S-ID
+                    sub = folder / sections.safe_name(sec["label"])
+                    sub.mkdir(exist_ok=True)
+                    dst = sub / f"{sections.safe_name(sec['sid'] + ' - ' + sec['code'])}{ext}"
+                else:
+                    name = "%02d - %s" % (sec["n"], sec["title"])
+                    dst = folder / f"{sections.safe_name(name)}{ext}"
 
                 def prog(f, i=i):
                     job["sections"]["progress"] = round((i + f) / total, 3)
@@ -235,10 +241,19 @@ class State:
                 if cuts is not None:
                     seg = cutter.shift_words(seg, cuts)
                 seg = [engine.Word(w.text, round(w.start - a, 3), round(w.end - a, 3), w.logprob) for w in seg]
-                outs = engine.write_outputs(seg, str(dst), str(folder), True, s["json"], False, lang)
-                items.append({"n": sec["n"], "title": sec["title"], "path": str(dst), "srt": outs.get("srt", ""),
-                              "start": round(a, 2), "end": round(b, 2), "match": sec["match"], "ok": sec["ok"], **check})
+                outs = engine.write_outputs(seg, str(dst), str(dst.parent), True, s["json"] and not pack, False, lang)
+                item = {"n": sec["n"], "title": sec["title"], "path": str(dst), "srt": outs.get("srt", ""),
+                        "start": round(a, 2), "end": round(b, 2), "match": sec["match"], "ok": sec["ok"], **check}
+                for key in ("sid", "code", "label"):
+                    if key in sec:
+                        item[key] = sec[key]
+                if sec.get("images"):
+                    shift = (lambda t: cutter.map_time(t, cuts)) if cuts is not None else (lambda t: t)
+                    item["images"] = [{**im, "start": round(shift(im["start"]), 3), "end": round(shift(im["end"]), 3)}
+                                      for im in sec["images"]]
+                items.append(item)
                 job["sections"]["items"] = list(items)
+            self.write_section_lists(folder, items)
             with self.lock:
                 job["sections"] = {"state": "done", "folder": str(folder), "items": items, "progress": 1.0}
                 job["rev"] = job.get("rev", 0) + 1
@@ -248,6 +263,32 @@ class State:
             with self.lock:
                 job["sections"] = {"state": "error", "error": f"{e.__class__.__name__}: {e}"}
                 job["rev"] = job.get("rev", 0) + 1
+
+    @staticmethod
+    def write_section_lists(folder: Path, items):
+        """A list of every saved section (and of B-roll image timings), readable in Excel or Numbers."""
+        import csv
+
+        def tc(t):
+            ms = int(round(t * 1000))
+            return f"{ms // 3600000:02d}:{ms // 60000 % 60:02d}:{ms // 1000 % 60:02d}.{ms % 1000:03d}"
+        with open(folder / "Section list.csv", "w", newline="", encoding="utf-8-sig") as f:
+            w = csv.writer(f)
+            w.writerow(["Section", "Type", "Start", "End", "Length (s)", "Script heard", "Check", "File"])
+            for i in items:
+                problems = [x for x, bad in (("match", not i["ok"]), ("length", not i["length_ok"]),
+                                             ("start", not i["clean_start"]), ("end", not i["clean_end"])) if bad]
+                w.writerow([i.get("sid", i["n"]), i.get("code", ""), tc(i["start"]), tc(i["end"]), i["duration"],
+                            f"{round(i['match'] * 100)}%", "OK" if not problems else "check " + ", ".join(problems),
+                            str(Path(i["path"]).relative_to(folder))])
+        imgs = [(i, im) for i in items for im in i.get("images", [])]
+        if imgs:
+            with open(folder / "B-roll image timings.csv", "w", newline="", encoding="utf-8-sig") as f:
+                w = csv.writer(f)
+                w.writerow(["Image", "Section", "Start (full video)", "End (full video)", "Start (in clip)", "Length (s)"])
+                for i, im in imgs:
+                    w.writerow([im["image"], f"{i.get('sid', i['n'])} {i.get('code', '')}".strip(), tc(im["start"]),
+                                tc(im["end"]), tc(max(0.0, im["start"] - i["start"])), round(im["end"] - im["start"], 2)])
 
     def import_json(self, job):
         words, lang = load_words_json(job["path"])
