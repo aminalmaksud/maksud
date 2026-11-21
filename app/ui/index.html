@@ -208,7 +208,11 @@ body.nounsure .w.unsure { text-decoration: none; }
     <label class="row">Speech recognition model
       <select id="model"></select>
     </label>
-    <div class="row" style="display:grid;gap:4px;color:var(--muted);font-size:11.5px">Mode
+    <div class="row" id="elrow" style="display:none;gap:4px;color:var(--muted);font-size:11.5px">
+      <div class="outdir"><span id="elkey">No API key yet</span><button class="btn" id="elset" style="padding:3px 9px">Set API key…</button></div>
+      <span>Audio is uploaded to ElevenLabs and uses your account's credits.</span>
+    </div>
+    <div class="row" id="moderow" style="display:grid;gap:4px;color:var(--muted);font-size:11.5px">Mode
       <div class="seg" id="quality"><button data-b="1">Fast</button><button data-b="5">Most accurate</button></div>
     </div>
     <div class="row" style="display:grid;gap:4px;color:var(--muted);font-size:11.5px">Default save folder for new files
@@ -265,6 +269,10 @@ function renderSide() {
   }
   if (document.activeElement !== m) m.value = st.models[lang];
   document.querySelectorAll("#quality button").forEach(b => b.classList.toggle("on", +b.dataset.b === +st.beams));
+  const cloud = String(st.models[lang] || "").startsWith("elevenlabs:");
+  $("#elrow").style.display = cloud ? "grid" : "none"; $("#moderow").style.display = cloud ? "none" : "grid";
+  $("#elkey").innerHTML = S.eleven_key ? `API key <b style="color:var(--text)">${esc(S.eleven_key)}</b>` : `<span class="warn">No API key yet</span>`;
+  $("#elset").textContent = S.eleven_key ? "Change…" : "Set API key…";
   $("#outdir").innerHTML = `<bdi>${esc(st.out_dir || "Same folder as audio")}</bdi>`;
   $("#outdir").title = st.out_dir || "";
   $("#o-srt").checked = !!st.srt; $("#o-json").checked = !!st.json; $("#o-txt").checked = !!st.txt;
@@ -326,14 +334,15 @@ function renderMain() {
   if (sel === "history") return renderHistory();
   const j = S.jobs.find(x => x.id === sel);
   if (!j) {
-    const k = "empty" + S.models_ready + S.settings.lang;
+    const k = "empty" + S.models_ready + S.settings.lang + S.settings.models[S.settings.lang];
     if (main._k !== k) {
       main._k = k; main._job = null;
       main.innerHTML = `<div class="empty"><div class="big">
         <h2>Audio → subtitles</h2>
         <div class="bn">বাংলা বা ইংরেজি অডিও দিন, টাইমিংসহ সাবটাইটেল (.srt) নিন</div>
         <p>Drop Bangla or English MP3, WAV, M4A, MP4… and you get a timed <b>.srt</b> plus ElevenLabs-style word-timestamp <b>.json</b>.
-        Choose the language at the bottom left. You can also drop an existing transcript <b>.json</b> to turn it into subtitles. Everything runs on this Mac.</p>
+        Choose the language at the bottom left. You can also drop an existing transcript <b>.json</b> to turn it into subtitles.
+        ${String(S.settings.models[S.settings.lang] || "").startsWith("elevenlabs:") ? "With ElevenLabs Scribe selected, the audio is transcribed online by ElevenLabs." : "Everything runs on this Mac."}</p>
         ${S.models_ready ? "" : `<p style="color:var(--accent)">First time only: the ${LANG[S.settings.lang]} AI models download automatically when you press Transcribe (a few GB). After that it works offline.</p>`}
         <button class="btn primary" id="choosefiles">Choose files…</button></div></div>`;
       $("#choosefiles").onclick = addFiles;
@@ -723,6 +732,35 @@ function showSections(j) {
   bg.querySelectorAll("[data-p]").forEach(b => b.onclick = () => reveal(b.dataset.p));
 }
 
+// ---- ElevenLabs API key -----------------------------------------------------------
+function openElevenKey() {
+  const bg = document.createElement("div");
+  bg.className = "modal-bg";
+  bg.innerHTML = `<div class="modal" style="height:auto"><h3>ElevenLabs API key</h3>
+    <p>With an ElevenLabs model selected, the audio of each file is sent to ElevenLabs Scribe and transcribed there, with word
+    timestamps. It uses your ElevenLabs credits. Only the sound is uploaded, never the video picture.</p>
+    <p>Get a key at <b>elevenlabs.io</b> → <b>Developers</b> → <b>API keys</b> → <b>Create key</b> (allow <b>Speech to Text</b>), then paste it here.
+    It is stored in this Mac's Keychain.</p>
+    <input type="password" id="k-in" placeholder="sk_…" autocomplete="off" spellcheck="false"
+      style="font:14px ui-monospace,Menlo,monospace;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text)">
+    <div class="row"><span class="sp" id="k-msg"></span>${S.eleven_key ? `<button class="btn danger" id="k-del">Remove key</button>` : ""}
+      <button class="btn" id="k-cancel">Cancel</button><button class="btn primary" id="k-save">Check &amp; save</button></div></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.onclick = e => { if (e.target === bg) close(); };
+  $("#k-cancel").onclick = close;
+  $("#k-in").focus();
+  const save = async () => {
+    $("#k-msg").textContent = "Checking the key with ElevenLabs…";
+    const r = await api("/api/elevenlabs/key", {key: $("#k-in").value});
+    if (r.error) { $("#k-msg").innerHTML = `<span class="bad">${esc(r.error)}</span>`; return; }
+    close(); toast(r.message || "Key saved"); refresh();
+  };
+  $("#k-save").onclick = save;
+  $("#k-in").onkeydown = e => { if (e.key === "Enter") save(); };
+  const d = $("#k-del"); if (d) d.onclick = async () => { await api("/api/elevenlabs/key", {remove: true}); close(); toast("Key removed"); refresh(); };
+}
+
 // ---- corrections list --------------------------------------------------------
 async function openCorrections() {
   let lang = S.settings.lang || "bn";
@@ -853,7 +891,11 @@ async function addFiles() {
 $("#add").onclick = addFiles;
 $("#corr").onclick = openCorrections;
 document.querySelectorAll("#langseg button").forEach(b => b.onclick = () => api("/api/settings", {lang: b.dataset.lang}).then(refresh));
-$("#model").onchange = e => api("/api/settings", {model: e.target.value}).then(refresh);
+$("#model").onchange = e => api("/api/settings", {model: e.target.value}).then(() => {
+  refresh();
+  if (e.target.value.startsWith("elevenlabs:") && !S.eleven_key) openElevenKey();
+});
+$("#elset").onclick = openElevenKey;
 document.querySelectorAll("#quality button").forEach(b => b.onclick = () => api("/api/settings", {beams: +b.dataset.b}).then(refresh));
 for (const k of ["srt", "json", "txt"])
   $("#o-" + k).onchange = async e => { await api("/api/settings", {[k]: e.target.checked}); await api("/api/rewrite", {}); refresh(); };

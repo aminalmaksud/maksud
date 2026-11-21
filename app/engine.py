@@ -41,6 +41,9 @@ ASR_MODELS = {
         "openai/whisper-large-v3": "Whisper Large v3 (slowest, very accurate)",
     },
 }
+for _lang in ("bn", "en"):  # ElevenLabs Scribe (online; see scribe.py)
+    ASR_MODELS[_lang].update({"elevenlabs:scribe_v3": "ElevenLabs Scribe v3 (online, uses your credits)",
+                              "elevenlabs:scribe_v2": "ElevenLabs Scribe v2 (online, uses your credits)"})
 DEFAULT_MODELS = {"bn": "bengaliAI/tugstugi_bengaliai-asr_whisper-medium", "en": "openai/whisper-large-v3-turbo"}
 DEFAULT_ASR = DEFAULT_MODELS["bn"]
 WHISPER_LANG = {"bn": ("bn", "bengali"), "en": ("en", "english")}

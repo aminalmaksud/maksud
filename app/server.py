@@ -18,9 +18,10 @@ from pathlib import Path
 
 import cutter
 import engine
+import scribe
 import sections
 
-VERSION = "1.5"
+VERSION = "1.6"
 UI_DIR = Path(__file__).resolve().parent / "ui"
 AUDIO_EXT = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".opus", ".wma", ".aiff", ".aif",
              ".mp4", ".mov", ".mkv", ".webm", ".m4v"}
@@ -337,8 +338,13 @@ class State:
             return {"jobs": jobs, "running": self.running, "version": VERSION,
                     "status": self.status, "settings": self.settings, "native": self.picker is not None,
                     "models": engine.ASR_MODELS, "languages": engine.LANGUAGES,
-                    "models_ready": engine.model_available(self.settings["models"][self.settings["lang"]])
-                    and engine.model_available(engine.ALIGN_MODEL)}
+                    "models_ready": self.models_ready(), "eleven_key": scribe.key_hint()}
+
+    def models_ready(self):
+        m = self.settings["models"][self.settings["lang"]]
+        if scribe.is_cloud(m):
+            return True
+        return engine.model_available(m) and engine.model_available(engine.ALIGN_MODEL)
 
     def start(self):
         with self.lock:
@@ -369,8 +375,15 @@ class State:
 
                 try:
                     lang = job["lang"]
-                    words, dur = self.engine.run(job["path"], s["models"][lang], int(s["beams"]), status,
-                                                 lambda: self.cancel, lang)
+                    model = s["models"][lang]
+                    if scribe.is_cloud(model):
+                        try:
+                            words, dur = scribe.transcribe(job["path"], model, lang, status, lambda: self.cancel)
+                        except InterruptedError:
+                            raise engine.Cancelled()
+                    else:
+                        words, dur = self.engine.run(job["path"], model, int(s["beams"]), status,
+                                                     lambda: self.cancel, lang)
                     words, fixes = engine.apply_corrections(words, self.corrections[lang])
                     with self.lock:
                         job["_words"] = words
@@ -382,7 +395,8 @@ class State:
                 except Exception as e:
                     traceback.print_exc()
                     with self.lock:
-                        job.update(status="error", error=f"{e.__class__.__name__}: {e}", message="Failed")
+                        job.update(status="error", message="Failed",
+                               error=str(e) if isinstance(e, scribe.ScribeError) else f"{e.__class__.__name__}: {e}")
         finally:
             with self.lock:
                 self.running = False
@@ -531,6 +545,18 @@ class Handler(BaseHTTPRequestHandler):
             STATE.save_settings()
             threading.Thread(target=STATE.cut, args=(job, gap), daemon=True).start()
             return self._json({"ok": True})
+        if p == "/api/elevenlabs/key":  # set, check or remove the ElevenLabs API key
+            if b.get("remove"):
+                scribe.delete_key()
+                return self._json({"ok": True, "hint": ""})
+            key = str(b.get("key", "")).strip()
+            if not key:
+                return self._json({"error": "Paste your ElevenLabs API key."}, 400)
+            ok, msg = scribe.check_key(key)
+            if not ok:
+                return self._json({"error": msg}, 400)
+            scribe.set_key(key)
+            return self._json({"ok": True, "message": msg, "hint": scribe.key_hint()})
         if p == "/api/sections/plan":  # read the script and find its sections in the audio
             job = STATE.jobs.get(b.get("id"))
             if not job or "_words" not in job:

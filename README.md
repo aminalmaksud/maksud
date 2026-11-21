@@ -19,9 +19,9 @@ the download is intact, puts **Bangla Transcriber** in Applications and opens it
 step failed and shows the app's error log, so you can send that output for help. The AI models download the first time
 you transcribe in each language.
 
-To install by hand instead, download the three `release/BanglaTranscriber-1.5-macos-arm64.tar.gz.part*` files into one
+To install by hand instead, download the three `release/BanglaTranscriber-1.6-macos-arm64.tar.gz.part*` files into one
 folder, open Terminal in that folder and run:
-`cat BanglaTranscriber-1.5-macos-arm64.tar.gz.part* | tar -xz -C /Applications`
+`cat BanglaTranscriber-1.6-macos-arm64.tar.gz.part* | tar -xz -C /Applications`
 
 ## Build the app (once)
 
@@ -70,6 +70,15 @@ different. Changing the folder of a finished file saves its subtitles into the n
 **History** (sidebar) lists everything transcribed (with links to shortened copies and section folders) in the last 7 days (or 30 or 60), grouped by day, with the folder the
 files are in. **Show in Finder** points at the `.srt`, and **Open** loads it back into the app so you can keep fixing it.
 Files that were moved or deleted are marked as such. History is kept between launches.
+
+### ElevenLabs Scribe (online, optional)
+
+In **Speech recognition model** you can also pick **ElevenLabs Scribe v3** (or v2) for Bangla or English. The audio is then
+transcribed online by ElevenLabs, with word timestamps, using your ElevenLabs credits; everything else (subtitles, editing,
+corrections, cutting, splitting) works the same. The first time, click **Set API key…** and paste a key from
+elevenlabs.io → Developers → API keys (allow Speech to Text). The key is checked, then kept in the Mac's Keychain.
+Only a small mono audio file is uploaded (about 0.4 MB per minute), never the video picture. If your account cannot use v3 yet,
+the app uses v2 automatically.
 
 ### Cut silences (shorter audio/video, no words cut)
 
